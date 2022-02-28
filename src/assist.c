@@ -49,14 +49,28 @@ struct assist_extras* assist_attach(struct reb_simulation* sim){
         return NULL;
     }
     struct assist_extras* assist = malloc(sizeof(*assist));
-    assist->sim = sim;
-    // Initialize assist, connect to rebound, ...
+    // Initialization seperate from memory allocation because python handles memory management
+    assist_initialize(sim, assist); 
     return assist;
 }
 
+void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist){
+    // Initialize assist, connect to rebound, ...
+    assist->sim = sim;
+}
+
+void assist_free_pointers(struct assist_extras* assist){
+    assist_detach(assist->sim, assist);
+}
+
 void assist_free(struct assist_extras* assist){
-    // free memory, detach from rebound
+    // Freeing pointers is seperate because python handles memory management of structure itself.
+    assist_free_pointers(assist);
     free(assist);
+}
+
+void assist_detach(struct reb_simulation* sim, struct assist_extras* assist){
+    assist->sim = NULL;
 }
 
 void assist_error(struct assist_extras* assist, const char* const msg){

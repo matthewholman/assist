@@ -59,6 +59,13 @@ struct assist_extras* assist_attach(struct reb_simulation* sim);
 void assist_free(struct assist_extras* assist);
 
 /**
+ * @brief Detaches ASSIST from simulation, resetting all the simulation's function pointers that ASSIST has set.
+ * @details This does not free the memory allocated by ASSIST (call assist_free).
+ * @param sim Pointer to the simulation from which to remove ASSIST
+ */
+void assist_detach(struct reb_simulation* sim, struct assist_extras* assist);
+
+/**
  * @brief Output an error message.
  * @details This function should be used if an error occurs rather than simply using print. 
  *          The message will be passed to python.
@@ -66,5 +73,10 @@ void assist_free(struct assist_extras* assist);
  * @param msg The error message.
  */
 void assist_error(struct assist_extras* assist, const char* const msg);
+
+
+// Functions called from python:
+void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist); // Initializes all pointers and values.
+void assist_free_pointers(struct assist_extras* assist);
 
 #endif
