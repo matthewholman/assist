@@ -1,5 +1,4 @@
-.. image:: https://img.shields.io/badge/ASSIST-v1.0.0-green.svg?style=flat
-    :target: https://reboundx.readthedocs.org
+[![Version](https://img.shields.io/badge/assist-v1.0.0-green.svg?style=flat)](https://assist.readthedocs.org)
 
 ASSIST
 ======

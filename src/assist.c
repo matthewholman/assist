@@ -37,10 +37,15 @@
 #define STRINGIFY(s) str(s)
 #define str(s) #s
 
-const char* assist_build_str = __DATE__ " " __TIME__; // Date and time build string. 
-const char* assist_version_str = "3.4.1";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
-const char* assist_githash_str = STRINGIFY(REBXGITHASH);             // This line gets updated automatically. Do not edit manually.
+const char* assist_build_str = __DATE__ " " __TIME__;   // Date and time build string. 
+const char* assist_version_str = "1.0.0";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets updated automatically. Do not edit manually.
 
+
+void assist_additional_forces(struct reb_simulation* sim){
+    // implement additional_forces here
+    printf("additional forces called\n");
+}
 
 
 struct assist_extras* assist_attach(struct reb_simulation* sim){  
@@ -54,9 +59,17 @@ struct assist_extras* assist_attach(struct reb_simulation* sim){
     return assist;
 }
 
+
+void assist_extras_cleanup(struct reb_simulation* r){
+    struct assist_extras* assist =  r->extras;
+    assist->sim = NULL;
+}
+
 void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist){
-    // Initialize assist, connect to rebound, ...
     assist->sim = sim;
+    sim->extras = assist;
+    sim->extras_cleanup = assist_extras_cleanup;
+    sim->additional_forces = assist_additional_forces;
 }
 
 void assist_free_pointers(struct assist_extras* assist){
