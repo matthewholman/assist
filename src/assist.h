@@ -40,8 +40,26 @@ extern const char* assist_build_str;      ///< Date and time build string.
 extern const char* assist_version_str;    ///< Version string.
 extern const char* assist_githash_str;    ///< Current git hash.
 
+typedef struct {
+  double t, x, y, z, vx, vy, vz, ax, ay, az;
+} tstate;
+
+typedef struct {
+    double* t;
+    double* state;
+    tstate* last_state;
+    int n_alloc;
+    int n_particles;
+} timestate;
+
 struct assist_extras {
     struct reb_simulation* sim;
+    double* c;
+    int geocentric;
+    tstate* last_state;
+    timestate* ts;
+    int nsubsteps;
+    double* hg;
 };
 
 /**
@@ -78,5 +96,24 @@ void assist_error(struct assist_extras* assist, const char* const msg);
 // Functions called from python:
 void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist); // Initializes all pointers and values.
 void assist_free_pointers(struct assist_extras* assist);
+
+int integration_function(double tstart, double tend, double tstep,
+			 int geocentric,
+			 double epsilon,
+			 int n_particles,
+			 double* instate,
+			 int n_var,
+			 int* invar_part,			 
+			 double* invar,
+			 int n_alloc,			 
+			 int *n_out,
+			 int n_substeps,
+			 double* hg,
+			 double* outtime,
+			 double* outstate,
+			 double min_dt,
+			 double max_dt);
+
+void heartbeat(struct reb_simulation* r);
 
 #endif
