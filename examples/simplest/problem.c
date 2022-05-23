@@ -72,7 +72,7 @@ int main(int argc, char* argv[]){
 				      nsubsteps,
 				      hg,
 				      outtime, outstate,
-				      0.0, INFINITY);//  0.01, 32.0);
+				      0.0); //, INFINITY);//  0.01, 32.0);
 
     int nouts = n_steps*nsubsteps + 1;
 

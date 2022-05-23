@@ -111,8 +111,8 @@ int integration_function(double tstart, double tend, double tstep,
 			 double* hg,
 			 double* outtime,
 			 double* outstate,
-			 double min_dt,
-			 double max_dt);
+			 double min_dt);
+                         //double max_dt);
 
 void heartbeat(struct reb_simulation* r);
 

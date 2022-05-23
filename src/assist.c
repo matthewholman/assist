@@ -475,8 +475,8 @@ int integration_function(double tstart, double tend, double tstep,
 			 double* hg,
 			 double* outtime,
 			 double* outstate,
-			 double min_dt,
-			 double max_dt){			 
+			 double min_dt){
+                         //double max_dt){			 
 
     struct reb_simulation* sim = reb_create_simulation();
 
@@ -501,7 +501,7 @@ int integration_function(double tstart, double tend, double tstep,
 
     // Don't hard code this.
     sim->ri_ias15.min_dt = min_dt;  // to avoid very small time steps (default: 0.0, suggestion 1e-2)
-    sim->ri_ias15.max_dt = max_dt;  // to avoid very large time steps (default: inf, suggestion 32.0)
+    //sim->ri_ias15.max_dt = max_dt;  // to avoid very large time steps (default: inf, suggestion 32.0)
     //sim->ri_ias15.epsilon = 1e-8;   // to avoid convergence issue with geocentric orbits (default: 1e-9)   
 
     // This should be flexible.
