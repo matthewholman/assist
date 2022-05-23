@@ -74,8 +74,6 @@ int main(int argc, char* argv[]){
 				      outtime, outstate,
 				      0.0, INFINITY);//  0.01, 32.0);
 
-    printf("status: %d\n", status);
-
     int nouts = n_steps*nsubsteps + 1;
 
     for (int j=0; j<nouts; j++){

@@ -324,13 +324,6 @@ void assist_additional_forces(struct reb_simulation* sim){
     int nsubsteps = assist->nsubsteps;
     double* hg = assist->hg;
 
-    /*
-    for(int i=0; i<nsubsteps; i++){
-	printf("%d %lf\n", i, hg[i]);
-	fflush(stdout);	
-    }
-    */
-    
     // implement additional_forces here
     const double G = sim->G;
     const int N = sim->N;  // N includes real+variational particles
@@ -589,7 +582,7 @@ int integration_function(double tstart, double tend, double tstep,
 
     int status = sim->status;
 
-    printf("%p %p %p %p\n", assist, ts, sim->status, sim->steps_done);
+    printf("%p %p\n", assist, ts);
     fflush(stdout);
 
     // explicitly free all the memory allocated by REBOUNDx
@@ -602,9 +595,6 @@ int integration_function(double tstart, double tend, double tstep,
     //assist_free(assist);    // this explicitly frees all the memory allocated by ASSIST
     
     reb_free_simulation(sim);
-
-    printf("finished integration %d\n", status);
-    fflush(stdout);
 
     return(status);
 }
@@ -783,9 +773,6 @@ void store_function(struct reb_simulation* sim){
     }
     last_steps_done = sim->steps_done;
 
-    printf("%d %d\n", ts->n_alloc, step);
-    fflush(stdout);
-    
     if((ts->n_alloc-step) < 1){
 	sim->status = REB_EXIT_USER;
 	return;
