@@ -1,10 +1,10 @@
 /**
  * @file    assist.c
  * @brief   Central internal functions for ASSIST
- * @author  Hanno Rein 
+ * @author  Matthew Holman, Arya Akmal, Hanno Rein
  * 
  * @section     LICENSE
- * Copyright (c) 2022 Matthew Holman, Hanno Rein
+ * Copyright (c) 2022 Matthew Holman, Arya Akmal, Hanno Rein
  *
  * This file is part of ASSIST.
  *
@@ -26,7 +26,6 @@
 #define FNAMESIZE 256
 #define DEFAULT_JPL_SB_EPHEM "sb441-n16.bsp"
 
-/* Main routines called each timestep. */
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -37,34 +36,9 @@
 #include "assist.h"
 #include "rebound.h"
 
-#include "spk.h"
+/* Header files for ephemerides for planets and asteroids */
 #include "planets.h"
-
-/**
- * @brief Struct containing pointers to intermediate values
- */
-struct reb_dpconst7 {
-    double* const restrict p0;  ///< Temporary values at intermediate step 0 
-    double* const restrict p1;  ///< Temporary values at intermediate step 1 
-    double* const restrict p2;  ///< Temporary values at intermediate step 2 
-    double* const restrict p3;  ///< Temporary values at intermediate step 3 
-    double* const restrict p4;  ///< Temporary values at intermediate step 4 
-    double* const restrict p5;  ///< Temporary values at intermediate step 5 
-    double* const restrict p6;  ///< Temporary values at intermediate step 6 
-};
-
-static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
-    struct reb_dpconst7 dpc = {
-        .p0 = dp.p0, 
-        .p1 = dp.p1, 
-        .p2 = dp.p2, 
-        .p3 = dp.p3, 
-        .p4 = dp.p4, 
-        .p5 = dp.p5, 
-        .p6 = dp.p6, 
-    };
-    return dpc;
-}
+#include "spk.h"
 
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
@@ -230,7 +204,6 @@ static int ast_ephem(const int i, const double jde, double* const GM, double* co
         else
 	    strncpy(buf, DEFAULT_JPL_SB_EPHEM, FNAMESIZE-1);
 
-	//printf("%s\n", buf);
 	FILE *file;
 	file = fopen(buf, "r");
 	if(file == NULL){
@@ -325,13 +298,6 @@ void assist_additional_forces(struct reb_simulation* sim){
     int nsubsteps = assist->nsubsteps;
     double* hg = assist->hg;
 
-    /*
-    for(int i=0; i<nsubsteps; i++){
-	printf("%d %lf\n", i, hg[i]);
-	fflush(stdout);	
-    }
-    */
-    
     // implement additional_forces here
     const double G = sim->G;
     const int N = sim->N;  // N includes real+variational particles
@@ -575,11 +541,8 @@ int integration_function(double tstart, double tend, double tstep,
 	fflush(stdout);
 	for(int i=0; i<reb_max_messages_N; i++){
 	    printf("mess: %d", i);
-	    fflush(stdout);
 	    if(sim->messages[i] != NULL){
 		printf("%d %s", i, sim->messages[i]);
-		printf("blah\n");
-		fflush(stdout);
 	    }
 	}
     }
@@ -590,8 +553,8 @@ int integration_function(double tstart, double tend, double tstep,
 
     int status = sim->status;
 
-    printf("%p %p %p %p\n", assist, ts, sim->status, sim->steps_done);
-    fflush(stdout);
+    //printf("%p %p\n", assist, ts);
+    //fflush(stdout);
 
     // explicitly free all the memory allocated by REBOUNDx
     ts->t = NULL;
@@ -604,10 +567,33 @@ int integration_function(double tstart, double tend, double tstep,
     
     reb_free_simulation(sim);
 
-    printf("finished integration %d\n", status);
-    fflush(stdout);
-
     return(status);
+}
+
+/**
+ * @brief Struct containing pointers to intermediate values
+ */
+struct reb_dpconst7 {
+    double* const restrict p0;  ///< Temporary values at intermediate step 0 
+    double* const restrict p1;  ///< Temporary values at intermediate step 1 
+    double* const restrict p2;  ///< Temporary values at intermediate step 2 
+    double* const restrict p3;  ///< Temporary values at intermediate step 3 
+    double* const restrict p4;  ///< Temporary values at intermediate step 4 
+    double* const restrict p5;  ///< Temporary values at intermediate step 5 
+    double* const restrict p6;  ///< Temporary values at intermediate step 6 
+};
+
+static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
+    struct reb_dpconst7 dpc = {
+        .p0 = dp.p0, 
+        .p1 = dp.p1, 
+        .p2 = dp.p2, 
+        .p3 = dp.p3, 
+        .p4 = dp.p4, 
+        .p5 = dp.p5, 
+        .p6 = dp.p6, 
+    };
+    return dpc;
 }
 
 // This function is doing two related things:
