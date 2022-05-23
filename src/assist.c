@@ -341,6 +341,10 @@ void assist_additional_forces(struct reb_simulation* sim){
     double GM;
     double x, y, z, vx, vy, vz, ax, ay, az;
 
+    // TODO: eliminate these output files after testing.
+    FILE *outfile;
+    outfile = fopen("acc.out", "w");
+
     // Get mass, position, velocity, and acceleration of the Earth and Sun
     // for later use.
     // The hard-wired constants should be changed.
@@ -387,7 +391,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	    const double _r  = sqrt(r2);
 	    const double prefac = GM/(_r*_r*_r);
 
-	    //fprintf(outfile, "%3d %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le\n", i, t, GM, dx, dy, dz, -prefac*dx, -prefac*dy, -prefac*dz);
+	    fprintf(outfile, "%3d %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le\n", i, t, GM, dx, dy, dz, -prefac*dx, -prefac*dy, -prefac*dz);
 
 	    particles[j].ax -= prefac*dx;
 	    particles[j].ay -= prefac*dy;
@@ -396,6 +400,8 @@ void assist_additional_forces(struct reb_simulation* sim){
         }
 
     }
+
+    fclose(outfile);
 
 }
 
