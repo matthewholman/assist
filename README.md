@@ -3,4 +3,4 @@
 ASSIST
 ======
 
-ASSIST is a package that allows to calculate high accuracy ephemeric for small Solar System bodies in REBOUND.
+ASSIST is a package that allows to calculate high accuracy ephemeris for small Solar System bodies in REBOUND.
