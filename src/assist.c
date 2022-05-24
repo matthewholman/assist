@@ -327,7 +327,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     // implement additional_forces here
     const double G = sim->G;
     const int N = sim->N;  // N includes real+variational particles
-    const int N_real= N;    
+    const int N_real= N;
 
     struct reb_particle* const particles = sim->particles;
 
@@ -591,7 +591,7 @@ int integration_function(double tstart, double tend, double tstep,
     printf("%p %p\n", assist, ts);
     fflush(stdout);
 
-    // explicitly free all the memory allocated by REBOUNDx
+    // explicitly free all the memory allocated by ASSIST
     ts->t = NULL;
     ts->state = NULL;
     ts->last_state = NULL;
@@ -696,7 +696,7 @@ void store_function(struct reb_simulation* sim){
 	}
 	int time_offset = (step-1)*nsubsteps+1;
 
-	// Loop over intervals using Gauss-Radau spacings      
+	// Loop over intervals using specified spacings      
 	for(int n=1;n<(nsubsteps+1);n++) {	    
 
 	    // The hg[n] values here define the substeps used in the
@@ -786,6 +786,89 @@ void store_function(struct reb_simulation* sim){
 
 }
 
+void store_coefficients(struct reb_simulation* sim){
+    int N = sim->N;
+    int N3 = 3*N;
+
+    static int last_steps_done = 0;
+
+    double s[9]; // Summation coefficients
+
+    struct assist_extras* assist = (struct assist_extras*) sim->extras;
+
+    int nsubsteps = assist->nsubsteps;
+    double* hg = assist->hg;
+
+    timestate* ts = ((struct assist_extras*) sim->extras)->ts;
+    tstate* last_state = ((struct assist_extras*) sim->extras)->last_state;    
+
+    static double* outtime;
+    static double* outstate;
+
+    int n_alloc;
+
+    int step = sim->steps_done;
+
+    outtime = ts->t;
+    outstate = ts->state;
+    n_alloc= ts->n_alloc;
+
+    if(step==0){
+
+	//printf("initial step %d %lf\n", step, sim->t);
+	
+    }else if(step > last_steps_done){
+
+	//printf("step %d\n", step);
+
+	// Convenience variable.  The 'br' field contains the 
+	// set of coefficients from the last completed step.
+	const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
+
+	double* x0 = malloc(sizeof(double)*N3);
+	double* v0 = malloc(sizeof(double)*N3);
+	double* a0 = malloc(sizeof(double)*N3);
+
+	//double t = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
+	printf("x %lf %lf \n", sim->t-sim->dt_last_done, sim->dt_last_done);
+	
+	for(int j=0;j<N;j++) {
+
+	    const int k0 = 3*j+0;
+	    const int k1 = 3*j+1;
+	    const int k2 = 3*j+2;
+
+	    x0[k0] = last_state[j].x;
+	    x0[k1] = last_state[j].y;
+	    x0[k2] = last_state[j].z;
+
+	    v0[k0] = last_state[j].vx;
+	    v0[k1] = last_state[j].vy;
+	    v0[k2] = last_state[j].vz;	
+
+	    a0[k0] = last_state[j].ax;
+	    a0[k1] = last_state[j].ay;
+	    a0[k2] = last_state[j].az;
+
+	    printf("%d %.16le %.16le %.16le\n",
+		   j,
+		   x0[k0], v0[k0], a0[k0]);
+	    printf("%d %.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
+		   j, b.p0[k0], b.p1[k0], b.p2[k0], b.p3[k0], b.p4[k0], b.p5[k0], b.p6[k0]);
+	    printf("%d %.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
+		   j, b.p0[k1], b.p1[k1], b.p2[k1], b.p3[k1], b.p4[k1], b.p5[k1], b.p6[k1]);
+	    printf("%d %.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
+		   j, b.p0[k2], b.p1[k2], b.p2[k2], b.p3[k2], b.p4[k2], b.p5[k2], b.p6[k2]);	    
+
+	}
+
+	free(x0);
+	free(v0);
+	free(a0);
+    }
+
+}
+
 void store_last_state(struct reb_simulation* sim){
 
     //timestate* ts = ((struct assist_extras*) sim->extras)->ts;
@@ -806,15 +889,17 @@ void store_last_state(struct reb_simulation* sim){
     }
 }
 
-void heartbeat(struct reb_simulation* r){
+void heartbeat(struct reb_simulation* sim){
 
-    void store_function(struct reb_simulation* r);
-    void store_last_state(struct reb_simulation* r);    
+    void store_function(struct reb_simulation* sim);
+    void store_last_state(struct reb_simulation* sim);
+    void store_coefficients(struct reb_simulation* sim);        
 
-    store_function(r);
+    store_function(sim);
+    store_coefficients(sim);    
 
-    reb_update_acceleration(r);
+    reb_update_acceleration(sim);
 
-    store_last_state(r);
+    store_last_state(sim);
 
 }

@@ -88,10 +88,8 @@ def integration_function(tstart, tend, tstep,
                          hg,
                          nsubsteps=10,
                          epsilon = 1e-9,
-                         min_dt = 0.01,
-                         max_dt = 1e10):
-
-    print('entering integration_function')
+                         min_dt = 0.01):
+                         #max_dt = 1e10):
 
     if (tend-tstart)/tstep < 0.0:
         print('tstep is in the wrong direction')
@@ -114,8 +112,8 @@ def integration_function(tstart, tend, tstep,
                                       POINTER(c_double),                                      
                                       POINTER(c_double),
                                       POINTER(c_double),
-                                      c_double,
                                       c_double)
+                                      #c_double)
 
     _integration_function.restype = c_int
 
@@ -128,8 +126,6 @@ def integration_function(tstart, tend, tstep,
     # The factor of 2 should be a free parameter
     n_alloc = int(abs((tend-tstart)/tstep)*2 + 10)
 
-    print('n_alloc:', n_alloc, tstart, tend, tstep)
-
     fac = 1.0
     iters = 0
 
@@ -138,14 +134,9 @@ def integration_function(tstart, tend, tstep,
     
     while(return_value == 5 and iters<max_iters):
 
-        print('fac', fac)
-
         n_alloc = int(fac*n_alloc)
         tsize = (n_alloc*nsubsteps+1 + 10)    
         ssize = (n_alloc*nsubsteps+1 + 10)*6*(n_particles+n_var)
-
-        print('iter:', iters, n_alloc, tsize, ssize)
-        sys.stdout.flush()        
 
         outtime = np.zeros((tsize), dtype=np.double)
         outstate = np.zeros((ssize), dtype=np.double)
@@ -166,11 +157,8 @@ def integration_function(tstart, tend, tstep,
                                              hg.ctypes.data_as(POINTER(c_double)),
                                              outtime.ctypes.data_as(POINTER(c_double)),
                                              outstate.ctypes.data_as(POINTER(c_double)),
-                                             min_dt,
-                                             max_dt)
-
-        print(return_value)
-        sys.stdout.flush()
+                                             min_dt)
+                                             #max_dt)
 
         # The factor of 1.5 should be a free parameter
         fac *= 2
@@ -242,8 +230,6 @@ def production_integration_function_wrapper(
 
     n_particles = len(instate_arr)
 
-    print(n_particles)
-
     # call the integrator
     # For non-gravs:
     # pass in an identifier for the model
@@ -299,9 +285,6 @@ def production_integration_function_wrapper(
         #print(epoch, tstart, tstep, geocentric, n_particles) #,
         #print(instate_arr, n_var, invar_part, invar, hg, nsubsteps)
 
-        print('f', f)
-        sys.stdout.flush()    
-        
         outtime, states, var_state, var_ng, return_value = integration_function(epoch,
                                                                                 tstart,
                                                                                 tstep,
@@ -314,11 +297,8 @@ def production_integration_function_wrapper(
                                                                                 hg,
                                                                                 nsubsteps=nsubsteps,
                                                                                 epsilon = epsilon,
-                                                                                min_dt = tstep_min,
-                                                                                max_dt = tstep_max)
-
-        print(states[-1])
-        sys.stdout.flush()    
+                                                                                min_dt = tstep_min)
+                                                                                #max_dt = tstep_max)
 
         outtime, states, var_state, var_ng, return_value = integration_function(tstart,
                                                                                 tend,
@@ -332,10 +312,8 @@ def production_integration_function_wrapper(
                                                                                 hg,
                                                                                 nsubsteps=nsubsteps,
                                                                                 epsilon = epsilon,
-                                                                                min_dt = tstep_min,
-                                                                                max_dt = tstep_max)
-        print(states[-1])
-        sys.stdout.flush()    
+                                                                                min_dt = tstep_min)
+                                                                                #max_dt = tstep_max)
 
         return_value = (return_value,)         
          
@@ -349,9 +327,6 @@ def production_integration_function_wrapper(
 
     elif f >= 1.:
 
-        print('f', f)
-        sys.stdout.flush()    
-
         outtime, states, var_state, var_ng, return_value = integration_function(epoch,
                                                                                 tend,
                                                                                 -tstep,
@@ -364,11 +339,8 @@ def production_integration_function_wrapper(
                                                                                 hg,
                                                                                 nsubsteps=nsubsteps,
                                                                                 epsilon = epsilon,
-                                                                                min_dt = tstep_min,
-                                                                                max_dt = tstep_max)
-
-        print('end state', states[-1])
-        sys.stdout.flush()    
+                                                                                min_dt = tstep_min)
+                                                                                #max_dt = tstep_max)
 
         outtime, states, var_state, var_ng, return_value = integration_function(tend,
                                                                                 tstart,
@@ -382,12 +354,10 @@ def production_integration_function_wrapper(
                                                                                 hg,
                                                                                 nsubsteps=nsubsteps,
                                                                                 epsilon = epsilon,
-                                                                                min_dt = tstep_min,
-                                                                                max_dt = tstep_max)
+                                                                                min_dt = tstep_min)
+                                                                                #max_dt = tstep_max)
 
 
-        print('end state', states[-1])
-        sys.stdout.flush()    
         
         # Reverse the order of the integration
 
@@ -419,8 +389,8 @@ def production_integration_function_wrapper(
                                                                                       hg,
                                                                                       nsubsteps=nsubsteps,
                                                                                       epsilon = epsilon,
-                                                                                      min_dt = tstep_min,
-                                                                                      max_dt = tstep_max)
+                                                                                      min_dt = tstep_min)
+                                                                                      #max_dt = tstep_max)
         
 
          outtime1, states1, var_state1, var_ng1, return_value1 = integration_function(epoch,
@@ -435,8 +405,8 @@ def production_integration_function_wrapper(
                                                                                       hg,
                                                                                       nsubsteps=nsubsteps,
                                                                                       epsilon = epsilon,
-                                                                                      min_dt = tstep_min,
-                                                                                      max_dt = tstep_max)
+                                                                                      min_dt = tstep_min)
+                                                                                      #max_dt = tstep_max)
          
 
          # Reverse the order of the first integration
@@ -459,8 +429,6 @@ def production_integration_function_wrapper(
 
          return_value = (return_value0, return_value1)
 
-    print('exiting production wrapper')
-    sys.stdout.flush()        
     return outtime, states, var_state, var_ng, return_value             
 
 
