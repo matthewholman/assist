@@ -830,7 +830,7 @@ void store_coefficients(struct reb_simulation* sim){
 	double* a0 = malloc(sizeof(double)*N3);
 
 	//double t = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
-	printf("x %lf %lf \n", sim->t-sim->dt_last_done, sim->dt_last_done);
+	printf("%lf %lf \n", sim->t-sim->dt_last_done, sim->dt_last_done);
 	
 	for(int j=0;j<N;j++) {
 
@@ -850,15 +850,16 @@ void store_coefficients(struct reb_simulation* sim){
 	    a0[k1] = last_state[j].ay;
 	    a0[k2] = last_state[j].az;
 
-	    printf("%d %.16le %.16le %.16le\n",
-		   j,
-		   x0[k0], v0[k0], a0[k0]);
-	    printf("%d %.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
-		   j, b.p0[k0], b.p1[k0], b.p2[k0], b.p3[k0], b.p4[k0], b.p5[k0], b.p6[k0]);
-	    printf("%d %.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
-		   j, b.p0[k1], b.p1[k1], b.p2[k1], b.p3[k1], b.p4[k1], b.p5[k1], b.p6[k1]);
-	    printf("%d %.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
-		   j, b.p0[k2], b.p1[k2], b.p2[k2], b.p3[k2], b.p4[k2], b.p5[k2], b.p6[k2]);	    
+	    printf("\n%d\n", j);
+	    printf("%.16le %.16le %.16le\n", x0[k0], v0[k0], a0[k0]);
+	    printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
+		   b.p0[k0], b.p1[k0], b.p2[k0], b.p3[k0], b.p4[k0], b.p5[k0], b.p6[k0]);
+	    printf("%.16le %.16le %.16le\n", x0[k1], v0[k1], a0[k1]);
+	    printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
+		   b.p0[k1], b.p1[k1], b.p2[k1], b.p3[k1], b.p4[k1], b.p5[k1], b.p6[k1]);
+	    printf("%.16le %.16le %.16le\n", x0[k2], v0[k2], a0[k2]);	    
+	    printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
+		   b.p0[k2], b.p1[k2], b.p2[k2], b.p3[k2], b.p4[k2], b.p5[k2], b.p6[k2]);	    
 
 	}
 
