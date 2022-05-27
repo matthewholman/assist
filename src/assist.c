@@ -1125,8 +1125,8 @@ void assist_additional_forces(struct reb_simulation* sim){
 	double gry = 0.0;
 	double grz = 0.0;		
 
-	//for (int j=0; j<1; j++){	
-	for (int j=0; j<N_ephem; j++){
+	for (int j=0; j<1; j++){	
+	    //for (int j=0; j<N_ephem; j++){
 
 	    // Get position and mass of massive body j.
 	    all_ephem(j, t, &GMj,
