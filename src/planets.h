@@ -59,6 +59,8 @@ struct _jpl_s {
 ///
         size_t len, rec;                // file and record sizes
         void *map;                      // memory mapped location
+        double con[1024];
+        char str[1024][8];    
 };
 
 // From Weryk's code

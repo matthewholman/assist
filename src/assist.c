@@ -42,7 +42,7 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 
-int test_output = 0;
+int test_output = 1;
 
 enum {
     NO_ERR,        // no error
@@ -347,7 +347,8 @@ void assist_additional_forces(struct reb_simulation* sim){
     }else{
 	// barycentric
 	xo = 0.0;  yo = 0.0;  zo = 0.0;
-	vxo = 0.0; vyo = 0.0; vzo = 0.0;      
+	vxo = 0.0; vyo = 0.0; vzo = 0.0;
+	axo = 0.0; ayo = 0.0; azo = 0.0;	
     }
 
     // Direct forces from massives bodies
@@ -474,14 +475,15 @@ void assist_additional_forces(struct reb_simulation* sim){
     xr = xe;  yr = ye;  zr = ze;
 
     // Hard-coded constants.  BEWARE!
-    const double GMearth = 0.888769244512563400E-09;
+    //const double GMearth = 0.888769244512563400E-09;
+    const double GMearth = 8.8876924467071022e-10;    
     //const double J2e =  0.00108262545;
     //const double J4e = -0.000001616;
-    const double J2e =  0.0010826253900;
+    const double J2e =  0.001082625390;    
     const double J4e = -0.000001619898;
     const double au = 149597870.700;
-    //const double Re_eq = 6378.1366/au;    
-    const double Re_eq = 6378.1263/au;
+    const double Re_eq = 6378.1366/au;    
+    //const double Re_eq = 6378.1263/au;
     // Unit vector to equatorial pole at the epoch
     // Note also that the pole orientation is not changing during
     // the integration.
@@ -547,6 +549,11 @@ void assist_additional_forces(struct reb_simulation* sim){
 	resy =  resyp;
 	resz =  reszp;
 
+	if(test_output){	
+	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "J24", t, resx, resy, resz);
+	    fflush(outfile);
+	}
+	
 	// Accumulate final acceleration terms
   	particles[j].ax += resx;
         particles[j].ay += resy; 
@@ -686,12 +693,14 @@ void assist_additional_forces(struct reb_simulation* sim){
 	resy =  resyp;
 	resz =  reszp;
 
-	fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "J2", t, resx, resy, resz);
-	fflush(outfile);	
+	if(test_output){
+	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "J2", t, resx, resy, resz);
+	    fflush(outfile);
+	}
 
-        //particles[j].ax += resx;
-        //particles[j].ay += resy;
-        //particles[j].az += resz;
+        particles[j].ax += resx;
+        particles[j].ay += resy;
+        particles[j].az += resz;
 
 	// Constants for variational equations
 	// Only evaluate if there are variational particles
@@ -969,11 +978,13 @@ void assist_additional_forces(struct reb_simulation* sim){
 	//particles[j].ay += prefac*(A*p.y + B*p.vy);
 	//particles[j].az += prefac*(A*p.z + B*p.vz);
 
-	fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", t,
-	prefac*(A*p.x + B*p.vx),
-	prefac*(A*p.y + B*p.vy),
-	prefac*(A*p.z + B*p.vz));
-	fflush(outfile);
+	if(test_output){
+	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", t,
+		    prefac*(A*p.x + B*p.vx),
+		    prefac*(A*p.y + B*p.vy),
+		    prefac*(A*p.z + B*p.vz));
+	    fflush(outfile);
+	}
 
 	// Constants for variational equations
 	// Only evaluate if there are variational particles
@@ -1163,8 +1174,10 @@ void assist_additional_forces(struct reb_simulation* sim){
 
 	    const double rijdotvj = dxij*(vxj-vxo) + dyij*(vyj-vyo) + dzij*(vzj-vzo);
 
-	    fprintf(eih, " EIH_J%12d\n", j);	    
-	    fprintf(eih, "%25.16lE ", rijdotvj/_rij);
+	    if(test_output){
+		fprintf(eih, " EIH_J%12d\n", j);	    
+		fprintf(eih, "%25.16lE ", rijdotvj/_rij);
+	    }
 
 	    const double term5 = -1.5/C2*(rijdotvj*rijdotvj)/(_rij*_rij);
 	    const double dterm5dx = -3.0/C2*rijdotvj/_rij*((vxj-vxo)/_rij - rijdotvj*dxij/(_rij*_rij*_rij));
@@ -1365,32 +1378,36 @@ void assist_additional_forces(struct reb_simulation* sim){
 	    double dfactordvy = dterm1dvy + dterm2dvy + dterm4dvy;
 	    double dfactordvz = dterm1dvz + dterm2dvz + dterm4dvz;
 
-	    fprintf(eih, "%24.16lE ", -factor*C2);
-	    fprintf(eih, "%24.16lE %24.16lE %24.16lE %24.16lE ",
-		    -factor*C2*prefacij*dxij,
-		    -factor*C2*prefacij*dyij,
-		    -factor*C2*prefacij*dzij,
-		    f);	    
-	    fprintf(eih, "%24.16lE %24.16lE %24.16lE ",
-		    prefacij*f*(particles[i].vx-(vxj-vxo)),
-		    prefacij*f*(particles[i].vy-(vyj-vyo)),
-		    prefacij*f*(particles[i].vz-(vzj-vzo)));	    
-	    fprintf(eih, "%24.16lE %24.16lE %24.16lE ",
-		    term8x,
-		    term8y,
-		    term8z);
-	    fprintf(eih, "%24.16lE %24.16lE %24.16lE\n",
-		    axj, ayj, azj);
+	    printf("%24.16lE %24.16lE %24.16lE %24.16lE %24.16lE %24.16lE %24.16lE\n",
+		   term0, term1, term2, term3, term4, term5, term6);
+	    if(test_output){
+		fprintf(eih, "%24.16lE ", -factor*C2);
+		fprintf(eih, "%24.16lE %24.16lE %24.16lE %24.16lE ",
+			-factor*C2*prefacij*dxij,
+			-factor*C2*prefacij*dyij,
+			-factor*C2*prefacij*dzij,
+			f);	    
+		fprintf(eih, "%24.16lE %24.16lE %24.16lE ",
+			prefacij*f*(particles[i].vx-(vxj-vxo)),
+			prefacij*f*(particles[i].vy-(vyj-vyo)),
+			prefacij*f*(particles[i].vz-(vzj-vzo)));	    
+		fprintf(eih, "%24.16lE %24.16lE %24.16lE ",
+			term8x,
+			term8y,
+			term8z);
+		fprintf(eih, "%24.16lE %24.16lE %24.16lE\n",
+			axj, ayj, azj);
 
-	    fflush(eih);
+		fflush(eih);
+	    }
 
 	    grx += -prefacij*dxij*factor;
 	    gry += -prefacij*dyij*factor;
 	    grz += -prefacij*dzij*factor;
 	    
-	    //particles[i].ax += -prefacij*dxij*factor;
-	    //particles[i].ay += -prefacij*dyij*factor;
-	    //particles[i].az += -prefacij*dzij*factor;
+	    particles[i].ax += -prefacij*dxij*factor;
+	    particles[i].ay += -prefacij*dyij*factor;
+	    particles[i].az += -prefacij*dzij*factor;
 
 	    // Variational equation terms go here.
 
@@ -1457,9 +1474,11 @@ void assist_additional_forces(struct reb_simulation* sim){
 	gry += term7y_sum/C2 + term8y_sum/C2;
 	grz += term7z_sum/C2 + term8z_sum/C2;
 
-	fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", t,
-	grx, gry, grz);
-	fflush(outfile);
+	if(test_output){
+	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", t,
+		    grx, gry, grz);
+	    fflush(outfile);
+	}
 
 	dxdx += dterm7x_sumdx/C2 + dterm8x_sumdx/C2;
 	dxdy += dterm7x_sumdy/C2 + dterm8x_sumdy/C2;
@@ -1482,9 +1501,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 	dzdvy += dterm7z_sumdvy/C2;
 	dzdvz += dterm7z_sumdvz/C2;
 	
-	//particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
-	//particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
-	//particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+	particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
+	particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
+	particles[i].az += term7z_sum/C2 + term8z_sum/C2;
 
 	// Variational equation terms go here.
 	for (int v=0; v < sim->var_config_N; v++){
@@ -1510,9 +1529,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
 
 		// Accumulate acceleration terms
-		//particles_var1[0].ax += dax;
-		//particles_var1[0].ay += day;
-		//particles_var1[0].az += daz;
+		particles_var1[0].ax += dax;
+		particles_var1[0].ay += day;
+		particles_var1[0].az += daz;
 		
 	    }
 	}
@@ -1524,19 +1543,23 @@ void assist_additional_forces(struct reb_simulation* sim){
     for (int j=1; j<N_real; j++){
 	double dx = particles[j].ax - particles[0].ax;
 	double dy = particles[j].ay - particles[0].ay;
-	double dz = particles[j].az - particles[0].az;	
-	//fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n", j, t, dx/delt, dy/delt, dz/delt);
+	double dz = particles[j].az - particles[0].az;
+	if(test_output){
+	    fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n", j, t, dx/delt, dy/delt, dz/delt);
+	}
     }
-    //fflush(vfile);	        
+    fflush(vfile);	        
     
     for (int j=0; j<N_real; j++){ //loop over test particles
 	for (int v=0; v < sim->var_config_N; v++){
 	    struct reb_variational_configuration const vc = sim->var_config[v];
 	    int tp = vc.testparticle;
-	    struct reb_particle* const particles_var1 = particles + vc.index;		
-	    if(tp == j){
-		//fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n",
-		//j, t, particles_var1[0].ax, particles_var1[0].ay, particles_var1[0].az);		
+	    struct reb_particle* const particles_var1 = particles + vc.index;
+	    if(test_output){		
+		if(tp == j){
+		    fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n",
+			    j, t, particles_var1[0].ax, particles_var1[0].ay, particles_var1[0].az);
+		}
 	    }
 	}
     }

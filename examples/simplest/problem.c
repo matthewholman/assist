@@ -38,7 +38,9 @@ int main(int argc, char* argv[]){
 
     //void heartbeat(struct reb_simulation* r);
 
-    read_inputs("holman_ic", &tepoch, &tstart, &tend, &tstep,
+    if(argc ==2){
+	//read_inputs("holman_ic", &tepoch, &tstart, &tend, &tstep,
+	read_inputs(argv[1], &tepoch, &tstart, &tend, &tstep,    
 		    &geocentric, &epsilon,
 		    &n_particles,		    
 		    &instate,
@@ -46,6 +48,11 @@ int main(int argc, char* argv[]){
 		    &invar_part,
 		    &invar,
 		    &cov_mat);
+    }else{
+        printf("No Input File\n");
+        exit(EXIT_FAILURE);
+    }
+	
 
     // This is for allocating memory to store the steps and
     // substeps of the integration
