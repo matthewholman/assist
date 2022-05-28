@@ -379,9 +379,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 		fprintf(outfile, "%3d %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le\n", i, t, GM, dx, dy, dz, -prefac*dx, -prefac*dy, -prefac*dz);
 	    }
 
-	    particles[j].ax -= prefac*dx;
-	    particles[j].ay -= prefac*dy;
-	    particles[j].az -= prefac*dz;
+	    //particles[j].ax -= prefac*dx;
+	    //particles[j].ay -= prefac*dy;
+	    //particles[j].az -= prefac*dz;
 
         }
     }
@@ -446,9 +446,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 		    // No variational mass contributions for test particles!
 
 		    // Accumulate acceleration terms
-		    particles_var1[0].ax += GM * dax; 
-		    particles_var1[0].ay += GM * day; 
-		    particles_var1[0].az += GM * daz; 
+		    //particles_var1[0].ax += GM * dax; 
+		    //particles_var1[0].ay += GM * day; 
+		    //particles_var1[0].az += GM * daz; 
 
 		}
 	    }
@@ -555,9 +555,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 	}
 	
 	// Accumulate final acceleration terms
-  	particles[j].ax += resx;
-        particles[j].ay += resy; 
-        particles[j].az += resz;
+  	//particles[j].ax += resx;
+        //particles[j].ay += resy; 
+        //particles[j].az += resz;
 
 	// Constants for variational equations
 	// J2 terms
@@ -616,9 +616,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 		double dazp =                  + day*cosd      + daz*sind;
 
 		// Accumulate acceleration terms
-		particles_var1[0].ax += daxp; 
-		particles_var1[0].ay += dayp; 
-		particles_var1[0].az += dazp; 
+		//particles_var1[0].ax += daxp; 
+		//particles_var1[0].ay += dayp; 
+		//particles_var1[0].az += dazp; 
 	    
 	    }
         }
@@ -698,9 +698,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 	    fflush(outfile);
 	}
 
-        particles[j].ax += resx;
-        particles[j].ay += resy;
-        particles[j].az += resz;
+        //particles[j].ax += resx;
+        //particles[j].ay += resy;
+        //particles[j].az += resz;
 
 	// Constants for variational equations
 	// Only evaluate if there are variational particles
@@ -741,9 +741,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 		double daz =                  + dayp*cosd      + dazp*sind;
 
 		// Accumulate acceleration terms
-		particles_var1[0].ax += dax; 
-		particles_var1[0].ay += day; 
-		particles_var1[0].az += daz; 
+		//particles_var1[0].ax += dax; 
+		//particles_var1[0].ay += day; 
+		//particles_var1[0].az += daz; 
 
 	    }
 
@@ -1037,9 +1037,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
 
 		// Accumulate acceleration terms
-		particles_var1[0].ax += dax;
-		particles_var1[0].ay += day;
-		particles_var1[0].az += daz;
+		//particles_var1[0].ax += dax;
+		//particles_var1[0].ay += day;
+		//particles_var1[0].az += daz;
 		
 	    }
 	}
@@ -1378,8 +1378,8 @@ void assist_additional_forces(struct reb_simulation* sim){
 	    double dfactordvy = dterm1dvy + dterm2dvy + dterm4dvy;
 	    double dfactordvz = dterm1dvz + dterm2dvz + dterm4dvz;
 
-	    printf("%24.16lE %24.16lE %24.16lE %24.16lE %24.16lE %24.16lE %24.16lE\n",
-		   term0, term1, term2, term3, term4, term5, term6);
+	    //printf("%24.16lE %24.16lE %24.16lE %24.16lE %24.16lE %24.16lE %24.16lE\n",
+	    //term0, term1, term2, term3, term4, term5, term6);
 	    if(test_output){
 		fprintf(eih, "%24.16lE ", -factor*C2);
 		fprintf(eih, "%24.16lE %24.16lE %24.16lE %24.16lE ",
@@ -1405,9 +1405,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 	    gry += -prefacij*dyij*factor;
 	    grz += -prefacij*dzij*factor;
 	    
-	    particles[i].ax += -prefacij*dxij*factor;
-	    particles[i].ay += -prefacij*dyij*factor;
-	    particles[i].az += -prefacij*dzij*factor;
+	    //particles[i].ax += -prefacij*dxij*factor;
+	    //particles[i].ay += -prefacij*dyij*factor;
+	    //particles[i].az += -prefacij*dzij*factor;
 
 	    // Variational equation terms go here.
 
@@ -1501,9 +1501,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 	dzdvy += dterm7z_sumdvy/C2;
 	dzdvz += dterm7z_sumdvz/C2;
 	
-	particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
-	particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
-	particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+	//particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
+	//particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
+	//particles[i].az += term7z_sum/C2 + term8z_sum/C2;
 
 	// Variational equation terms go here.
 	for (int v=0; v < sim->var_config_N; v++){
@@ -1529,16 +1529,21 @@ void assist_additional_forces(struct reb_simulation* sim){
 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
 
 		// Accumulate acceleration terms
-		particles_var1[0].ax += dax;
-		particles_var1[0].ay += day;
-		particles_var1[0].az += daz;
+		//particles_var1[0].ax += dax;
+		//particles_var1[0].ay += day;
+		//particles_var1[0].az += daz;
 		
 	    }
 	}
     }
 
     // This is for testing the variational equations.
-    // It could be moved into a separate section of module.
+    // It could be moved into a separate section of the module.
+    // What happening is that a set of test particles with
+    // small initial displacements from the 0th test particles
+    // are integrated with the 0th test particle.  The differences
+    // between the trajectories can be compared to results from
+    // the variational particles, in the next section.
     double delt = 1e-8;
     for (int j=1; j<N_real; j++){
 	double dx = particles[j].ax - particles[0].ax;
