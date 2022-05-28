@@ -326,7 +326,11 @@ void assist_additional_forces(struct reb_simulation* sim){
     eih = fopen("eih_acc.out", "w");
  
     FILE *vfile;
-    vfile = fopen("vary_acc.out", "w");
+    static int first=1;
+    if(first==1){
+	printf("opening file\n");
+	vfile = fopen("vary_acc.out", "w");
+    }
 
     // Get mass, position, velocity, and acceleration of the Earth and Sun
     // for later use.
@@ -1125,8 +1129,8 @@ void assist_additional_forces(struct reb_simulation* sim){
 	double gry = 0.0;
 	double grz = 0.0;		
 
-	for (int j=0; j<1; j++){	
-	    //for (int j=0; j<N_ephem; j++){
+	//for (int j=0; j<1; j++){	
+	for (int j=0; j<N_ephem; j++){
 
 	    // Get position and mass of massive body j.
 	    all_ephem(j, t, &GMj,
@@ -1405,9 +1409,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 	    gry += -prefacij*dyij*factor;
 	    grz += -prefacij*dzij*factor;
 	    
-	    //particles[i].ax += -prefacij*dxij*factor;
-	    //particles[i].ay += -prefacij*dyij*factor;
-	    //particles[i].az += -prefacij*dzij*factor;
+	    particles[i].ax += -prefacij*dxij*factor;
+	    particles[i].ay += -prefacij*dyij*factor;
+	    particles[i].az += -prefacij*dzij*factor;
 
 	    // Variational equation terms go here.
 
@@ -1501,9 +1505,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 	dzdvy += dterm7z_sumdvy/C2;
 	dzdvz += dterm7z_sumdvz/C2;
 	
-	//particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
-	//particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
-	//particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+	particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
+	particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
+	particles[i].az += term7z_sum/C2 + term8z_sum/C2;
 
 	// Variational equation terms go here.
 	for (int v=0; v < sim->var_config_N; v++){
@@ -1529,9 +1533,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
 
 		// Accumulate acceleration terms
-		//particles_var1[0].ax += dax;
-		//particles_var1[0].ay += day;
-		//particles_var1[0].az += daz;
+		particles_var1[0].ax += dax;
+		particles_var1[0].ay += day;
+		particles_var1[0].az += daz;
 		
 	    }
 	}
@@ -1544,26 +1548,29 @@ void assist_additional_forces(struct reb_simulation* sim){
     // are integrated with the 0th test particle.  The differences
     // between the trajectories can be compared to results from
     // the variational particles, in the next section.
-    double delt = 1e-8;
-    for (int j=1; j<N_real; j++){
-	double dx = particles[j].ax - particles[0].ax;
-	double dy = particles[j].ay - particles[0].ay;
-	double dz = particles[j].az - particles[0].az;
-	if(test_output){
-	    fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n", j, t, dx/delt, dy/delt, dz/delt);
-	}
-    }
-    fflush(vfile);	        
     
-    for (int j=0; j<N_real; j++){ //loop over test particles
-	for (int v=0; v < sim->var_config_N; v++){
-	    struct reb_variational_configuration const vc = sim->var_config[v];
-	    int tp = vc.testparticle;
-	    struct reb_particle* const particles_var1 = particles + vc.index;
-	    if(test_output){		
-		if(tp == j){
-		    fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n",
-			    j, t, particles_var1[0].ax, particles_var1[0].ay, particles_var1[0].az);
+    double delt = 1e-8;
+    if(first==1){
+	for (int j=1; j<N_real; j++){
+	    double dx = particles[j].ax - particles[0].ax;
+	    double dy = particles[j].ay - particles[0].ay;
+	    double dz = particles[j].az - particles[0].az;
+	    if(test_output){
+		fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n", j, t, dx/delt, dy/delt, dz/delt);
+	    }
+	}
+	fflush(vfile);	        
+    
+	for (int j=0; j<N_real; j++){ //loop over test particles
+	    for (int v=0; v < sim->var_config_N; v++){
+		struct reb_variational_configuration const vc = sim->var_config[v];
+		int tp = vc.testparticle;
+		struct reb_particle* const particles_var1 = particles + vc.index;
+		if(test_output){		
+		    if(tp == j){
+			fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n",
+				j, t, particles_var1[0].ax, particles_var1[0].ay, particles_var1[0].az);
+		    }
 		}
 	    }
 	}
@@ -1592,7 +1599,10 @@ void assist_additional_forces(struct reb_simulation* sim){
     //printf("here %le\n", t);
     //fflush(stdout);
 
-    fclose(vfile);    
+    if(first==1){
+	fclose(vfile);
+	//first=0;
+    }
     
     fflush(outfile);
     fclose(outfile);
@@ -2048,7 +2058,7 @@ void store_coefficients(struct reb_simulation* sim){
 	double* a0 = malloc(sizeof(double)*N3);
 
 	//double t = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
-	printf("%lf %lf \n", sim->t-sim->dt_last_done, sim->dt_last_done);
+	//printf("%lf %lf \n", sim->t-sim->dt_last_done, sim->dt_last_done);
 	
 	for(int j=0;j<N;j++) {
 
@@ -2068,16 +2078,16 @@ void store_coefficients(struct reb_simulation* sim){
 	    a0[k1] = last_state[j].ay;
 	    a0[k2] = last_state[j].az;
 
-	    printf("\n%d\n", j);
-	    printf("%.16le %.16le %.16le\n", x0[k0], v0[k0], a0[k0]);
-	    printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
-		   b.p0[k0], b.p1[k0], b.p2[k0], b.p3[k0], b.p4[k0], b.p5[k0], b.p6[k0]);
-	    printf("%.16le %.16le %.16le\n", x0[k1], v0[k1], a0[k1]);
-	    printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
-		   b.p0[k1], b.p1[k1], b.p2[k1], b.p3[k1], b.p4[k1], b.p5[k1], b.p6[k1]);
-	    printf("%.16le %.16le %.16le\n", x0[k2], v0[k2], a0[k2]);	    
-	    printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
-		   b.p0[k2], b.p1[k2], b.p2[k2], b.p3[k2], b.p4[k2], b.p5[k2], b.p6[k2]);	    
+	    //printf("\n%d\n", j);
+	    //printf("%.16le %.16le %.16le\n", x0[k0], v0[k0], a0[k0]);
+	    //printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
+	    //b.p0[k0], b.p1[k0], b.p2[k0], b.p3[k0], b.p4[k0], b.p5[k0], b.p6[k0]);
+	    //printf("%.16le %.16le %.16le\n", x0[k1], v0[k1], a0[k1]);
+	    //printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
+	    //b.p0[k1], b.p1[k1], b.p2[k1], b.p3[k1], b.p4[k1], b.p5[k1], b.p6[k1]);
+	    //printf("%.16le %.16le %.16le\n", x0[k2], v0[k2], a0[k2]);	    
+	    //printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
+	    //b.p0[k2], b.p1[k2], b.p2[k2], b.p3[k2], b.p4[k2], b.p5[k2], b.p6[k2]);	    
 
 	}
 
