@@ -257,11 +257,15 @@ def production_integration_function_wrapper(
     invar_part  = np.repeat(np.arange(n_particles),6)
     invar       = np.concatenate([np.identity(6) for i in np.arange(n_particles)])
 
+    '''
     if tstart == tend:
          return np.array((tstart)), instate_arr, invar, var_state, None, 0
-        
-    f = (epoch-tstart)/(tend-tstart)
+    '''
 
+    if tstart==tend:
+        f=0.0
+    else:
+        f = (epoch-tstart)/(tend-tstart)
 
     #
     # if f<=0 then epoch is outside of the range, on the tstart side
@@ -361,9 +365,15 @@ def production_integration_function_wrapper(
         
         # Reverse the order of the integration
 
+        '''
         outtime = np.flip(outtime, axis=0)[0:-1]
         states = np.flip(states, axis=0)[0:-1]
         var_state = np.flip(var_state, axis=0)[0:-1]
+        '''
+
+        outtime = np.flip(outtime, axis=0)
+        states = np.flip(states, axis=0)
+        var_state = np.flip(var_state, axis=0)
 
         return_value = (return_value,)
         

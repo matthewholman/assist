@@ -42,8 +42,6 @@
 const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
 const int reb_max_messages_N = 10;
 
-int test_output = 1;
-
 enum {
     NO_ERR,        // no error
     ERR_JPL_EPHEM, // JPL ephemeris file not found
@@ -304,7 +302,6 @@ void assist_additional_forces(struct reb_simulation* sim){
     const double G = sim->G;
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;    
-    //const int N_real= N;
 
     struct reb_particle* const particles = sim->particles;
 
@@ -313,22 +310,19 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     const double t = sim->t;
 
-    const int N_tot = number_bodies(&N_ephem, &N_ast);
-
     double GM;
     double x, y, z, vx, vy, vz, ax, ay, az;
 
     // TODO: eliminate these output files after testing.
-    FILE *outfile;
+    FILE *outfile = NULL;
     outfile = fopen("acc.out", "w");
 
-    FILE *eih;
-    eih = fopen("eih_acc.out", "w");
+    FILE *eih_file = NULL;
+    eih_file = fopen("eih_acc.out", "w");
  
-    FILE *vfile;
+    FILE *vfile = NULL;
     static int first=1;
     if(first==1){
-	printf("opening file\n");
 	vfile = fopen("vary_acc.out", "w");
     }
 
@@ -355,6 +349,11 @@ void assist_additional_forces(struct reb_simulation* sim){
 	axo = 0.0; ayo = 0.0; azo = 0.0;	
     }
 
+    direct(sim, xo, yo, zo, outfile);
+
+    const int N_tot = number_bodies(&N_ephem, &N_ast);
+
+    /*
     // Direct forces from massives bodies
     for (int i=0; i<N_tot; i++){
 	
@@ -379,20 +378,17 @@ void assist_additional_forces(struct reb_simulation* sim){
 	    const double _r  = sqrt(r2);
 	    const double prefac = GM/(_r*_r*_r);
 
-	    if(test_output){
+	    if(outfile){
 		fprintf(outfile, "%3d %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le\n", i, t, GM, dx, dy, dz, -prefac*dx, -prefac*dy, -prefac*dz);
 	    }
 
-	    //particles[j].ax -= prefac*dx;
-	    //particles[j].ay -= prefac*dy;
-	    //particles[j].az -= prefac*dz;
+	    particles[j].ax -= prefac*dx;
+	    particles[j].ay -= prefac*dy;
+	    particles[j].az -= prefac*dz;
 
         }
     }
 
-    fflush(outfile);
-
-    
     // Acceleration of variational particles due to direct forces from massive bodies 
     // Loop over the perturbers
     for (int i=0; i<N_tot; i++){
@@ -450,14 +446,16 @@ void assist_additional_forces(struct reb_simulation* sim){
 		    // No variational mass contributions for test particles!
 
 		    // Accumulate acceleration terms
-		    //particles_var1[0].ax += GM * dax; 
-		    //particles_var1[0].ay += GM * day; 
-		    //particles_var1[0].az += GM * daz; 
+		    particles_var1[0].ax += GM * dax; 
+		    particles_var1[0].ay += GM * day; 
+		    particles_var1[0].az += GM * daz; 
 
 		}
 	    }
         }
     }
+
+    */
 
     // We might move this into a somewhat separate part of the code,
     // similar to how different extra forces are typically handled in
@@ -553,7 +551,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	resy =  resyp;
 	resz =  reszp;
 
-	if(test_output){	
+	if(outfile){	
 	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "J24", t, resx, resy, resz);
 	    fflush(outfile);
 	}
@@ -629,10 +627,9 @@ void assist_additional_forces(struct reb_simulation* sim){
     }
 
     // We might move this into a somewhat separate part of the code,
-    // similar to how different extra forces are typically handled in
-    // reboundx
     // Here is the treatment of the Sun's J2.
-    // Borrowed code from gravitational_harmonics.
+    // Borrowed code from gravitational_harmonics but altered
+    // to accommodate an arbitrary spin vector for the primary body.
 
     // The Sun center is reference for these calculations.
 
@@ -648,9 +645,6 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     double RAs = 286.13*M_PI/180.;
     double Decs = 63.87*M_PI/180.;
-
-    //RAs =  0.0*M_PI/180.;
-    //Decs =  90.0*M_PI/180.;
 
     cosa = cos(RAs);
     sina = sin(RAs);
@@ -697,7 +691,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	resy =  resyp;
 	resz =  reszp;
 
-	if(test_output){
+	if(outfile){
 	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "J2", t, resx, resy, resz);
 	    fflush(outfile);
 	}
@@ -982,7 +976,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	//particles[j].ay += prefac*(A*p.y + B*p.vy);
 	//particles[j].az += prefac*(A*p.z + B*p.vz);
 
-	if(test_output){
+	if(outfile){
 	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", t,
 		    prefac*(A*p.x + B*p.vx),
 		    prefac*(A*p.y + B*p.vy),
@@ -1178,9 +1172,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 
 	    const double rijdotvj = dxij*(vxj-vxo) + dyij*(vyj-vyo) + dzij*(vzj-vzo);
 
-	    if(test_output){
-		fprintf(eih, " EIH_J%12d\n", j);	    
-		fprintf(eih, "%25.16lE ", rijdotvj/_rij);
+	    if(eih_file){
+		fprintf(eih_file, " EIH_J%12d\n", j);	    
+		fprintf(eih_file, "%25.16lE ", rijdotvj/_rij);
 	    }
 
 	    const double term5 = -1.5/C2*(rijdotvj*rijdotvj)/(_rij*_rij);
@@ -1384,34 +1378,34 @@ void assist_additional_forces(struct reb_simulation* sim){
 
 	    //printf("%24.16lE %24.16lE %24.16lE %24.16lE %24.16lE %24.16lE %24.16lE\n",
 	    //term0, term1, term2, term3, term4, term5, term6);
-	    if(test_output){
-		fprintf(eih, "%24.16lE ", -factor*C2);
-		fprintf(eih, "%24.16lE %24.16lE %24.16lE %24.16lE ",
+	    if(eih_file){
+		fprintf(eih_file, "%24.16lE ", -factor*C2);
+		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE %24.16lE ",
 			-factor*C2*prefacij*dxij,
 			-factor*C2*prefacij*dyij,
 			-factor*C2*prefacij*dzij,
 			f);	    
-		fprintf(eih, "%24.16lE %24.16lE %24.16lE ",
+		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE ",
 			prefacij*f*(particles[i].vx-(vxj-vxo)),
 			prefacij*f*(particles[i].vy-(vyj-vyo)),
 			prefacij*f*(particles[i].vz-(vzj-vzo)));	    
-		fprintf(eih, "%24.16lE %24.16lE %24.16lE ",
+		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE ",
 			term8x,
 			term8y,
 			term8z);
-		fprintf(eih, "%24.16lE %24.16lE %24.16lE\n",
+		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE\n",
 			axj, ayj, azj);
 
-		fflush(eih);
+		fflush(eih_file);
 	    }
 
 	    grx += -prefacij*dxij*factor;
 	    gry += -prefacij*dyij*factor;
 	    grz += -prefacij*dzij*factor;
 	    
-	    particles[i].ax += -prefacij*dxij*factor;
-	    particles[i].ay += -prefacij*dyij*factor;
-	    particles[i].az += -prefacij*dzij*factor;
+	    //particles[i].ax += -prefacij*dxij*factor;
+	    //particles[i].ay += -prefacij*dyij*factor;
+	    //particles[i].az += -prefacij*dzij*factor;
 
 	    // Variational equation terms go here.
 
@@ -1478,7 +1472,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	gry += term7y_sum/C2 + term8y_sum/C2;
 	grz += term7z_sum/C2 + term8z_sum/C2;
 
-	if(test_output){
+	if(outfile){
 	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", t,
 		    grx, gry, grz);
 	    fflush(outfile);
@@ -1505,9 +1499,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 	dzdvy += dterm7z_sumdvy/C2;
 	dzdvz += dterm7z_sumdvz/C2;
 	
-	particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
-	particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
-	particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+	//particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
+	//particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
+	//particles[i].az += term7z_sum/C2 + term8z_sum/C2;
 
 	// Variational equation terms go here.
 	for (int v=0; v < sim->var_config_N; v++){
@@ -1533,9 +1527,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
 
 		// Accumulate acceleration terms
-		particles_var1[0].ax += dax;
-		particles_var1[0].ay += day;
-		particles_var1[0].az += daz;
+		//particles_var1[0].ax += dax;
+		//particles_var1[0].ay += day;
+		//particles_var1[0].az += daz;
 		
 	    }
 	}
@@ -1555,18 +1549,17 @@ void assist_additional_forces(struct reb_simulation* sim){
 	    double dx = particles[j].ax - particles[0].ax;
 	    double dy = particles[j].ay - particles[0].ay;
 	    double dz = particles[j].az - particles[0].az;
-	    if(test_output){
+	    if(vfile){
 		fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n", j, t, dx/delt, dy/delt, dz/delt);
 	    }
 	}
-	fflush(vfile);	        
     
 	for (int j=0; j<N_real; j++){ //loop over test particles
 	    for (int v=0; v < sim->var_config_N; v++){
 		struct reb_variational_configuration const vc = sim->var_config[v];
 		int tp = vc.testparticle;
 		struct reb_particle* const particles_var1 = particles + vc.index;
-		if(test_output){		
+		if(vfile){		
 		    if(tp == j){
 			fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n",
 				j, t, particles_var1[0].ax, particles_var1[0].ay, particles_var1[0].az);
@@ -1576,7 +1569,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	}
     }
 
-    fclose(eih);
+    fclose(eih_file);
 
     if(*geo == 1){
 	// geocentric
@@ -2131,4 +2124,124 @@ void heartbeat(struct reb_simulation* sim){
 
     store_last_state(sim);
 
+}
+
+void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
+
+    const double G = sim->G;
+    const unsigned int N = sim->N;  // N includes real+variational particles
+    const unsigned int N_real = N - sim->N_var;
+
+    const double t = sim->t;    
+
+    int N_ephem, N_ast;
+    int number_bodies(int* N_ephem, int* N_ast);
+
+    const int N_tot = number_bodies(&N_ephem, &N_ast);
+
+    struct reb_particle* const particles = sim->particles;
+
+    double GM;
+    double x, y, z, vx, vy, vz, ax, ay, az;
+
+    // Direct forces from massives bodies
+    for (int i=0; i<N_tot; i++){
+	
+        // Get position and mass of massive body i.
+	// TOOD: make a version that returns the positions, velocities,
+	// and accelerations for all the bodies at a given time.
+	int flag = all_ephem(i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
+	if(flag != NO_ERR){
+	    char outstring[50];
+	    sprintf(outstring, "%s %d %d\n", "Ephemeris error b ", i, flag);	    
+	    reb_error(sim, outstring);
+	}
+
+	// Loop over test particles
+        for (int j=0; j<N_real; j++){
+
+	    // Compute position vector of test particle j relative to massive body i.
+	    const double dx = particles[j].x + (xo - x); 
+	    const double dy = particles[j].y + (yo - y);
+	    const double dz = particles[j].z + (zo - z);
+	    const double r2 = dx*dx + dy*dy + dz*dz;
+	    const double _r  = sqrt(r2);
+	    const double prefac = GM/(_r*_r*_r);
+
+	    if(outfile){
+		fprintf(outfile, "%3d %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le\n", i, t, GM, dx, dy, dz, -prefac*dx, -prefac*dy, -prefac*dz);
+	    }
+
+	    particles[j].ax -= prefac*dx;
+	    particles[j].ay -= prefac*dy;
+	    particles[j].az -= prefac*dz;
+
+        }
+    }
+
+    // Acceleration of variational particles due to direct forces from massive bodies 
+    // Loop over the perturbers
+    for (int i=0; i<N_tot; i++){
+
+        // Get position and mass of massive body i.	
+	int flag = all_ephem(i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
+	if(flag != NO_ERR){
+	    char outstring[50];
+	    sprintf(outstring, "%s %d %d\n", "Ephemeris error c ", i, flag);	    	    
+	    reb_error(sim, outstring);
+	}
+
+	// Loop over test particles
+        for (int j=0; j<N_real; j++){
+
+	    // This stuff was already computed above.
+	    // We can recycle it.
+	    const double dx = particles[j].x + (xo - x);
+	    const double dy = particles[j].y + (yo - y);
+	    const double dz = particles[j].z + (zo - z);
+	    const double r2 = dx*dx + dy*dy + dz*dz;
+	    const double _r  = sqrt(r2);
+	    const double r3inv = 1./(r2*_r);
+	    const double r5inv = 3.*r3inv/r2;
+
+	    // Coefficients for variational equations
+	    const double dxdx = dx*dx*r5inv - r3inv;
+	    const double dydy = dy*dy*r5inv - r3inv;
+	    const double dzdz = dz*dz*r5inv - r3inv;
+	    const double dxdy = dx*dy*r5inv;
+	    const double dxdz = dx*dz*r5inv;
+	    const double dydz = dy*dz*r5inv;
+
+	    // Loop over variational particles
+	    // Update the accelerations for the variational
+	    // particles that are associated with current
+	    // real particle.
+
+	    for (int v=0; v < sim->var_config_N; v++){
+		struct reb_variational_configuration const vc = sim->var_config[v];
+		int tp = vc.testparticle;
+		struct reb_particle* const particles_var1 = particles + vc.index;		
+		if(tp == j){
+	    
+		    // Variational particle coords
+		    const double ddx = particles_var1[0].x;
+		    const double ddy = particles_var1[0].y;
+		    const double ddz = particles_var1[0].z;
+
+		    // Matrix multiplication
+		    const double dax =   ddx * dxdx + ddy * dxdy + ddz * dxdz;
+		    const double day =   ddx * dxdy + ddy * dydy + ddz * dydz;
+		    const double daz =   ddx * dxdz + ddy * dydz + ddz * dzdz;
+
+		    // No variational mass contributions for test particles!
+
+		    // Accumulate acceleration terms
+		    particles_var1[0].ax += GM * dax; 
+		    particles_var1[0].ay += GM * day; 
+		    particles_var1[0].az += GM * daz; 
+
+		}
+	    }
+        }
+    }
 }
