@@ -357,11 +357,12 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
+    // Pick one or the other of the next two routines
     simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
-    eih_GR(sim,
-	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
-	   outfile, eih_file);
+    //eih_GR(sim,
+    //xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
+    //outfile, eih_file);
 
     //const int N_tot = number_bodies(&N_ephem, &N_ast);
 
