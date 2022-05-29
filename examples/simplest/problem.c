@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
         exit(EXIT_FAILURE);
     }
 	
-
+    
     // This is for allocating memory to store the steps and
     // substeps of the integration
     int n_alloc = ((tend-tstart)/tstep + 1)*10;
@@ -187,7 +187,8 @@ void read_inputs(char *filename, double* tepoch, double* tstart, double* tend, d
       fclose(fp);
 
      }else{
-       exit(EXIT_FAILURE);
+	 printf("no such file %s\n", filename); 
+	 exit(EXIT_FAILURE);
      }
 
      return;

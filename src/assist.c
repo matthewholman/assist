@@ -349,13 +349,13 @@ void assist_additional_forces(struct reb_simulation* sim){
 	axo = 0.0; ayo = 0.0; azo = 0.0;	
     }
 
-    direct(sim, xo, yo, zo, outfile);
+    //direct(sim, xo, yo, zo, outfile);
 
-    earth_J2J4(sim, xo, yo, zo, outfile);
+    //earth_J2J4(sim, xo, yo, zo, outfile);
 
-    solar_J2(sim, xo, yo, zo, outfile);
+    //solar_J2(sim, xo, yo, zo, outfile);
 
-    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    //non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     // Pick one or the other of the next two routines
     simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
@@ -788,9 +788,9 @@ void assist_additional_forces(struct reb_simulation* sim){
     // Figure out a good way to pass in the non-grav terms
     
     // Normal asteroids
-    double A1 = 0.0;
-    double A2 = 0.0;
-    double A3 = 0.0;
+    //double A1 = 0.0;
+    //double A2 = 0.0;
+    //double A3 = 0.0;
 
     // 2020 CD3
     //double A1= 1.903810165823E-10;
@@ -803,9 +803,9 @@ void assist_additional_forces(struct reb_simulation* sim){
     //double A3 = 0.0;
 
     // 2020 SO
-    //double A1 = 2.840852439404E-9; //0.0;
-    //double A2 = -2.521527931094E-10;
-    //double A3= 2.317289821804E-10;
+    double A1 = 2.840852439404E-9; //0.0;
+    double A2 = -2.521527931094E-10;
+    double A3= 2.317289821804E-10;
     
     // Loop over test particles
     for (int j=0; j<N_real; j++){
@@ -838,9 +838,9 @@ void assist_additional_forces(struct reb_simulation* sim){
         const double t2 = tx*tx + ty*ty + tz*tz;
         const double _t = sqrt(t2);
 
-	//particles[j].ax += A1*g*dx/r + A2*g*tx/_t + A3*g*hx/h;
-        //particles[j].ay += A1*g*dy/r + A2*g*ty/_t + A3*g*hy/h;
-        //particles[j].az += A1*g*dz/r + A2*g*tz/_t + A3*g*hz/h;
+	particles[j].ax += A1*g*dx/r + A2*g*tx/_t + A3*g*hx/h;
+        particles[j].ay += A1*g*dy/r + A2*g*ty/_t + A3*g*hy/h;
+        particles[j].az += A1*g*dz/r + A2*g*tz/_t + A3*g*hz/h;
 
 //      variational matrix elements
 	// Only evaluate the constants if there are variational particles
@@ -958,15 +958,14 @@ void assist_additional_forces(struct reb_simulation* sim){
 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
 
 		// Accumulate acceleration terms
-		//particles_var1[0].ax += dax;
-		//particles_var1[0].ay += day;
-		//particles_var1[0].az += daz;
+		particles_var1[0].ax += dax;
+		particles_var1[0].ay += day;
+		particles_var1[0].az += daz;
 
 	    }
 	}
 	//  variational end
     }
-
     */
 
     /*
@@ -1635,7 +1634,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     if(first==1){
 	fclose(vfile);
-	//first=0;
+	first=1;
     }
     
     fflush(outfile);
@@ -2222,6 +2221,8 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
 
     // Acceleration of variational particles due to direct forces from massive bodies 
     // Loop over the perturbers
+    // We should put a check at the top to see if there are any variational
+    // particles.
     for (int i=0; i<N_tot; i++){
 
         // Get position and mass of massive body i.	
@@ -2400,9 +2401,9 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 	}
 	
 	// Accumulate final acceleration terms
-  	//particles[j].ax += resx;
-        //particles[j].ay += resy; 
-        //particles[j].az += resz;
+  	particles[j].ax += resx;
+        particles[j].ay += resy; 
+        particles[j].az += resz;
 
 	// Constants for variational equations
 	// J2 terms
@@ -2461,9 +2462,9 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 		double dazp =                  + day*cosd      + daz*sind;
 
 		// Accumulate acceleration terms
-		//particles_var1[0].ax += daxp; 
-		//particles_var1[0].ay += dayp; 
-		//particles_var1[0].az += dazp; 
+		particles_var1[0].ax += daxp; 
+		particles_var1[0].ay += dayp; 
+		particles_var1[0].az += dazp;
 	    
 	    }
         }
@@ -2556,9 +2557,9 @@ void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE 
 	    fflush(outfile);
 	}
 
-        //particles[j].ax += resx;
-        //particles[j].ay += resy;
-        //particles[j].az += resz;
+        particles[j].ax += resx;
+        particles[j].ay += resy;
+        particles[j].az += resz;
 
 	// Constants for variational equations
 	// Only evaluate if there are variational particles
@@ -2599,9 +2600,9 @@ void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE 
 		double daz =                  + dayp*cosd      + dazp*sind;
 
 		// Accumulate acceleration terms
-		//particles_var1[0].ax += dax; 
-		//particles_var1[0].ay += day; 
-		//particles_var1[0].az += daz; 
+		particles_var1[0].ax += dax; 
+		particles_var1[0].ay += day; 
+		particles_var1[0].az += daz; 
 
 	    }
 
@@ -2644,9 +2645,9 @@ void non_gravs(struct reb_simulation* sim,
     // Figure out a good way to pass in the non-grav terms
     
     // Normal asteroids
-    double A1 = 0.0;
-    double A2 = 0.0;
-    double A3 = 0.0;
+    //double A1 = 0.0;
+    //double A2 = 0.0;
+    //double A3 = 0.0;
 
     // 2020 CD3
     //double A1= 1.903810165823E-10;
@@ -2659,9 +2660,9 @@ void non_gravs(struct reb_simulation* sim,
     //double A3 = 0.0;
 
     // 2020 SO
-    //double A1 = 2.840852439404E-9; //0.0;
-    //double A2 = -2.521527931094E-10;
-    //double A3= 2.317289821804E-10;
+    double A1 = 2.840852439404E-9; //0.0;
+    double A2 = -2.521527931094E-10;
+    double A3= 2.317289821804E-10;
     
     // Loop over test particles
     for (int j=0; j<N_real; j++){
@@ -2694,9 +2695,9 @@ void non_gravs(struct reb_simulation* sim,
         const double t2 = tx*tx + ty*ty + tz*tz;
         const double _t = sqrt(t2);
 
-	//particles[j].ax += A1*g*dx/r + A2*g*tx/_t + A3*g*hx/h;
-        //particles[j].ay += A1*g*dy/r + A2*g*ty/_t + A3*g*hy/h;
-        //particles[j].az += A1*g*dz/r + A2*g*tz/_t + A3*g*hz/h;
+	particles[j].ax += A1*g*dx/r + A2*g*tx/_t + A3*g*hx/h;
+        particles[j].ay += A1*g*dy/r + A2*g*ty/_t + A3*g*hy/h;
+        particles[j].az += A1*g*dz/r + A2*g*tz/_t + A3*g*hz/h;
 
 //      variational matrix elements
 	// Only evaluate the constants if there are variational particles
@@ -2814,9 +2815,9 @@ void non_gravs(struct reb_simulation* sim,
 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
 
 		// Accumulate acceleration terms
-		//particles_var1[0].ax += dax;
-		//particles_var1[0].ay += day;
-		//particles_var1[0].az += daz;
+		particles_var1[0].ax += dax;
+		particles_var1[0].ay += day;
+		particles_var1[0].az += daz;
 
 	    }
 	}
@@ -2878,9 +2879,9 @@ void simple_GR(struct reb_simulation* sim,
 
 	const double prefac = GMsun/(r*r*r*C2);
 
-	//particles[j].ax += prefac*(A*p.x + B*p.vx);
-	//particles[j].ay += prefac*(A*p.y + B*p.vy);
-	//particles[j].az += prefac*(A*p.z + B*p.vz);
+	particles[j].ax += prefac*(A*p.x + B*p.vx);
+	particles[j].ay += prefac*(A*p.y + B*p.vy);
+	particles[j].az += prefac*(A*p.z + B*p.vz);
 
 	if(outfile){
 	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", t,
@@ -2941,9 +2942,9 @@ void simple_GR(struct reb_simulation* sim,
 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
 
 		// Accumulate acceleration terms
-		//particles_var1[0].ax += dax;
-		//particles_var1[0].ay += day;
-		//particles_var1[0].az += daz;
+		particles_var1[0].ax += dax;
+		particles_var1[0].ay += day;
+		particles_var1[0].az += daz;
 		
 	    }
 	}
@@ -3065,8 +3066,8 @@ void eih_GR(struct reb_simulation* sim,
 	double gry = 0.0;
 	double grz = 0.0;		
 
-	//for (int j=0; j<1; j++){	
-	for (int j=0; j<N_ephem; j++){
+	for (int j=0; j<1; j++){	
+	    //for (int j=0; j<N_ephem; j++){
 
 	    // Get position and mass of massive body j.
 	    all_ephem(j, t, &GMj,
@@ -3343,9 +3344,9 @@ void eih_GR(struct reb_simulation* sim,
 	    gry += -prefacij*dyij*factor;
 	    grz += -prefacij*dzij*factor;
 	    
-	    //particles[i].ax += -prefacij*dxij*factor;
-	    //particles[i].ay += -prefacij*dyij*factor;
-	    //particles[i].az += -prefacij*dzij*factor;
+	    particles[i].ax += -prefacij*dxij*factor;
+	    particles[i].ay += -prefacij*dyij*factor;
+	    particles[i].az += -prefacij*dzij*factor;
 
 	    // Variational equation terms go here.
 
@@ -3439,9 +3440,9 @@ void eih_GR(struct reb_simulation* sim,
 	dzdvy += dterm7z_sumdvy/C2;
 	dzdvz += dterm7z_sumdvz/C2;
 	
-	//particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
-	//particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
-	//particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+	particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
+	particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
+	particles[i].az += term7z_sum/C2 + term8z_sum/C2;
 
 	// Variational equation terms go here.
 	for (int v=0; v < sim->var_config_N; v++){
@@ -3467,9 +3468,9 @@ void eih_GR(struct reb_simulation* sim,
 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
 
 		// Accumulate acceleration terms
-		//particles_var1[0].ax += dax;
-		//particles_var1[0].ay += day;
-		//particles_var1[0].az += daz;
+		particles_var1[0].ax += dax;
+		particles_var1[0].ay += day;
+		particles_var1[0].az += daz;
 		
 	    }
 	}
