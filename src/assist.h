@@ -118,4 +118,25 @@ void heartbeat(struct reb_simulation* r);
 
 void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
 
+void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
+
+void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
+
+void non_gravs(struct reb_simulation* sim,
+	       double xo, double yo, double zo,
+	       double vxo, double vyo, double vzo,	       
+	       FILE *outfile);
+
+void simple_GR(struct reb_simulation* sim,
+	       double xo, double yo, double zo,
+	       double vxo, double vyo, double vzo,	       
+	       FILE *outfile);
+
+void eih_GR(struct reb_simulation* sim,
+	    double xo, double yo, double zo,
+	    double vxo, double vyo, double vzo,
+	    double axo, double ayo, double azo,	       	    
+	    FILE *outfile,
+	    FILE *eih_file);
+
 #endif
