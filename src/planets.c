@@ -99,6 +99,8 @@ struct _jpl_s * jpl_init(void)
         /** use or environment-specified file, 
 	 * or the default filename, in that order
          */
+	memset(buf, 0, sizeof(buf));
+
         if (getenv("JPL_PLANET_EPHEM")!=NULL)
 	    strncpy(buf, getenv("JPL_PLANET_EPHEM"), FNAMESIZE-1);
         else
@@ -106,21 +108,24 @@ struct _jpl_s * jpl_init(void)
 
         //snprintf(buf, sizeof(buf), "linux_p1550p2650.440");
         //snprintf(buf, sizeof(buf), "linux_m13000p17000.441");
-
+fprintf(stdout, "open '%s'\n", buf);
         if ((fd = open(buf, O_RDONLY)) < 0)
                 return NULL;
-
+fprintf(stdout, "fd %d\n", fd);
         jpl = malloc(sizeof(struct _jpl_s));
         memset(jpl, 0, sizeof(struct _jpl_s));
 //	memset(buf, 0, sizeof(buf)); //line to replace line above
 
         if (fstat(fd, &sb) < 0)
                 goto err;
+#if 0
+	// skip the header and constant names
         if (lseek(fd, 0x0A5C, SEEK_SET) < 0)
                 goto err;
-
-/*
+#else
 	// skip over the first three header lines
+	// although the first line might useful to keep since it
+	// is something like 'JPL Planetary Ephemeris DE441/LE441'
 	ret  = read(fd, buf, 84);
 	ret += read(fd, buf, 84);
 	ret += read(fd, buf, 84);
@@ -128,8 +133,7 @@ struct _jpl_s * jpl_init(void)
 	// retrieve the names of the first 400 constants
 	for (p = 0; p < 400; p++)
 		read(fd, &jpl->str[p], 6);
-*/
-
+#endif
         // read header
         ret  = read(fd, &jpl->beg, sizeof(double));
         ret += read(fd, &jpl->end, sizeof(double));
@@ -155,13 +159,17 @@ struct _jpl_s * jpl_init(void)
         ret += read(fd, &jpl->off[12], sizeof(int32_t));
         ret += read(fd, &jpl->ncf[12], sizeof(int32_t));
         ret += read(fd, &jpl->niv[12], sizeof(int32_t));
-
+#if 0
         // skip the remaining constants
         off = 6 * (jpl->num - 400);
 
         if (lseek(fd, off, SEEK_CUR) < 0)
                 goto err;
-
+#else
+	// read the remaining constant names
+	for (p = 400; p < jpl->num; p++)
+		read(fd, &jpl->str[p], 6);
+#endif
         // finishing reading
         for (p = 13; p < 15; p++) {
                 ret += read(fd, &jpl->off[p], sizeof(int32_t));
@@ -329,3 +337,30 @@ int jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, int n, int m)
         now->jde = jde;
         return 0;
 }
+
+/*
+ *  jpl_mass
+ *
+ */
+double jpl_mass(struct _jpl_s *pl, int tar)
+{
+	char buf[8];
+	int n;
+
+	if (pl == NULL)
+		return 0.0;
+
+	if (tar >= 10000)
+		return 0.0;
+
+	snprintf(buf, sizeof(buf), "MA%04d", tar);
+
+	for (n = 0; n < pl->num; n++) {
+		if (strncmp(pl->str[n], buf, 6) == 0)
+			return pl->con[n];
+	}
+
+	// not found
+	return 0.0;
+}
+

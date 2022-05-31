@@ -192,7 +192,7 @@ static int ast_ephem(const int i, const double jde, double* const GM, double* co
 	FILE *file;
 	file = fopen(buf, "r");
 	if(file == NULL){
-	    fprintf(stderr, "couldn't open asteroid file:\n", buf);
+	    fprintf(stderr, "Couldn't open asteroid file: %s\n", buf);
 	}
 	      
 
@@ -281,7 +281,9 @@ int all_ephem(const int i, const double t, double* const GM,
 void assist_additional_forces(struct reb_simulation* sim){
 
     // implement additional_forces here    
-    // Doesn't need to be hard-coded.
+
+    // TODO: Constant should be hard-codes.
+    // geo flag should be set from the outside.
 
     int* geo = 0;    
     sim->G = 0.295912208285591100E-03; // Gravitational constant (AU, solar masses, days)
@@ -301,23 +303,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     double GM;
 
-    // TODO: eliminate these output files after testing.
-    FILE *outfile = NULL;
-    outfile = fopen("acc.out", "w");
-
-    FILE *eih_file = NULL;
-    eih_file = fopen("eih_acc.out", "w");
- 
-    FILE *vfile = NULL;
-    static int first=1;
-    if(first==1){
-	vfile = fopen("vary_acc.out", "w");
-    }
-
-    // Get mass, position, velocity, and acceleration of the Earth and Sun
-    // for later use.
-    // The hard-wired constants should be changed.
-    
+    // Get mass, position, velocity, and acceleration of the Earth for later use.
     // The offset position is used to adjust the particle positions.
     // The options are the barycenter (default) and geocenter.
     double xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo;
@@ -337,6 +323,10 @@ void assist_additional_forces(struct reb_simulation* sim){
 	axo = 0.0; ayo = 0.0; azo = 0.0;	
     }
 
+    // TODO: eliminate the output files after testing.
+    FILE *outfile = NULL;
+    outfile = fopen("acc.out", "w");
+
     direct(sim, xo, yo, zo, outfile);
 
     earth_J2J4(sim, xo, yo, zo, outfile);
@@ -348,10 +338,19 @@ void assist_additional_forces(struct reb_simulation* sim){
     // Pick one or the other of the next two routines
     simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
+    FILE *eih_file = NULL;
+    eih_file = fopen("eih_acc.out", "w");
+    
     eih_GR(sim, eih_loop_limit,
 	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
 	   outfile, eih_file);
 
+    FILE *vfile = NULL;
+    static int first=1;
+    if(first==1){
+	vfile = fopen("vary_acc.out", "w");
+    }
+    
     test_vary(sim, vfile);
 
     if(first==1){
@@ -401,19 +400,17 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     if(*geo == 1){
 	// geocentric
-	// This part will need work for the variational equations to work.	
+	// TODO: This part will need work for the variational equations
+	// to work properly.
 	all_ephem(3, t, &GM, &xo, &yo, &zo, &vxo, &vyo, &vzo, &axo, &ayo, &azo);
-
-	//printf("%lf %le %le %le geo\n", t, axo, ayo, azo);
 
 	// This is the indirect term for geocentric equations
 	// of motion.
 	for (int j=0; j<N_real; j++){    
 
-	    //printf("%lf %le %le %le\n", t, particles[j].ax, particles[j].ay, particles[j].az);	    
-	    //particles[j].ax -= axo;
-	    //particles[j].ay -= ayo;
-	    //particles[j].az -= azo;
+	    particles[j].ax -= axo;
+	    particles[j].ay -= ayo;
+	    particles[j].az -= azo;
 
 	}
     }
@@ -499,12 +496,24 @@ int nsubsteps = 10;
 
 // integration_function
 // tstart: integration start time in tdb
-// tstep: suggested initial time step (days)
-// trange: amount of time to integrate (days)
-// geocentric: 1==geocentric equations of motion, 0==heliocentric
+// tend:   integration end time in tdb
+// tstep:  suggested initial time step (days)
+// geocentric:  1==geocentric equations of motion, 0==barycentric
 // n_particles: number of input test particles
-// instate: input states of test particles
-// ts: output times and states.
+// instate:     input states of test particles
+// n_var:       number of input variational particles
+// invar_part:  index of host particle that each variational
+//              particle refers to.
+// invar:       input states of variational particles
+// n_alloc:     number of overall times steps for which there
+//              is space allocated.
+// nsubsteps:   number of substeps of output per overall
+//              time step.
+// hg:          array of output substep times as a fraction of
+//              the step interval, i.e. values 0 to 1.
+// outtime:     array of output times.
+// outstate:    array of output states.
+// min_dt:      minimum allowed time step.
 
 int integration_function(double tstart, double tend, double tstep,
 			 int geocentric,
@@ -521,7 +530,6 @@ int integration_function(double tstart, double tend, double tstep,
 			 double* outtime,
 			 double* outstate,
 			 double min_dt){
-                         //double max_dt){			 
 
     struct reb_simulation* sim = reb_create_simulation();
 
@@ -533,6 +541,7 @@ int integration_function(double tstart, double tend, double tstep,
     // so that it is ensured to consistent with the units used in those routines.
     sim->G = 0.295912208285591100E-03; // Gravitational constant (AU, solar masses, days)
 
+    // TODO: decide how flexible these should be.
     sim->integrator = REB_INTEGRATOR_IAS15;
     sim->save_messages = 1;
     sim->heartbeat = heartbeat;
@@ -550,9 +559,10 @@ int integration_function(double tstart, double tend, double tstep,
     // be done so that other REBOUND integration routines could be explored.
 
     // Don't hard code this.
-    sim->ri_ias15.min_dt = min_dt;  // to avoid very small time steps (default: 0.0, suggestion 1e-2)
+    sim->ri_ias15.min_dt = min_dt;    // to avoid very small time steps (default: 0.0, suggestion 1e-2)
     //sim->ri_ias15.max_dt = max_dt;  // to avoid very large time steps (default: inf, suggestion 32.0)
-    //sim->ri_ias15.epsilon = 1e-8;   // to avoid convergence issue with geocentric orbits (default: 1e-9)   
+    //sim->ri_ias15.epsilon = 1e-8;   // to avoid convergence issue with geocentric orbits (default: 1e-9)
+    sim->ri_ias15.epsilon = epsilon;  // to avoid convergence issue with geocentric orbits (default: 1e-9)       
 
     // Add and initialize particles    
     for(int i=0; i<n_particles; i++){
@@ -583,9 +593,11 @@ int integration_function(double tstart, double tend, double tstep,
         sim->particles[var_i].vz = invar[6*i+5]; 
  
     }
-    
+
+    // Attach the assist struct to the simulation.
     struct assist_extras* assist = assist_attach(sim);
 
+    // Allocate memory.
     timestate *ts = (timestate*) malloc(sizeof(timestate));
     tstate* last_state = (tstate*) malloc(sim->N*sizeof(tstate));
 
@@ -1097,7 +1109,7 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     const double GMearth = 8.8876924467071022e-10;    
     //const double J2e =  0.00108262545;
     //const double J4e = -0.000001616;
-    const double J2e =  0.001082625390;    
+    const double J2e =  0.001082625390;
     const double J4e = -0.000001619898;
     const double au = 149597870.700;
     const double Re_eq = 6378.1366/au;    
@@ -1983,9 +1995,6 @@ void eih_GR(struct reb_simulation* sim,
 	    double dterm0dx = 0.0;
 	    double dterm0dy = 0.0;
 	    double dterm0dz = 0.0;	    
-	    double dterm0dvx = 0.0;
-	    double dterm0dvy = 0.0;
-	    double dterm0dvz = 0.0;	    
 
 	    double term1 = 0.0;
 	    double dterm1dx = 0.0;

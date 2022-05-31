@@ -1,7 +1,12 @@
+
+#ifndef _JPL_EPHEM_H
+#define _JPL_EPHEM_H
+
 struct _jpl_s * jpl_init(void);
 int jpl_free(struct _jpl_s *jpl);
 void jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1, double *u, double *v, double *w);
 int jpl_calc(struct _jpl_s *jpl, struct mpos_s *now, double jde, int n, int m);
+double jpl_mass(struct _jpl_s *pl, int tar);
 
 // these are the body codes for the user to specify
 enum {
@@ -22,7 +27,7 @@ enum {
         _NUM_TEST,
 };
 
-int body[11];
+//int body[11];
 
 // these are array indices for the internal interface
 enum {
@@ -74,3 +79,6 @@ static inline void vecpos_nul(double *u)
         { u[0] = u[1] = u[2] = 0.0; }
 static inline void vecpos_div(double *u, double v)
         { u[0] /= v; u[1] /= v; u[2] /= v; }
+
+#endif // _JPL_EPHEM_H
+
