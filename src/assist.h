@@ -133,10 +133,14 @@ void simple_GR(struct reb_simulation* sim,
 	       FILE *outfile);
 
 void eih_GR(struct reb_simulation* sim,
+	    int eih_loop_limit,
 	    double xo, double yo, double zo,
 	    double vxo, double vyo, double vzo,
 	    double axo, double ayo, double azo,	       	    
 	    FILE *outfile,
 	    FILE *eih_file);
+
+void test_vary(struct reb_simulation* sim, FILE *vfile);
+
 
 #endif
