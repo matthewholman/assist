@@ -112,11 +112,23 @@ struct _jpl_s * jpl_init(void)
 
         jpl = malloc(sizeof(struct _jpl_s));
         memset(jpl, 0, sizeof(struct _jpl_s));
+//	memset(buf, 0, sizeof(buf)); //line to replace line above
 
         if (fstat(fd, &sb) < 0)
                 goto err;
         if (lseek(fd, 0x0A5C, SEEK_SET) < 0)
                 goto err;
+
+/*
+	// skip over the first three header lines
+	ret  = read(fd, buf, 84);
+	ret += read(fd, buf, 84);
+	ret += read(fd, buf, 84);
+
+	// retrieve the names of the first 400 constants
+	for (p = 0; p < 400; p++)
+		read(fd, &jpl->str[p], 6);
+*/
 
         // read header
         ret  = read(fd, &jpl->beg, sizeof(double));
@@ -173,6 +185,15 @@ struct _jpl_s * jpl_init(void)
 
         if (jpl->map == NULL)
                 goto err;
+
+//added from weyrk's exammple code
+	// now read the constant values after seeking to where they are
+	if (lseek(fd, jpl->rec, SEEK_SET) < 0)
+		goto err;
+
+	for (p = 0; p < jpl->num; p++)
+		read(fd, &jpl->con[p], sizeof(double));
+//end of added
 
         // this file descriptor is no longer needed since we are memory mapped
         if (close(fd) < 0)
