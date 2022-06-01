@@ -1110,6 +1110,7 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     //const double J2e =  0.00108262545;
     //const double J4e = -0.000001616;
     const double J2e =  0.001082625390;
+    const double J3e =  0.000000000000; // need to put in this value
     const double J4e = -0.000001619898;
     const double au = 149597870.700;
     const double Re_eq = 6378.1366/au;    
@@ -1161,6 +1162,14 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 	double resx = GMearth*J2e_prefac*J2e_fac*dx;
 	double resy = GMearth*J2e_prefac*J2e_fac*dy;
 	double resz = GMearth*J2e_prefac*(J2e_fac-2.)*dz;	
+
+	// J3 terms
+        const double J3e_prefac = 5.*J3e*Re_eq*Re_eq*Re_eq/r2/r2/r/2.;
+        const double J3e_fac = 3.-7.*costheta2;
+
+        resx += GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
+        resy += GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
+        resz += GMearth*J3e_prefac*((1./r2)*2*costheta2*J3e_fac)+7.*costheta2*costheta2-0.6);
 
 	// J4 terms
         const double J4e_prefac = 5.*J4e*Re_eq*Re_eq*Re_eq*Re_eq/r2/r2/r2/r/8.;
