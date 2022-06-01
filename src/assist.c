@@ -408,9 +408,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 	// of motion.
 	for (int j=0; j<N_real; j++){    
 
-	    particles[j].ax -= axo;
-	    particles[j].ay -= ayo;
-	    particles[j].az -= azo;
+	    sim->particles[j].ax -= axo;
+	    sim->particles[j].ay -= ayo;
+	    sim->particles[j].az -= azo;
 
 	}
     }
