@@ -1169,7 +1169,7 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 
         resx += GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
         resy += GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
-        resz += GMearth*J3e_prefac*((1./r2)*2*costheta2*J3e_fac)+7.*costheta2*costheta2-0.6);
+        resz += GMearth*J3e_prefac*(((1./r2)*2*costheta2*J3e_fac)+7.*costheta2*costheta2-0.6);
 
 	// J4 terms
         const double J4e_prefac = 5.*J4e*Re_eq*Re_eq*Re_eq*Re_eq/r2/r2/r2/r/8.;
