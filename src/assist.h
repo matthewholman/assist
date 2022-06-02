@@ -142,5 +142,8 @@ void eih_GR(struct reb_simulation* sim,
 
 void test_vary(struct reb_simulation* sim, FILE *vfile);
 
+void test_vary_2nd(struct reb_simulation* sim, FILE *vfile);
+
+
 
 #endif
