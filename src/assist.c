@@ -1159,9 +1159,9 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
         const double J2e_prefac = 3.*J2e*Re_eq*Re_eq/r2/r2/r/2.;
         const double J2e_fac = 5.*costheta2-1.;
 
-	//double resx = GMearth*J2e_prefac*J2e_fac*dx;
-	//double resy = GMearth*J2e_prefac*J2e_fac*dy;
-	//double resz = GMearth*J2e_prefac*(J2e_fac-2.)*dz;	
+	double resx = GMearth*J2e_prefac*J2e_fac*dx;
+	double resy = GMearth*J2e_prefac*J2e_fac*dy;
+	double resz = GMearth*J2e_prefac*(J2e_fac-2.)*dz;	
 
 	// J3 terms
         const double J3e_prefac = 5.*J3e*Re_eq*Re_eq*Re_eq/r2/r2/r/2.;
@@ -1171,18 +1171,17 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
         //resy += GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
         //resz += GMearth*J3e_prefac*(((1./r2)*2*costheta2*J3e_fac)+7.*costheta2*costheta2-0.6);
 
-        double resx = -GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
-        double resy = -GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
-        //double resz = -GMearth*J3e_prefac*(((1./r2)*2*costheta2*J3e_fac)+7.*costheta2*costheta2-0.6);
-	double resz = -GMearth*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
+        resx += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
+        resy += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
+	resz += -GMearth*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
 	
 	// J4 terms
         const double J4e_prefac = 5.*J4e*Re_eq*Re_eq*Re_eq*Re_eq/r2/r2/r2/r/8.;
         const double J4e_fac = 63.*costheta2*costheta2-42.*costheta2 + 3.;
 
-        //resx += GMearth*J4e_prefac*J4e_fac*dx;
-        //resy += GMearth*J4e_prefac*J4e_fac*dy;
-        //resz += GMearth*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
+        resx += GMearth*J4e_prefac*J4e_fac*dx;
+        resy += GMearth*J4e_prefac*J4e_fac*dy;
+        resz += GMearth*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
 
         //double resx = GMearth*J4e_prefac*J4e_fac*dx;
         //double resy = GMearth*J4e_prefac*J4e_fac*dy;
