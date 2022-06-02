@@ -1231,10 +1231,12 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 
 	const double dxdxJ3 = GMearth*J3e_prefac*costheta*(J3e_fac2*dx-J3e_fac);
 	const double dydyJ3 = GMearth*J3e_prefac*costheta*(J3e_fac2*dy-J3e_fac);
-	const double dzdzJ3 = GMearth*J3e_prefac*J3e_fac4;
+	//const double dzdzJ3 = GMearth*J3e_prefac*J3e_fac4;
 	const double dxdyJ3 = GMearth*J3e_prefac*J3e_fac2*costheta*dx*dy/r;
 	const double dydzJ3 = GMearth*J3e_prefac*J3e_fac3*dy;
 	const double dxdzJ3 = GMearth*J3e_prefac*J3e_fac3*dx;
+
+        const double dzdzJ3 = (0.5*GMearth*J3e*Re_eq*Re_eq*Re_eq)*(-315*dz*dz*dz*dz*dz/r2/r2/r2/r2/r2/r + 350.*dz*dz*dz/r2/r2/r2/r2/r -75.*dz/r2/r2/r2/r);
 
 	// J4 terms
         const double J4e_fac2= 33.*costheta2*costheta2-18.*costheta2 + 1.;
