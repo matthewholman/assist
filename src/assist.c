@@ -1219,6 +1219,19 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 	const double dydz = GMearth*J2e_prefac*(-5.)*(J2e_fac2-2.)*dy*dz/r2;
 	const double dxdz = GMearth*J2e_prefac*(-5.)*(J2e_fac2-2.)*dx*dz/r2;
 
+	// J3 terms
+        const double costheta = dz/r;
+        const double J3e_fac2 = 21*(-3.*costheta2+1.)/r2;
+        const double J3e_fac3 = 3*(-21.*costheta2*costheta2+14.*costheta2-1.)/r2;
+        const double J3e_fac4 = (-63.*costheta2*costheta2+70.*costheta2+15.)*costheta/r;
+
+	const double dxdxJ3 = GMearth*J3e_prefac*costheta*(J3e_fac2*dx-J3e_fac);
+	const double dydyJ3 = GMearth*J3e_prefac*costheta*(J3e_fac2*dy-J3e_fac);
+	const double dzdzJ3 = GMearth*J3e_prefac*J3e_fac4;
+	const double dxdyJ3 = GMearth*J3e_prefac*J3e_fac2*costheta*dx*dy/r;
+	const double dydzJ3 = GMearth*J3e_prefac*J3e_fac3*dy;
+	const double dxdzJ3 = GMearth*J3e_prefac*J3e_fac3*dx;
+
 	// J4 terms
         const double J4e_fac2= 33.*costheta2*costheta2-18.*costheta2 + 1.;
         const double J4e_fac3= 33.*costheta2*costheta2-30.*costheta2 + 5.;
@@ -1252,6 +1265,11 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 		double dax =   ddxp * dxdx + ddyp * dxdy + ddzp * dxdz;
 		double day =   ddxp * dxdy + ddyp * dydy + ddzp * dydz;
 		double daz =   ddxp * dxdz + ddyp * dydz + ddzp * dzdz;
+
+		// J3 part		
+		dax +=   ddxp * dxdxJ3 + ddyp * dxdyJ3 + ddzp * dxdzJ3;
+		day +=   ddxp * dxdyJ3 + ddyp * dydyJ3 + ddzp * dydzJ3;
+		daz +=   ddxp * dxdzJ3 + ddyp * dydzJ3 + ddzp * dzdzJ3;
 
 		// J4 part		
 		dax +=   ddxp * dxdxJ4 + ddyp * dxdyJ4 + ddzp * dxdzJ4;
