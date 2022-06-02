@@ -1227,20 +1227,22 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
         const double costheta = dz/r;
         const double J3e_fac2 = 21*(-3.*costheta2+1.)/r2;
         const double J3e_fac3 = 3*(-21.*costheta2*costheta2+14.*costheta2-1.)/r2;
-        const double J3e_fac4 = (-63.*costheta2*costheta2+70.*costheta2+15.)*costheta/r;
+        const double J3e_fac4 = (-63.*costheta2*costheta2+70.*costheta2-15.)*costheta/r;
 
-	//const double dxdxJ3 = GMearth*J3e_prefac*costheta*(J3e_fac2*dx-J3e_fac);
-	//const double dydyJ3 = GMearth*J3e_prefac*costheta*(J3e_fac2*dy-J3e_fac);
-	//const double dzdzJ3 = GMearth*J3e_prefac*J3e_fac4;
+	const double dxdxJ3 = GMearth*J3e_prefac*costheta*(J3e_fac2*dx*dx-J3e_fac)/r;
+	const double dydyJ3 = GMearth*J3e_prefac*costheta*(J3e_fac2*dy*dy-J3e_fac)/r;
+	const double dzdzJ3 = GMearth*J3e_prefac*J3e_fac4;
 	const double dxdyJ3 = GMearth*J3e_prefac*J3e_fac2*costheta*dx*dy/r;
 	const double dydzJ3 = GMearth*J3e_prefac*J3e_fac3*dy;
 	const double dxdzJ3 = GMearth*J3e_prefac*J3e_fac3*dx;
 
+/*
         const double dxdxJ3 = (2.5*GMearth*J3e*Re_eq*Re_eq*Re_eq)*(-63.*dx*dx*dz*dz*dz/r2/r2/r2/r2/r2/r + 7.*dz*dz*dz/r2/r2/r2/r2/r 
                                                                    +21.*dx*dx*dz/r2/r2/r2/r2/r           - 3.*dz/r2/r2/r2/r);
         const double dydyJ3 = (2.5*GMearth*J3e*Re_eq*Re_eq*Re_eq)*(-63.*dy*dy*dz*dz*dz/r2/r2/r2/r2/r2/r + 7.*dz*dz*dz/r2/r2/r2/r2/r 
                                                                    +21.*dy*dy*dz/r2/r2/r2/r2/r           - 3.*dz/r2/r2/r2/r);
         const double dzdzJ3 = (0.5*GMearth*J3e*Re_eq*Re_eq*Re_eq)*(-315*dz*dz*dz*dz*dz/r2/r2/r2/r2/r2/r + 350.*dz*dz*dz/r2/r2/r2/r2/r -75.*dz/r2/r2/r2/r);
+*/
 
 	// J4 terms
         const double J4e_fac2= 33.*costheta2*costheta2-18.*costheta2 + 1.;
