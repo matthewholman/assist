@@ -1110,13 +1110,8 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     //const double J2e =  0.00108262545;
     //const double J4e = -0.000001616;
     const double J2e =  0.001082625390;
-<<<<<<< HEAD
-    const double J3e =  -2.5324100000000000e-06;    
+    const double J3e =  -2.532410000000000e-06;    
     const double J4e = -1.6198980000000001e-06;
-=======
-    const double J3e = -2.532410000000e-06;
-    const double J4e = -0.000001619898;
->>>>>>> 5ae0490957b627b0cc2d3a8776fef1b026ab8a52
     const double au = 149597870.700;
     const double Re_eq = 6378.1366/au;    
     //const double Re_eq = 6378.1263/au;
