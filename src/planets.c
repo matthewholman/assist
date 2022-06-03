@@ -11,9 +11,11 @@
 
 #include "spk.h"
 #include "planets.h"
+#include "const.h"
 
-#define FNAMESIZE 256
-#define DEFAULT_JPL_PLANET_EPHEM "linux_m13000p17000.441"
+#ifndef JPL_EPHEM_FILE
+#define JPL_EPHEM_FILE "../linux_m13000p17000.441"
+#endif
 
 int body[11] = {
         PLAN_SOL,                       // Sun (in barycentric)
@@ -91,7 +93,7 @@ struct _jpl_s * jpl_init(void)
 {
         struct _jpl_s *jpl;
 	struct stat sb;
-	char buf[FNAMESIZE];
+	char *str;
 	ssize_t ret;
 	off_t off;
         int fd, p;
@@ -99,41 +101,25 @@ struct _jpl_s * jpl_init(void)
         /** use or environment-specified file, 
 	 * or the default filename, in that order
          */
-	memset(buf, 0, sizeof(buf));
+	if ((str = getenv("JPL_PLANET_EPHEM")) == NULL)
+		str = JPL_EPHEM_FILE;
 
-        if (getenv("JPL_PLANET_EPHEM")!=NULL)
-	    strncpy(buf, getenv("JPL_PLANET_EPHEM"), FNAMESIZE-1);
-        else
-	    strncpy(buf, DEFAULT_JPL_PLANET_EPHEM, FNAMESIZE-1);
-
-        //snprintf(buf, sizeof(buf), "linux_p1550p2650.440");
-        //snprintf(buf, sizeof(buf), "linux_m13000p17000.441");
-fprintf(stdout, "open '%s'\n", buf);
-        if ((fd = open(buf, O_RDONLY)) < 0)
+        if ((fd = open(str, O_RDONLY)) < 0)
                 return NULL;
-fprintf(stdout, "fd %d\n", fd);
+
         jpl = malloc(sizeof(struct _jpl_s));
         memset(jpl, 0, sizeof(struct _jpl_s));
-//	memset(buf, 0, sizeof(buf)); //line to replace line above
 
         if (fstat(fd, &sb) < 0)
                 goto err;
-#if 0
-	// skip the header and constant names
+
+	// FIXME : probably should ensure the file is sized corrrectly
+	// FIXME : also could read 3*84 bytes to see if this is a JPL file
+
+	// skip the header and constant names for now
         if (lseek(fd, 0x0A5C, SEEK_SET) < 0)
                 goto err;
-#else
-	// skip over the first three header lines
-	// although the first line might useful to keep since it
-	// is something like 'JPL Planetary Ephemeris DE441/LE441'
-	ret  = read(fd, buf, 84);
-	ret += read(fd, buf, 84);
-	ret += read(fd, buf, 84);
 
-	// retrieve the names of the first 400 constants
-	for (p = 0; p < 400; p++)
-		read(fd, &jpl->str[p], 6);
-#endif
         // read header
         ret  = read(fd, &jpl->beg, sizeof(double));
         ret += read(fd, &jpl->end, sizeof(double));
@@ -159,17 +145,26 @@ fprintf(stdout, "fd %d\n", fd);
         ret += read(fd, &jpl->off[12], sizeof(int32_t));
         ret += read(fd, &jpl->ncf[12], sizeof(int32_t));
         ret += read(fd, &jpl->niv[12], sizeof(int32_t));
-#if 0
-        // skip the remaining constants
-        off = 6 * (jpl->num - 400);
 
-        if (lseek(fd, off, SEEK_CUR) < 0)
-                goto err;
-#else
+	// get all the constant names, from two lcoations
+	jpl->str = calloc(jpl->num, sizeof(char *));
+	off = lseek(fd, 0, SEEK_CUR);
+	lseek(fd, 0x00FC, SEEK_SET);
+
+	// retrieve the names of the first 400 constants
+	for (p = 0; p < 400; p++) {
+		jpl->str[p] = calloc(1, 8);
+		read(fd, jpl->str[p], 6);
+	}
+
+	lseek(fd, off, SEEK_SET);
+
 	// read the remaining constant names
-	for (p = 400; p < jpl->num; p++)
-		read(fd, &jpl->str[p], 6);
-#endif
+	for (p = 400; p < jpl->num; p++) {
+		jpl->str[p] = calloc(1, 8);
+		read(fd, jpl->str[p], 6);
+	}
+
         // finishing reading
         for (p = 13; p < 15; p++) {
                 ret += read(fd, &jpl->off[p], sizeof(int32_t));
@@ -194,14 +189,14 @@ fprintf(stdout, "fd %d\n", fd);
         if (jpl->map == NULL)
                 goto err;
 
-//added from weyrk's exammple code
 	// now read the constant values after seeking to where they are
 	if (lseek(fd, jpl->rec, SEEK_SET) < 0)
 		goto err;
 
+	jpl->con = calloc(jpl->num, sizeof(double));
+
 	for (p = 0; p < jpl->num; p++)
 		read(fd, &jpl->con[p], sizeof(double));
-//end of added
 
         // this file descriptor is no longer needed since we are memory mapped
         if (close(fd) < 0)
@@ -223,16 +218,24 @@ err:    close(fd);
  */
 int jpl_free(struct _jpl_s *jpl)
 {
+	int p;
+
         if (jpl == NULL)
                 return -1;
 
         if (munmap(jpl->map, jpl->len) < 0)
                 { ; } // perror...
 
+	for (p = 0; p < jpl->num; p++)
+		free(jpl->str[p]);
+
+	free(jpl->str);
+	free(jpl->con);
         memset(jpl, 0, sizeof(struct _jpl_s));
         free(jpl);
         return 0;
 }
+
 /*
  *  jpl_calc
  *
