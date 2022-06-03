@@ -82,16 +82,15 @@ static int ephem(const int i, const double jde, double* const GM,
     static struct _jpl_s *pl;
     struct mpos_s now;
 
+    // Calculate GM values for Earth and Moon
+    // from Earth-moon ratio and sum.
     const static double r = JPL_EPHEM_EMRAT;
     const static double GMe = r/(1.+r) * JPL_EPHEM_GMB;
     const static double GMm = 1./(1.+r) * JPL_EPHEM_GMB;    
 
     // The values below are G*mass.
     // Units are solar masses, au, days.
-    // TODO: The units should probably be handled elsewhere.
     // DE440/441 units: au^3 day^-2.
-    // TODO: These should be moved to an external source that
-    // is easily modified.
     const static double JPL_GM[11] =
 	{
 	    JPL_EPHEM_GMS, // 0 sun
@@ -107,23 +106,6 @@ static int ephem(const int i, const double jde, double* const GM,
 	    JPL_EPHEM_GM9, // 10 pluto
 	};
 
-    /*
-    const static double JPL_GM[11] =
-	{
-	    0.2959122082841196e-03, // 0 sun
-	    0.4912500194889318e-10, // 1 mercury
-	    0.7243452332644119e-09, // 2 venus
-	    0.8887692446707102e-09, // 3 earth
-	    0.1093189462402435e-10, // 4 moon	    
-	    0.9549548829725812e-10, // 5 mars
-	    0.2825345825225792e-06, // 6 jupiter
-	    0.8459705993376290e-07, // 7 saturn
-	    0.1292026564968240e-07, // 8 uranus
-	    0.1524357347885194e-07, // 9 neptune
-	    0.2175096464893358e-11, // 10 pluto
-	};
-    */
-    
     if(i<0 || i>10){
 	return(ERR_NEPH);
     }
@@ -142,7 +124,6 @@ static int ephem(const int i, const double jde, double* const GM,
     jpl_calc(pl, &now, jde, ebody[i], PLAN_BAR); 
 
     // Convert to au/day and au/day^2
-    // TODO: Consider making the units more flexible.
     vecpos_div(now.u, pl->cau);
     vecpos_div(now.v, pl->cau/86400.);
     vecpos_div(now.w, pl->cau/(86400.*86400.));
@@ -168,12 +149,30 @@ static int ast_ephem(const int i, const double jde, double* const GM, double* co
     static struct spk_s *spl;
     struct mpos_s pos;
 
+    // DE441
     // The values below are G*mass.
     // Units are solar masses, au, days.
-    // DE441
-    // GMs were supplied by Davide.
-    // TODO: these should be moved to an external
-    // source that can be easily updated.
+    const static double JPL_GM[16] =    
+    {
+	JPL_EPHEM_MA0107, // 107 camilla
+	JPL_EPHEM_MA0001, // 1 Ceres
+	JPL_EPHEM_MA0065, // 65 cybele
+	JPL_EPHEM_MA0511, // 511 davida
+	JPL_EPHEM_MA0015, // 15 eunomia
+	JPL_EPHEM_MA0031, // 31 euphrosyne	    
+	JPL_EPHEM_MA0052, // 52 europa
+	JPL_EPHEM_MA0010, // 10 hygiea
+	JPL_EPHEM_MA0704, // 704 interamnia
+	JPL_EPHEM_MA0007, // 7 iris
+	JPL_EPHEM_MA0003, // 3 juno
+	JPL_EPHEM_MA0002, // 2 pallas
+	JPL_EPHEM_MA0016, // 16 psyche
+	JPL_EPHEM_MA0087, // 87 sylvia
+	JPL_EPHEM_MA0088, // 88 thisbe
+	JPL_EPHEM_MA0004  // 4 vesta
+    };
+
+    /*
     const static double JPL_GM[16] =    
     {
 	    3.2191392075878588e-15, // 107 camilla
@@ -195,7 +194,8 @@ static int ast_ephem(const int i, const double jde, double* const GM, double* co
 	    3.8548000225257904e-14, // 4 vesta          
 
     };
-
+    */
+    
     if(i<0 || i>15){
 	return(ERR_NAST);
     }
@@ -309,7 +309,6 @@ void assist_additional_forces(struct reb_simulation* sim){
     // geo flag should be set from the outside.
 
     int* geo = 0;    
-    sim->G = 0.295912208285591100E-03; // Gravitational constant (AU, solar masses, days)
 
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;    
@@ -385,42 +384,6 @@ void assist_additional_forces(struct reb_simulation* sim){
     fclose(eih_file);
     fflush(outfile);
     fclose(outfile);
-
-    /*
-    // This is for testing the variational equations.
-    // It could be moved into a separate section of the module.
-    // What happening is that a set of test particles with
-    // small initial displacements from the 0th test particles
-    // are integrated with the 0th test particle.  The differences
-    // between the trajectories can be compared to results from
-    // the variational particles, in the next section.
-    
-    double delt = 1e-8;
-    if(first==1){
-	for (int j=1; j<N_real; j++){
-	    double dx = particles[j].ax - particles[0].ax;
-	    double dy = particles[j].ay - particles[0].ay;
-	    double dz = particles[j].az - particles[0].az;
-	    if(vfile){
-		fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n", j, t, dx/delt, dy/delt, dz/delt);
-	    }
-	}
-    
-	for (int j=0; j<N_real; j++){ //loop over test particles
-	    for (int v=0; v < sim->var_config_N; v++){
-		struct reb_variational_configuration const vc = sim->var_config[v];
-		int tp = vc.testparticle;
-		struct reb_particle* const particles_var1 = particles + vc.index;
-		if(vfile){		
-		    if(tp == j){
-			fprintf(vfile, "%3d %25.16le %25.16le %25.16le %25.16le\n",
-				j, t, particles_var1[0].ax, particles_var1[0].ay, particles_var1[0].az);
-		    }
-		}
-	    }
-	}
-    }
-    */
 
     if(*geo == 1){
 	// geocentric
@@ -563,7 +526,7 @@ int integration_function(double tstart, double tend, double tstep,
     // Set up simulation constants
     // The gravitational constant should be set using the ephemeris routines,
     // so that it is ensured to consistent with the units used in those routines.
-    sim->G = 0.295912208285591100E-03; // Gravitational constant (AU, solar masses, days)
+    //sim->G = 0.295912208285591100E-03; // Gravitational constant (AU, solar masses, days)
 
     // TODO: decide how flexible these should be.
     sim->integrator = REB_INTEGRATOR_IAS15;
@@ -1124,21 +1087,18 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     // The geocenter is the reference for the Earth J2/J4 calculations.
     double xe, ye, ze, vxe, vye, vze, axe, aye, aze;    
     all_ephem(3, t, &GM, &xe, &ye, &ze, &vxe, &vye, &vze, &axe, &aye, &aze);
+    const double GMearth = GM;    
 
     double xr, yr, zr; //, vxr, vyr, vzr, axr, ayr, azr;
     xr = xe;  yr = ye;  zr = ze;
 
     // Hard-coded constants.  BEWARE!
-    //const double GMearth = 0.888769244512563400E-09;
-    const double GMearth = 8.8876924467071022e-10;    
-    //const double J2e =  0.00108262545;
-    //const double J4e = -0.000001616;
-    const double J2e =  0.001082625390;
-    const double J3e =  -2.532410000000000e-06;    
-    const double J4e = -1.6198980000000001e-06;
-    const double au = 149597870.700;
-    const double Re_eq = 6378.1366/au;    
-    //const double Re_eq = 6378.1263/au;
+    const double J2e = JPL_EPHEM_J2E;
+    const double J3e = JPL_EPHEM_J3E;
+    const double J4e = JPL_EPHEM_J4E;
+    const double au = JPL_EPHEM_CAU;
+    const double Re_eq = JPL_EPHEM_RE/au;
+
     // Unit vector to equatorial pole at the epoch
     // Note also that the pole orientation is not changing during
     // the integration.
@@ -1332,7 +1292,6 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 
 void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
 
-    //const double G = sim->G;
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
 
@@ -1341,27 +1300,19 @@ void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE 
     struct reb_particle* const particles = sim->particles;
 
     double GM;
-    //double x, y, z, vx, vy, vz, ax, ay, az;
-
-    // We might move this into a somewhat separate part of the code,
-    // Here is the treatment of the Sun's J2.
-    // Borrowed code from gravitational_harmonics but altered
-    // to accommodate an arbitrary spin vector for the primary body.
 
     // The Sun center is reference for these calculations.
 
     double xr, yr, zr, vxr, vyr, vzr, axr, ayr, azr;
 
-    //all_ephem(i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);	    
-    all_ephem(0, t, &GM, &xr, &yr, &zr, &vxr, &vyr, &vzr, &axr, &ayr, &azr);	    
+    all_ephem(0, t, &GM, &xr, &yr, &zr, &vxr, &vyr, &vzr, &axr, &ayr, &azr);
+    const double GMsun = GM;    
+
+    const double au = JPL_EPHEM_CAU;
+    const double Rs_eq = JPL_EPHEM_ASUN/au;
+    const double J2s = JPL_EPHEM_J2SUN;
 
     // Hard-coded constants.  BEWARE!
-    // Clean up on aisle 3!
-    // Mass of sun in solar masses.
-    const double au = 149597870.700;    
-    const double GMsun = GM;
-    const double Rs_eq = 696000.0/au;
-    const double J2s =   2.196139151652982e-07;
 
     double RAs = 286.13*M_PI/180.;
     double Decs = 63.87*M_PI/180.;
@@ -1692,11 +1643,10 @@ void simple_GR(struct reb_simulation* sim,
 
     // Damour and Deruelle solar GR treatment
 
-    // Doesn't need to be hard-coded.
-    const double c = 173.14463267424031;
+    const double au = JPL_EPHEM_CAU;    
+    const double c = (JPL_EPHEM_CLIGHT/au)*86400;
     const double C2 = c*c;  // This could be stored as C2.
     
-    //const double G = sim->G;
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
 
@@ -1705,12 +1655,12 @@ void simple_GR(struct reb_simulation* sim,
     struct reb_particle* const particles = sim->particles;
 
     double GM;
-    //double x, y, z, vx, vy, vz, ax, ay, az;
 
     double xr, yr, zr, vxr, vyr, vzr, axr, ayr, azr;
     
     // The Sun center is reference for these calculations.
     double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
+
     all_ephem(0, t, &GM, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
     const double GMsun = GM;    
 
@@ -1721,7 +1671,6 @@ void simple_GR(struct reb_simulation* sim,
     for (int j=0; j<N_real; j++){
 
         struct reb_particle p = particles[j];
-        //struct reb_vec3d vi;
 
 	p.x += (xo - xr);
 	p.y += (yo - yr);
@@ -1822,11 +1771,14 @@ void eih_GR(struct reb_simulation* sim,
     // This is one of two options for GR.
     // This one version is only rarely needed.
 
-    // Doesn't need to be hard-coded.
-    const double c = 173.14463267424031;
+    const double au = JPL_EPHEM_CAU;    
+    const double c = (JPL_EPHEM_CLIGHT/au)*86400;
     const double C2 = c*c;  // This could be stored as C2.
     
-    //const double G = sim->G;
+    // Doesn't need to be hard-coded.
+    //const double c = 173.14463267424031;
+    //const double C2 = c*c;  // This could be stored as C2.
+    
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
 
@@ -1842,7 +1794,7 @@ void eih_GR(struct reb_simulation* sim,
     // The Sun center is reference for these calculations.
     double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
     all_ephem(0, t, &GM, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
-    //const double GMsun = GM;    
+    const double GMsun = GM;    
 
     xr  = xs;  yr  = ys;  zr = zs;
     vxr = vxs; vyr = vys; vzr = vzs;
