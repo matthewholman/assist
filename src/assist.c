@@ -84,9 +84,9 @@ static int ephem(const int i, const double jde, double* const GM,
 
     // Calculate GM values for Earth and Moon
     // from Earth-moon ratio and sum.
-    const static double r = JPL_EPHEM_EMRAT;
-    const static double GMe = r/(1.+r) * JPL_EPHEM_GMB;
-    const static double GMm = 1./(1.+r) * JPL_EPHEM_GMB;    
+    const static double em_r = JPL_EPHEM_EMRAT;
+    const static double GMe = em_r/(1.+em_r) * JPL_EPHEM_GMB;
+    const static double GMm = 1./(1.+em_r) * JPL_EPHEM_GMB;    
 
     // The values below are G*mass.
     // Units are solar masses, au, days.
@@ -1313,7 +1313,6 @@ void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE 
     const double J2s = JPL_EPHEM_J2SUN;
 
     // Hard-coded constants.  BEWARE!
-
     double RAs = 286.13*M_PI/180.;
     double Decs = 63.87*M_PI/180.;
 
@@ -1427,7 +1426,6 @@ void non_gravs(struct reb_simulation* sim,
 	       double vxo, double vyo, double vzo,	       
 	       FILE *outfile){
 
-    //const double G = sim->G;
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
 
