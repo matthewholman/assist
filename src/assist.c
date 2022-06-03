@@ -25,6 +25,7 @@
 
 #define FNAMESIZE 256
 #define DEFAULT_JPL_SB_EPHEM "sb441-n16.bsp"
+#include "const.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -81,12 +82,32 @@ static int ephem(const int i, const double jde, double* const GM,
     static struct _jpl_s *pl;
     struct mpos_s now;
 
+    const static double r = JPL_EPHEM_EMRAT;
+    const static double GMe = r/(1.+r) * JPL_EPHEM_GMB;
+    const static double GMm = 1./(1.+r) * JPL_EPHEM_GMB;    
+
     // The values below are G*mass.
     // Units are solar masses, au, days.
     // TODO: The units should probably be handled elsewhere.
     // DE440/441 units: au^3 day^-2.
     // TODO: These should be moved to an external source that
     // is easily modified.
+    const static double JPL_GM[11] =
+	{
+	    JPL_EPHEM_GMS, // 0 sun
+	    JPL_EPHEM_GM1, // 1 mercury
+	    JPL_EPHEM_GM2, // 2 venus
+	    GMe,           // 3 earth
+	    GMm,           // 4 earth
+	    JPL_EPHEM_GM4, // 5 mars
+	    JPL_EPHEM_GM5, // 6 jupiter
+	    JPL_EPHEM_GM6, // 7 saturn
+	    JPL_EPHEM_GM7, // 8 uranus
+	    JPL_EPHEM_GM8, // 9 neptune
+	    JPL_EPHEM_GM9, // 10 pluto
+	};
+
+    /*
     const static double JPL_GM[11] =
 	{
 	    0.2959122082841196e-03, // 0 sun
@@ -101,7 +122,8 @@ static int ephem(const int i, const double jde, double* const GM,
 	    0.1524357347885194e-07, // 9 neptune
 	    0.2175096464893358e-11, // 10 pluto
 	};
-
+    */
+    
     if(i<0 || i>10){
 	return(ERR_NEPH);
     }
@@ -155,7 +177,8 @@ static int ast_ephem(const int i, const double jde, double* const GM, double* co
     const static double JPL_GM[16] =    
     {
 	    3.2191392075878588e-15, // 107 camilla
-	    1.3964518123081070e-13, // 1 ceres
+	    JPL_EPHEM_MA0001, // 1 Ceres
+	    //1.3964518123081070e-13, // 1 ceres
 	    2.0917175955133682e-15, // 65 cybele	
 	    8.6836253492286545e-15, // 511 davida
 	    4.5107799051436795e-15, // 15 eunomia
@@ -327,16 +350,16 @@ void assist_additional_forces(struct reb_simulation* sim){
     FILE *outfile = NULL;
     outfile = fopen("acc.out", "w");
 
-    //direct(sim, xo, yo, zo, outfile);
+    direct(sim, xo, yo, zo, outfile);
 
     earth_J2J4(sim, xo, yo, zo, outfile);
 
-    //solar_J2(sim, xo, yo, zo, outfile);
+    solar_J2(sim, xo, yo, zo, outfile);
 
-    //non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     // Pick one or the other of the next two routines
-    //simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     FILE *eih_file = NULL;
     eih_file = fopen("eih_acc.out", "w");

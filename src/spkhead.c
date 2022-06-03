@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 		if ((fp = fopen(argv[p], "r")) == NULL)
 			{ perror(argv[p]); continue; }
 
-		off = 1024;
+		off = 2048;
 
 		while (!feof(fp)) {
 			fseek(fp, off, SEEK_SET);
@@ -25,10 +25,10 @@ int main(int argc, char **argv)
 
 			if (buf[0] == '\0')
 				continue;
-			if (buf[0] == 0x04)
-				break;
+			//if (buf[0] == 0x04)
+			//break;
 
-			//fprintf(stdout, "'%s' %d\n", buf, off);
+			fprintf(stdout, "'%s' %d\n", buf, off);
 
 			// name comes before number
 			if ((str = strstr(buf, "Short Name:")) != NULL)
