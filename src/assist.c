@@ -86,7 +86,7 @@ static int ephem(const int i, const double jde, double* const GM,
     // from Earth-moon ratio and sum.
     const static double em_r = JPL_EPHEM_EMRAT;
     const static double GMe = em_r/(1.+em_r) * JPL_EPHEM_GMB;
-    const static double GMm = 1./(1.+em_r) * JPL_EPHEM_GMB;    
+    const static double GMm = 1./(1.+em_r) * JPL_EPHEM_GMB;
 
     // The values below are G*mass.
     // Units are solar masses, au, days.
@@ -217,16 +217,15 @@ static int ast_ephem(const int i, const double jde, double* const GM, double* co
 	if(file == NULL){
 	    fprintf(stderr, "Couldn't open asteroid file: %s\n", buf);
 	}
-	      
 
 	if ((spl = spk_init(buf)) == NULL) {	
 	    return(ERR_JPL_AST);
-      }
+	}
       
-      initialized = 1;
+	initialized = 1;
 
     }
-
+    
     // TODO: again, the units might be handled more
     // generally
 
@@ -851,8 +850,6 @@ void store_coefficients(struct reb_simulation* sim){
 	
     }else if(step > last_steps_done){
 
-	//printf("step %d\n", step);
-
 	// Convenience variable.  The 'br' field contains the 
 	// set of coefficients from the last completed step.
 	const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
@@ -1070,24 +1067,22 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     struct reb_particle* const particles = sim->particles;
 
     double GM;
-    //double x, y, z, vx, vy, vz, ax, ay, az;
 
-    // We might move this into a somewhat separate part of the code,
-    // similar to how different extra forces are typically handled in
-    // reboundx
     // 
-    // Here is the treatment of the Earth's J2 and J4.
-    // Borrowed code from gravitational_harmonics example.
+    // Here is the treatment of the Earth's J2, J3, and J4.
+    // J2 and J4 are based in part on gravitational_harmonics
+    // example in reboundx.
     // Assumes the coordinates are geocentric.
     // Also assuming that Earth's pole is along the z
     // axis.  This is only precisely true at the J2000
     // epoch.
-    //
 
     // The geocenter is the reference for the Earth J2/J4 calculations.
     double xe, ye, ze, vxe, vye, vze, axe, aye, aze;    
     all_ephem(3, t, &GM, &xe, &ye, &ze, &vxe, &vye, &vze, &axe, &aye, &aze);
-    const double GMearth = GM;    
+    const double GMearth = GM;
+
+    printf("%.16le %.16le\n", GMearth, JPL_EPHEM_GMB);
 
     double xr, yr, zr; //, vxr, vyr, vzr, axr, ayr, azr;
     xr = xe;  yr = ye;  zr = ze;
@@ -1106,6 +1101,8 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     double RAe =  359.87123273*M_PI/180.;
     double Dece =  89.88809752*M_PI/180.;
 
+    // Reverting to J2000 equatorial plane
+    // as is current done in JPL Horizons.
     RAe =  0.0*M_PI/180.;
     Dece =  90.0*M_PI/180.;
 
@@ -1114,7 +1111,7 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     double cosd = cos(Dece);
     double sind = sin(Dece);
     
-    // Rearrange this loop for efficiency
+    // TODO: Rearrange this loop for efficiency
     // Loop over test particles        
     for (int j=0; j<N_real; j++){
 
@@ -1419,7 +1416,7 @@ void non_gravs(struct reb_simulation* sim,
     // The Sun center is reference for these calculations.
     double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
     all_ephem(0, t, &GMsun, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
-    //const double GMsun = GM;    
+
     xr = xs;  yr = ys;  zr = zs;
     vxr = vxs; vyr = vys; vzr = vzs;    
 
