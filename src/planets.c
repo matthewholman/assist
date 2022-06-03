@@ -11,9 +11,11 @@
 
 #include "spk.h"
 #include "planets.h"
+#include "const.h"
 
-#define FNAMESIZE 256
-#define DEFAULT_JPL_PLANET_EPHEM "linux_m13000p17000.441"
+#ifndef JPL_EPHEM_FILE
+#define JPL_EPHEM_FILE "../linux_m13000p17000.441"
+#endif
 
 int body[11] = {
         PLAN_SOL,                       // Sun (in barycentric)
@@ -91,7 +93,7 @@ struct _jpl_s * jpl_init(void)
 {
         struct _jpl_s *jpl;
 	struct stat sb;
-	char buf[FNAMESIZE];
+	char *str;
 	ssize_t ret;
 	off_t off;
         int fd, p;
@@ -99,22 +101,14 @@ struct _jpl_s * jpl_init(void)
         /** use or environment-specified file, 
 	 * or the default filename, in that order
          */
-	memset(buf, 0, sizeof(buf));
+	if ((str = getenv("JPL_PLANET_EPHEM")) == NULL)
+		str = JPL_EPHEM_FILE;
 
-        if (getenv("JPL_PLANET_EPHEM")!=NULL)
-	    strncpy(buf, getenv("JPL_PLANET_EPHEM"), FNAMESIZE-1);
-        else
-	    strncpy(buf, DEFAULT_JPL_PLANET_EPHEM, FNAMESIZE-1);
-
-        //snprintf(buf, sizeof(buf), "linux_p1550p2650.440");
-        //snprintf(buf, sizeof(buf), "linux_m13000p17000.441");
-fprintf(stdout, "open '%s'\n", buf);
-        if ((fd = open(buf, O_RDONLY)) < 0)
+        if ((fd = open(str, O_RDONLY)) < 0)
                 return NULL;
-fprintf(stdout, "fd %d\n", fd);
+
         jpl = malloc(sizeof(struct _jpl_s));
         memset(jpl, 0, sizeof(struct _jpl_s));
-//	memset(buf, 0, sizeof(buf)); //line to replace line above
 
         if (fstat(fd, &sb) < 0)
                 goto err;

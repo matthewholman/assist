@@ -3,7 +3,7 @@
 #ifndef _JPL_CONST_H
 #define _JPL_CONST_H
 
-#define JPL_EPHEM_FILE                 "FIXME"
+#define JPL_EPHEM_FILE                 "../linux_m13000p17000.441"
 #define JPL_EPHEM_VER                  441
 #define JPL_EPHEM_NUM                  645
 #define JPL_EPHEM_BEG                  -3027215.500000
