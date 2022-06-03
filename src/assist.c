@@ -1143,38 +1143,26 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
         const double J2e_prefac = 3.*J2e*Re_eq*Re_eq/r2/r2/r/2.;
         const double J2e_fac = 5.*costheta2-1.;
 
-	//double resx = GMearth*J2e_prefac*J2e_fac*dx;
-	//double resy = GMearth*J2e_prefac*J2e_fac*dy;
-	//double resz = GMearth*J2e_prefac*(J2e_fac-2.)*dz;	
+	double resx = GMearth*J2e_prefac*J2e_fac*dx;
+	double resy = GMearth*J2e_prefac*J2e_fac*dy;
+	double resz = GMearth*J2e_prefac*(J2e_fac-2.)*dz;	
 
 	// J3 terms
         const double J3e_prefac = 5.*J3e*Re_eq*Re_eq*Re_eq/r2/r2/r/2.;
         const double J3e_fac = 3.-7.*costheta2;
 
-        //resx += GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
-        //resy += GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
-        //resz += GMearth*J3e_prefac*(((1./r2)*2*costheta2*J3e_fac)+7.*costheta2*costheta2-0.6);
-
-        //resx += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
-        //resy += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
-	//resz += -GMearth*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
-
-        double resx = -GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
-        double resy = -GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
-	double resz = -GMearth*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
+        resx += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
+        resy += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
+	resz += -GMearth*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
 	
 	// J4 terms
         const double J4e_prefac = 5.*J4e*Re_eq*Re_eq*Re_eq*Re_eq/r2/r2/r2/r/8.;
         const double J4e_fac = 63.*costheta2*costheta2-42.*costheta2 + 3.;
 
-        //resx += GMearth*J4e_prefac*J4e_fac*dx;
-        //resy += GMearth*J4e_prefac*J4e_fac*dy;
-        //resz += GMearth*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
+        resx += GMearth*J4e_prefac*J4e_fac*dx;
+        resy += GMearth*J4e_prefac*J4e_fac*dy;
+        resz += GMearth*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
 
-        //double resx = GMearth*J4e_prefac*J4e_fac*dx;
-        //double resy = GMearth*J4e_prefac*J4e_fac*dy;
-        //double resz = GMearth*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
-	
 	// Rotate back to original frame
 	double resxp = - resx*sina      - resy*cosa*sind + resz*cosa*cosd;
 	double resyp =   resx*cosa      - resy*sina*sind + resz*sina*cosd;
@@ -1219,14 +1207,6 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 	const double dydzJ3 = GMearth*J3e_prefac*J3e_fac3*dy;
 	const double dxdzJ3 = GMearth*J3e_prefac*J3e_fac3*dx;
 
-/*
-        const double dxdxJ3 = (2.5*GMearth*J3e*Re_eq*Re_eq*Re_eq)*(-63.*dx*dx*dz*dz*dz/r2/r2/r2/r2/r2/r + 7.*dz*dz*dz/r2/r2/r2/r2/r 
-                                                                   +21.*dx*dx*dz/r2/r2/r2/r2/r           - 3.*dz/r2/r2/r2/r);
-        const double dydyJ3 = (2.5*GMearth*J3e*Re_eq*Re_eq*Re_eq)*(-63.*dy*dy*dz*dz*dz/r2/r2/r2/r2/r2/r + 7.*dz*dz*dz/r2/r2/r2/r2/r 
-                                                                   +21.*dy*dy*dz/r2/r2/r2/r2/r           - 3.*dz/r2/r2/r2/r);
-        const double dzdzJ3 = (0.5*GMearth*J3e*Re_eq*Re_eq*Re_eq)*(-315*dz*dz*dz*dz*dz/r2/r2/r2/r2/r2/r + 350.*dz*dz*dz/r2/r2/r2/r2/r -75.*dz/r2/r2/r2/r);
-*/
-
 	// J4 terms
         const double J4e_fac2= 33.*costheta2*costheta2-18.*costheta2 + 1.;
         const double J4e_fac3= 33.*costheta2*costheta2-30.*costheta2 + 5.;
@@ -1257,23 +1237,19 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 
 		// Matrix multiplication
 		// J2 part
-		//double dax =   ddxp * dxdx + ddyp * dxdy + ddzp * dxdz;
-		//double day =   ddxp * dxdy + ddyp * dydy + ddzp * dydz;
-		//double daz =   ddxp * dxdz + ddyp * dydz + ddzp * dzdz;
+		double dax =   ddxp * dxdx + ddyp * dxdy + ddzp * dxdz;
+		double day =   ddxp * dxdy + ddyp * dydy + ddzp * dydz;
+		double daz =   ddxp * dxdz + ddyp * dydz + ddzp * dzdz;
 
 		// J3 part		
-		//dax +=   ddxp * dxdxJ3 + ddyp * dxdyJ3 + ddzp * dxdzJ3;
-		//day +=   ddxp * dxdyJ3 + ddyp * dydyJ3 + ddzp * dydzJ3;
-		//daz +=   ddxp * dxdzJ3 + ddyp * dydzJ3 + ddzp * dzdzJ3;
+		dax +=   ddxp * dxdxJ3 + ddyp * dxdyJ3 + ddzp * dxdzJ3;
+		day +=   ddxp * dxdyJ3 + ddyp * dydyJ3 + ddzp * dydzJ3;
+		daz +=   ddxp * dxdzJ3 + ddyp * dydzJ3 + ddzp * dzdzJ3;
 
-		double dax =   ddxp * dxdxJ3 + ddyp * dxdyJ3 + ddzp * dxdzJ3;
-		double day =   ddxp * dxdyJ3 + ddyp * dydyJ3 + ddzp * dydzJ3;
-		double daz =   ddxp * dxdzJ3 + ddyp * dydzJ3 + ddzp * dzdzJ3;
-		
 		// J4 part		
-		//dax +=   ddxp * dxdxJ4 + ddyp * dxdyJ4 + ddzp * dxdzJ4;
-		//day +=   ddxp * dxdyJ4 + ddyp * dydyJ4 + ddzp * dydzJ4;
-		//daz +=   ddxp * dxdzJ4 + ddyp * dydzJ4 + ddzp * dzdzJ4;
+		dax +=   ddxp * dxdxJ4 + ddyp * dxdyJ4 + ddzp * dxdzJ4;
+		day +=   ddxp * dxdyJ4 + ddyp * dydyJ4 + ddzp * dydzJ4;
+		daz +=   ddxp * dxdzJ4 + ddyp * dydzJ4 + ddzp * dzdzJ4;
 
 		// Rotate back to original frame
 		double daxp = - dax*sina      - day*cosa*sind + daz*cosa*cosd;
