@@ -500,6 +500,7 @@ int nsubsteps = 10;
 // invar_part:  index of host particle that each variational
 //              particle refers to.
 // invar:       input states of variational particles
+// part_const   non-grav. constants characterizing test particles
 // n_alloc:     number of overall times steps for which there
 //              is space allocated.
 // nsubsteps:   number of substeps of output per overall
