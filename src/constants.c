@@ -50,8 +50,12 @@ int main(int argc, char **argv)
 	fprintf(fp, "#define JPL_EPHEM_%-20s %.16e\n", "CEM", pl->cem);
 	fprintf(fp, "#define JPL_EPHEM_%-20s %.16e\n", "CAU", pl->cau);
 
+	for (p = 0; p < pl->num; p++)
+		fprintf(fp, "#define JPL_EPHEM_%-20s %.16e\t// %d\n", pl->str[p], pl->con[p], p);
+	/*
 	for (num = max = p = 0; p < pl->num; p++) {
 		// print all non-mass terms
+	    
 		if (pl->str[p][0] != 'M' || pl->str[p][1] != 'A')
 			fprintf(fp, "#define JPL_EPHEM_%-20s %.16e\t// %d\n", pl->str[p], pl->con[p], p);
 		else {
@@ -63,6 +67,7 @@ int main(int argc, char **argv)
 		    num += 1;
 		}
 	}
+	*/
 
 
 	fprintf(fp, "\n#endif // _JPL_CONST_H\n\n");
