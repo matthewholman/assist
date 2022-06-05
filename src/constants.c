@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 	fprintf(fp, "#define _JPL_CONST_H\n\n");
 
 	// write all the constants out ... we could save a default filename
-	fprintf(fp, "#define JPL_EPHEM_%-20s \"%s\"\n", "FILE", argv[1]);
+	fprintf(fp, "//#define JPL_EPHEM_%-20s \"%s\"\n", "FILE", argv[1]);
 	fprintf(fp, "#define JPL_EPHEM_%-20s %02d\n", "VER", pl->ver);
 	fprintf(fp, "#define JPL_EPHEM_%-20s %02d\n", "NUM", pl->num);
 	fprintf(fp, "#define JPL_EPHEM_%-20s %.6f\n", "BEG", pl->beg);
