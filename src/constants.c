@@ -55,14 +55,15 @@ int main(int argc, char **argv)
 		if (pl->str[p][0] != 'M' || pl->str[p][1] != 'A')
 			fprintf(fp, "#define JPL_EPHEM_%-20s %.16e\t// %d\n", pl->str[p], pl->con[p], p);
 		else {
-			sscanf(pl->str[p], "MA%d", &max);
-			num += 1;
+		    // FIXME : these could be used to show how many mass values are available from jpl_mass()
+		    sscanf(pl->str[p], "MA%d", &max);
+		    fprintf(fp, "\n#define JPL_EPHEM_AST %d\n", num);
+		    //fprintf(fp, "#define JPL_EPHEM_MAX %d\n", max);
+		    //printf("max: %d\n", max);
+		    num += 1;
 		}
 	}
 
-// FIXME : these could be used to show how many mass values are available from jpl_mass()
-//	fprintf(fp, "\n#define JPL_EPHEM_AST %d\n", num);
-//	fprintf(fp, "#define JPL_EPHEM_MAX %d\n", max);
 
 	fprintf(fp, "\n#endif // _JPL_CONST_H\n\n");
 	jpl_free(pl);
