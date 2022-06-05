@@ -52,6 +52,12 @@ typedef struct {
     int n_particles;
 } timestate;
 
+typedef struct {
+    double A1;
+    double A2;
+    double A3;        
+} particle_const;
+
 struct assist_extras {
     struct reb_simulation* sim;
     double* c;
@@ -60,6 +66,7 @@ struct assist_extras {
     timestate* ts;
     int nsubsteps;
     double* hg;
+    particle_const* part_const;    
 };
 
 /**
@@ -105,14 +112,14 @@ int integration_function(double tstart, double tend, double tstep,
 			 int n_var,
 			 int* invar_part,			 
 			 double* invar,
+			 particle_const* part_cons,
 			 int n_alloc,			 
 			 int *n_out,
-			 int n_substeps,
+			 int nsubsteps,
 			 double* hg,
 			 double* outtime,
 			 double* outstate,
 			 double min_dt);
-                         //double max_dt);
 
 void heartbeat(struct reb_simulation* r);
 

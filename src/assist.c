@@ -318,19 +318,23 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     const int N_tot = number_bodies(&N_ephem, &N_ast);    
 
+    // The limit of the EIH GR limit should be a free
+    // parameter
     int eih_loop_limit = N_ephem; // = 1;
 
     const double t = sim->t;
 
     double GM;
 
-    // Get mass, position, velocity, and acceleration of the Earth for later use.
-    // The offset position is used to adjust the particle positions.
-    // The options are the barycenter (default) and geocenter.
     double xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo;
 
+    // Check which center is used.
+    // The current options are the barycenter (default) and geocenter.
+    // We might consider adding the heliocenter.
     if(*geo == 1){
 	// geocentric
+	// Get mass, position, velocity, and acceleration of the Earth for later use.
+	// The offset position is used to adjust the particle positions.
 	int flag = all_ephem(3, t, &GM, &xo, &yo, &zo, &vxo, &vyo, &vzo, &axo, &ayo, &azo);
 	if(flag != NO_ERR){
 	    char outstring[50];
@@ -509,6 +513,7 @@ int integration_function(double tstart, double tend, double tstep,
 			 int n_var,
 			 int* invar_part,			 
 			 double* invar,
+			 particle_const* part_const,
 			 int n_alloc,			 
 			 int *n_out,
 			 int nsubsteps,
@@ -518,6 +523,12 @@ int integration_function(double tstart, double tend, double tstep,
 			 double min_dt){
 
     struct reb_simulation* sim = reb_create_simulation();
+
+    if(part_const != NULL){
+	for(int i=0; i<n_particles; i++){
+	    printf("%d %lf %lf %lf\n", i, part_const[i].A1, part_const[i].A2, part_const[i].A3);
+	}
+    }
 
     sim->t = tstart;
     sim->dt = tstep;    // time step in days, this is just an initial value.
@@ -596,21 +607,18 @@ int integration_function(double tstart, double tend, double tstep,
     assist->nsubsteps = nsubsteps;
     assist->hg = hg;
 
+    assist->part_const = part_const;    
+
     ts->n_particles = n_particles;
     ts->n_alloc = n_alloc;
 
     reb_integrate(sim, tend);
 
     if (sim->messages){
-	printf("error\n");
-	fflush(stdout);
 	for(int i=0; i<reb_max_messages_N; i++){
 	    printf("mess: %d", i);
-	    fflush(stdout);
 	    if(sim->messages[i] != NULL){
 		printf("%d %s", i, sim->messages[i]);
-		printf("blah\n");
-		fflush(stdout);
 	    }
 	}
     }
@@ -1082,8 +1090,6 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     all_ephem(3, t, &GM, &xe, &ye, &ze, &vxe, &vye, &vze, &axe, &aye, &aze);
     const double GMearth = GM;
 
-    printf("%.16le %.16le\n", GMearth, JPL_EPHEM_GMB);
-
     double xr, yr, zr; //, vxr, vyr, vzr, axr, ayr, azr;
     xr = xe;  yr = ye;  zr = ze;
 
@@ -1406,6 +1412,20 @@ void non_gravs(struct reb_simulation* sim,
 
     struct reb_particle* const particles = sim->particles;
 
+    struct assist_extras* assist = (struct assist_extras*) sim->extras;
+
+    particle_const* part_const = NULL;
+    printf("%p\n", assist->part_const);
+    
+    if(assist->part_const == NULL)
+	return;
+    
+    //particle_const*
+    part_const = assist->part_const;
+    for(int i=0; i<N_real; i++){
+	printf("ng: %d %lf %lf %lf\n", i, part_const[i].A1, part_const[i].A2, part_const[i].A3);
+    }
+
     double GMsun;
     //double x, y, z, vx, vy, vz, ax, ay, az;
 
@@ -1426,9 +1446,9 @@ void non_gravs(struct reb_simulation* sim,
     // Figure out a good way to pass in the non-grav terms
     
     // Normal asteroids
-    double A1 = 0.0;
-    double A2 = 0.0;
-    double A3 = 0.0;
+    //double A1 = 0.0;
+    //double A2 = 0.0;
+    //double A3 = 0.0;
 
     // 2020 CD3
     //double A1= 1.903810165823E-10;
@@ -1444,10 +1464,21 @@ void non_gravs(struct reb_simulation* sim,
     //double A1 = 2.840852439404E-9; //0.0;
     //double A2 = -2.521527931094E-10;
     //double A3= 2.317289821804E-10;
+
+    // if no particles have non-zero non-grav
+    // constants, skip the whole thing.
     
     // Loop over test particles
     for (int j=0; j<N_real; j++){
 
+	double A1 = part_const[j].A1;
+	double A2 = part_const[j].A2;
+	double A3 = part_const[j].A3;
+
+	// If A1, A2, and A3 are zero, skip.
+	if(A1==0. && A2==0. && A3==0.)
+	    continue;
+	
         const struct reb_particle p = particles[j];
         double dx = p.x + (xo - xr);
         double dy = p.y + (yo - yr);
@@ -1456,6 +1487,7 @@ void non_gravs(struct reb_simulation* sim,
         const double r2 = dx*dx + dy*dy + dz*dz;
         const double r = sqrt(r2);
 
+	// We may need to make this more general.
 	const double g = 1.0/r2;
 
 	double dvx = p.vx + (vxo - vxr);
@@ -1480,7 +1512,7 @@ void non_gravs(struct reb_simulation* sim,
         particles[j].ay += A1*g*dy/r + A2*g*ty/_t + A3*g*hy/h;
         particles[j].az += A1*g*dz/r + A2*g*tz/_t + A3*g*hz/h;
 
-//      variational matrix elements
+	// variational matrix elements
 	// Only evaluate the constants if there are variational particles
 
         const double r3    = r*r*r;
