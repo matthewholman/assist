@@ -218,7 +218,8 @@ static int ast_ephem(const int i, const double jde, double* const GM, double* co
 	    fprintf(stderr, "Couldn't open asteroid file: %s\n", buf);
 	}
 
-	if ((spl = spk_init(buf)) == NULL) {	
+	if ((spl = spk_init(buf)) == NULL) {
+	    printf("Could find asteroid ephemeris file: %s\n", buf);
 	    return(ERR_JPL_AST);
 	}
       
@@ -348,10 +349,14 @@ void assist_additional_forces(struct reb_simulation* sim){
 	axo = 0.0; ayo = 0.0; azo = 0.0;	
     }
 
-    // TODO: eliminate the output files after testing.
+    // TODO: eliminate the output files after testing
+    // or make this more flexible
     FILE *outfile = NULL;
     outfile = fopen("acc.out", "w");
 
+    // These should be executed in order from smallest
+    // to largest
+    
     direct(sim, xo, yo, zo, outfile);
 
     earth_J2J4(sim, xo, yo, zo, outfile);
@@ -1612,12 +1617,12 @@ void non_gravs(struct reb_simulation* sim,
 	    if(tp == j){
 	
 		// variational particle coords -- transformed to appropriate coord system.
-		double ddx = particles_var1[0].x;// + (xo - xr);
-		double ddy = particles_var1[0].y;// + (yo - yr);
-		double ddz = particles_var1[0].z;// + (zo - zr);
-		double ddvx = particles_var1[0].vx;// + (vxo - vxr);
-		double ddvy = particles_var1[0].vy;// + (vyo - vyr);
-		double ddvz = particles_var1[0].vz;// + (vzo - vzr);
+		double ddx = particles_var1[0].x;
+		double ddy = particles_var1[0].y;
+		double ddz = particles_var1[0].z;
+		double ddvx = particles_var1[0].vx;
+		double ddvy = particles_var1[0].vy;
+		double ddvz = particles_var1[0].vz;
 
 		// Matrix multiplication
 		const double dax =   ddx  * dxdx  + ddy  * dxdy  + ddz  * dxdz
