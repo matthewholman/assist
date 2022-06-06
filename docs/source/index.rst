@@ -31,4 +31,5 @@ Contents
 
 .. toctree::
 
+   quickstart
    usage
