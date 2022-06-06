@@ -3,8 +3,15 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Assist's documentation!
+Welcome to ASSIST's documentation!
 ==================================
+
+**ASSIST** is a package supporting high-accuracy ephemeric calculations for small Solar System bodies 
+in REBOUND <https://rebound.readthedocs.io/>.
+
+.. note::
+
+   This project is under active development
 
 .. toctree::
    :maxdepth: 2
