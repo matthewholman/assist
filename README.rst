@@ -1,4 +1,5 @@
-[![Version](https://img.shields.io/badge/assist-v1.0.0-green.svg?style=flat)](https://assist.readthedocs.org)
+.. image:: https://img.shields.io/badge/assist-v1.0.0-green.svg?style=flat
+    :target: https://assist.readthedocs.org
 
 ASSIST
 ======
