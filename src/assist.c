@@ -301,6 +301,8 @@ int all_ephem(const int i, const double t, double* const GM,
     return(NO_ERR);
 }
 
+//void assist_add(struct assist_extras* assist, params);
+
 void assist_additional_forces(struct reb_simulation* sim){
 
     // implement additional_forces here    
@@ -518,8 +520,11 @@ int integration_function(double tstart, double tend, double tstep,
 			 int n_var,
 			 int* invar_part,			 
 			 double* invar,
+			 particle_const* part_params,
+			 // need to pass in the particle constants for variational particles too
 			 //particle_const* part_const,
-			 double* part_const,
+			 //double* part_const,
+			 particle_const* var_part_params,			 
 			 int n_alloc,			 
 			 int *n_out,
 			 int nsubsteps,
@@ -530,14 +535,22 @@ int integration_function(double tstart, double tend, double tstep,
 
     struct reb_simulation* sim = reb_create_simulation();
 
-    if(part_const != NULL){
+    if(part_params != NULL){
 	for(int i=0; i<n_particles; i++){
-	    //printf("%d %lf %lf %lf\n", i, part_const[i].A1, part_const[i].A2, part_const[i].A3);
-	    printf("%d %lf %lf %lf\n", i,
-		   part_const[3*i+0], part_const[3*i+1], part_const[3*i+2]);	    
+	    printf("%d %lf %lf %lf\n", i, part_params[i].A1, part_params[i].A2, part_params[i].A3);
+	    //printf("%d %lf %lf %lf\n", i,
+	    //part_params[3*i+0], part_params[3*i+1], part_params[3*i+2]);	    
 	}
     }
 
+    if(var_part_params != NULL){
+	for(int i=0; i<n_var; i++){
+	    printf("var %d %lf %lf %lf\n", i, var_part_params[i].A1, var_part_params[i].A2, var_part_params[i].A3);
+	    //printf("%d %lf %lf %lf\n", i,
+	    //part_params[3*i+0], part_params[3*i+1], part_params[3*i+2]);	    
+	}
+    }
+    
     sim->t = tstart;
     sim->dt = tstep;    // time step in days, this is just an initial value.
 
@@ -567,7 +580,10 @@ int integration_function(double tstart, double tend, double tstep,
     sim->ri_ias15.min_dt = min_dt;    // to avoid very small time steps (default: 0.0, suggestion 1e-2)
     //sim->ri_ias15.max_dt = max_dt;  // to avoid very large time steps (default: inf, suggestion 32.0)
     //sim->ri_ias15.epsilon = 1e-8;   // to avoid convergence issue with geocentric orbits (default: 1e-9)
-    sim->ri_ias15.epsilon = epsilon;  // to avoid convergence issue with geocentric orbits (default: 1e-9)       
+    sim->ri_ias15.epsilon = epsilon;  // to avoid convergence issue with geocentric orbits (default: 1e-9)
+
+    // Attach the assist struct to the simulation.
+    struct assist_extras* assist = assist_attach(sim);
 
     // Add and initialize particles    
     for(int i=0; i<n_particles; i++){
@@ -581,26 +597,48 @@ int integration_function(double tstart, double tend, double tstep,
 	tp.vy =  instate[6*i+4];
 	tp.vz =  instate[6*i+5];
 
+	// Could probably tie the next two statements together
+	// in one function
 	reb_add(sim, tp);
+	assist->N++;
+	assist->particle_params = realloc(assist->particle_params, (assist->N)*sizeof(particle_const));
+	assist->particle_params[i].A1 = part_params[i].A1;
+	assist->particle_params[i].A2 = part_params[i].A2;
+	assist->particle_params[i].A3 = part_params[i].A3;		
+	//printf("%d %lf %lf %lf\n", i, part_params[i].A1, part_params[i].A2, part_params[i].A3);	
+	//assist_add(assist, params);	
     }
 
     // Add and initialize variational particles
     for(int i=0; i<n_var; i++){
 
-	// invar_part[i] contains the index of the test particle that we vary.	
+	// invar_part[i] contains the index of the test particle that we vary.
+	// Could probably tie the next two statements together
+	// in one function
         int var_i = reb_add_var_1st_order(sim, invar_part[i]);
+	//assist_add(assist, params);	
 	
         sim->particles[var_i].x =  invar[6*i+0]; 
         sim->particles[var_i].y =  invar[6*i+1]; 
         sim->particles[var_i].z =  invar[6*i+2]; 
         sim->particles[var_i].vx = invar[6*i+3]; 
         sim->particles[var_i].vy = invar[6*i+4]; 
-        sim->particles[var_i].vz = invar[6*i+5]; 
+        sim->particles[var_i].vz = invar[6*i+5];
+
+	assist->N++;
+	assist->particle_params = realloc(assist->particle_params, (assist->N)*sizeof(particle_const));
+	assist->particle_params[var_i].A1 = var_part_params[i].A1;
+	assist->particle_params[var_i].A2 = var_part_params[i].A2;
+	assist->particle_params[var_i].A3 = var_part_params[i].A3;		
+
+	// If non-gravs are being considered and the derivatives w.r.t.
+	// the non-grav parameters are needed, 
+	// this is the place to add a parameter variation array for
+	// each variational particle.  These need to point to the
+	// same variational particle, and that index probably needs
+	// to be stored in a structure.
  
     }
-
-    // Attach the assist struct to the simulation.
-    struct assist_extras* assist = assist_attach(sim);
 
     // Allocate memory.
     timestate *ts = (timestate*) malloc(sizeof(timestate));
@@ -615,7 +653,7 @@ int integration_function(double tstart, double tend, double tstep,
     assist->nsubsteps = nsubsteps;
     assist->hg = hg;
 
-    assist->part_const = part_const;    
+    //assist->part_params = part_params;    
 
     ts->n_particles = n_particles;
     ts->n_alloc = n_alloc;
@@ -1415,6 +1453,7 @@ void non_gravs(struct reb_simulation* sim,
 
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
+    const unsigned int N_var = sim->N_var;  // N includes real+variational particles    
 
     const double t = sim->t;    
 
@@ -1423,18 +1462,18 @@ void non_gravs(struct reb_simulation* sim,
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
 
     //particle_const* part_const = NULL;
-    double* part_const = NULL;    
-    printf("%p\n", assist->part_const);
+    particle_const* part_params = NULL;    
+    printf("%p\n", assist->particle_params);
     
-    if(assist->part_const == NULL)
+    if(assist->particle_params == NULL)
 	return;
     
     //particle_const*
-    part_const = assist->part_const;
-    for(int i=0; i<N_real; i++){
-	//printf("ng: %d %lf %lf %lf\n", i, part_const[i].A1, part_const[i].A2, part_const[i].A3);
-	printf("ng: %d %lf %lf %lf\n", i,
-	       part_const[3*i+0], part_const[3*i+1], part_const[3*i+2]);	
+    part_params = assist->particle_params;
+    for(int i=0; i<N_real+N_var; i++){
+	printf("ng: %d %lf %lf %lf\n", i, part_params[i].A1, part_params[i].A2, part_params[i].A3);
+	//printf("ng: %d %lf %lf %lf\n", i,
+	//part_params[3*i+0], part_params[3*i+1], part_params[3*i+2]);	
     }
 
     double GMsun;
@@ -1482,12 +1521,12 @@ void non_gravs(struct reb_simulation* sim,
     // Loop over test particles
     for (int j=0; j<N_real; j++){
 
-	//double A1 = part_const[j].A1;
-	//double A2 = part_const[j].A2;
-	//double A3 = part_const[j].A3;
-	double A1 = part_const[3*j+0];
-	double A2 = part_const[3*j+1];
-	double A3 = part_const[3*j+2];
+	double A1 = part_params[j].A1;
+	double A2 = part_params[j].A2;
+	double A3 = part_params[j].A3;
+	//double A1 = part_const[3*j+0];
+	//double A2 = part_const[3*j+1];
+	//double A3 = part_const[3*j+2];
 
 	// If A1, A2, and A3 are zero, skip.
 	if(A1==0. && A2==0. && A3==0.)
@@ -1558,7 +1597,7 @@ void non_gravs(struct reb_simulation* sim,
 	const double dxdA3 = g*hx/h;
 	const double dydA3 = g*hy/h;
 	const double dzdA3 = g*hz/h;
-	
+
 	const double dxdx = A1*(dgx*dx/r + g*(1./r - dx*dx/r3)) 
 	    + A2*(dgx*tx/_t + g*((dx*dvx - rdotv)/_t - txt3*(2.*dx*vdott - rdotv*tx)))
 	    + A3*(dgx*hx/h + g*(-hxh3)*(v2*dx - rdotv*dvx));
@@ -1644,6 +1683,12 @@ void non_gravs(struct reb_simulation* sim,
 		double ddvx = particles_var1[0].vx;
 		double ddvy = particles_var1[0].vy;
 		double ddvz = particles_var1[0].vz;
+
+		double dA1 = part_params[N_real+v].A1;
+		double dA2 = part_params[N_real+v].A2;
+		double dA3 = part_params[N_real+v].A3;
+
+		printf("dA123: %lf %lf %lf\n", dA1, dA2, dA3);
 
 		// Get the dA1, dA2, dA3 values.  These would normally be
 		// 0 or 1, and they don't change with time

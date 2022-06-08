@@ -58,6 +58,14 @@ typedef struct {
     double A3;        
 } particle_const;
 
+/*
+typedef struct {
+    double A1;
+    double A2;
+    double A3;        
+} particle_params;
+*/
+
 struct assist_extras {
     struct reb_simulation* sim;
     double* c;
@@ -67,7 +75,9 @@ struct assist_extras {
     int nsubsteps;
     double* hg;
     //    particle_const* part_const;
-    double* part_const;        
+    particle_const* particle_params;
+    //double* particle_params;
+    int N;
 };
 
 /**
@@ -113,8 +123,10 @@ int integration_function(double tstart, double tend, double tstep,
 			 int n_var,
 			 int* invar_part,			 
 			 double* invar,
+			 particle_const* part_params,
 			 //particle_const* part_cons,
-			 double* part_cons,			 
+			 //double* part_cons,
+			 particle_const* var_part_params,			 
 			 int n_alloc,			 
 			 int *n_out,
 			 int nsubsteps,
