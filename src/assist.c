@@ -1684,6 +1684,8 @@ void non_gravs(struct reb_simulation* sim,
 		double ddvy = particles_var1[0].vy;
 		double ddvz = particles_var1[0].vz;
 
+		// Getting the variations in the non-grav params
+		// There might be cleaner way to do this indexing.
 		double dA1 = part_params[N_real+v].A1;
 		double dA2 = part_params[N_real+v].A2;
 		double dA3 = part_params[N_real+v].A3;
@@ -1695,11 +1697,11 @@ void non_gravs(struct reb_simulation* sim,
 
 		// Matrix multiplication
 		const double dax =   ddx  * dxdx  + ddy  * dxdy  + ddz  * dxdz
-		    +   ddvx * dxdvx + ddvy * dxdvy + ddvz * dxdvz; // + dA1*dxdA1 + dA2*dxdA2 + dA3*dxdA3;
+		    +   ddvx * dxdvx + ddvy * dxdvy + ddvz * dxdvz + dA1*dxdA1 + dA2*dxdA2 + dA3*dxdA3;
 		const double day =   ddx  * dydx  + ddy  * dydy  + ddz  * dydz
-		    +   ddvx * dydvx + ddvy * dydvy + ddvz * dydvz; // + dA1*dydA1 + dA2*dydA2 + dA3*dydA3;
+		    +   ddvx * dydvx + ddvy * dydvy + ddvz * dydvz + dA1*dydA1 + dA2*dydA2 + dA3*dydA3;
 		const double daz =   ddx  * dzdx  + ddy  * dzdy  + ddz  * dzdz
-		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz; // + dA1*dzdA1 + dA2*dzdA2 + dA3*dzdA3;
+		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz + dA1*dzdA1 + dA2*dzdA2 + dA3*dzdA3;
 
 		// Accumulate acceleration terms
 		particles_var1[0].ax += dax;
