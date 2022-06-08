@@ -66,7 +66,8 @@ struct assist_extras {
     timestate* ts;
     int nsubsteps;
     double* hg;
-    particle_const* part_const;    
+    //    particle_const* part_const;
+    double* part_const;        
 };
 
 /**
@@ -112,7 +113,8 @@ int integration_function(double tstart, double tend, double tstep,
 			 int n_var,
 			 int* invar_part,			 
 			 double* invar,
-			 particle_const* part_cons,
+			 //particle_const* part_cons,
+			 double* part_cons,			 
 			 int n_alloc,			 
 			 int *n_out,
 			 int nsubsteps,

@@ -510,7 +510,6 @@ int nsubsteps = 10;
 // outtime:     array of output times.
 // outstate:    array of output states.
 // min_dt:      minimum allowed time step.
-
 int integration_function(double tstart, double tend, double tstep,
 			 int geocentric,
 			 double epsilon,
@@ -519,7 +518,8 @@ int integration_function(double tstart, double tend, double tstep,
 			 int n_var,
 			 int* invar_part,			 
 			 double* invar,
-			 particle_const* part_const,
+			 //particle_const* part_const,
+			 double* part_const,
 			 int n_alloc,			 
 			 int *n_out,
 			 int nsubsteps,
@@ -532,7 +532,9 @@ int integration_function(double tstart, double tend, double tstep,
 
     if(part_const != NULL){
 	for(int i=0; i<n_particles; i++){
-	    printf("%d %lf %lf %lf\n", i, part_const[i].A1, part_const[i].A2, part_const[i].A3);
+	    //printf("%d %lf %lf %lf\n", i, part_const[i].A1, part_const[i].A2, part_const[i].A3);
+	    printf("%d %lf %lf %lf\n", i,
+		   part_const[3*i+0], part_const[3*i+1], part_const[3*i+2]);	    
 	}
     }
 
@@ -1420,7 +1422,8 @@ void non_gravs(struct reb_simulation* sim,
 
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
 
-    particle_const* part_const = NULL;
+    //particle_const* part_const = NULL;
+    double* part_const = NULL;    
     printf("%p\n", assist->part_const);
     
     if(assist->part_const == NULL)
@@ -1429,7 +1432,9 @@ void non_gravs(struct reb_simulation* sim,
     //particle_const*
     part_const = assist->part_const;
     for(int i=0; i<N_real; i++){
-	printf("ng: %d %lf %lf %lf\n", i, part_const[i].A1, part_const[i].A2, part_const[i].A3);
+	//printf("ng: %d %lf %lf %lf\n", i, part_const[i].A1, part_const[i].A2, part_const[i].A3);
+	printf("ng: %d %lf %lf %lf\n", i,
+	       part_const[3*i+0], part_const[3*i+1], part_const[3*i+2]);	
     }
 
     double GMsun;
@@ -1477,9 +1482,12 @@ void non_gravs(struct reb_simulation* sim,
     // Loop over test particles
     for (int j=0; j<N_real; j++){
 
-	double A1 = part_const[j].A1;
-	double A2 = part_const[j].A2;
-	double A3 = part_const[j].A3;
+	//double A1 = part_const[j].A1;
+	//double A2 = part_const[j].A2;
+	//double A3 = part_const[j].A3;
+	double A1 = part_const[3*j+0];
+	double A2 = part_const[3*j+1];
+	double A3 = part_const[3*j+2];
 
 	// If A1, A2, and A3 are zero, skip.
 	if(A1==0. && A2==0. && A3==0.)
@@ -1539,6 +1547,18 @@ void non_gravs(struct reb_simulation* sim,
         const double tyt3 = ty/(_t*_t*_t);
         const double tzt3 = tz/(_t*_t*_t);
 
+	const double dxdA1 = g*dx/r;
+	const double dydA1 = g*dy/r;
+	const double dzdA1 = g*dz/r;
+
+	const double dxdA2 = g*tx/_t;
+	const double dydA2 = g*ty/_t;
+	const double dzdA2 = g*tz/_t;
+
+	const double dxdA3 = g*hx/h;
+	const double dydA3 = g*hy/h;
+	const double dzdA3 = g*hz/h;
+	
 	const double dxdx = A1*(dgx*dx/r + g*(1./r - dx*dx/r3)) 
 	    + A2*(dgx*tx/_t + g*((dx*dvx - rdotv)/_t - txt3*(2.*dx*vdott - rdotv*tx)))
 	    + A3*(dgx*hx/h + g*(-hxh3)*(v2*dx - rdotv*dvx));
@@ -1624,6 +1644,9 @@ void non_gravs(struct reb_simulation* sim,
 		double ddvx = particles_var1[0].vx;
 		double ddvy = particles_var1[0].vy;
 		double ddvz = particles_var1[0].vz;
+
+		// Get the dA1, dA2, dA3 values.  These would normally be
+		// 0 or 1, and they don't change with time
 
 		// Matrix multiplication
 		const double dax =   ddx  * dxdx  + ddy  * dxdy  + ddz  * dxdz

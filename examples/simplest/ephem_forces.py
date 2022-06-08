@@ -44,7 +44,7 @@ def all_ephem(i, t):
     
     """
     
-    # Set up call to integration_function
+    # Set up call to all_ephem
     _all_ephem = assist_lib.all_ephem
     _all_ephem.restype = c_int
     _all_ephem.argtypes = (c_int, c_double, 
@@ -82,6 +82,7 @@ def integration_function(tstart, tend, tstep,
                          geocentric,
                          n_particles,
                          instate_arr,
+                         part_const_arr,
                          n_var,
                          invar_part,                         
                          invar,
@@ -105,6 +106,7 @@ def integration_function(tstart, tend, tstep,
                                       POINTER(c_double),
                                       c_int,
                                       POINTER(c_int),
+                                      POINTER(c_double),
                                       POINTER(c_double),
                                       c_int,
                                       POINTER(c_int),
@@ -151,6 +153,7 @@ def integration_function(tstart, tend, tstep,
                                              n_var,
                                              invar_part.ctypes.data_as(POINTER(c_int)),
                                              invar.ctypes.data_as(POINTER(c_double)),
+                                             part_const_arr.ctypes.data_as(POINTER(c_double)),                                             
                                              n_alloc,
                                              byref(n_out),
                                              nsubsteps,
