@@ -1650,11 +1650,11 @@ void non_gravs(struct reb_simulation* sim,
 
 		// Matrix multiplication
 		const double dax =   ddx  * dxdx  + ddy  * dxdy  + ddz  * dxdz
-		    +   ddvx * dxdvx + ddvy * dxdvy + ddvz * dxdvz;
+		    +   ddvx * dxdvx + ddvy * dxdvy + ddvz * dxdvz; // + dA1*dxdA1 + dA2*dxdA2 + dA3*dxdA3;
 		const double day =   ddx  * dydx  + ddy  * dydy  + ddz  * dydz
-		    +   ddvx * dydvx + ddvy * dydvy + ddvz * dydvz;
+		    +   ddvx * dydvx + ddvy * dydvy + ddvz * dydvz; // + dA1*dydA1 + dA2*dydA2 + dA3*dydA3;
 		const double daz =   ddx  * dzdx  + ddy  * dzdy  + ddz  * dzdz
-		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
+		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz; // + dA1*dzdA1 + dA2*dzdA2 + dA3*dzdA3;
 
 		// Accumulate acceleration terms
 		particles_var1[0].ax += dax;
