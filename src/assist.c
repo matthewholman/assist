@@ -24,7 +24,7 @@
  */
 
 #define FNAMESIZE 256
-#define DEFAULT_JPL_SB_EPHEM "sb441-n16.bsp"
+#define DEFAULT_JPL_SB_EPHEM "../../data/sb441-n16.bsp"
 #include "const.h"
 
 #include <stdlib.h>
@@ -521,10 +521,7 @@ int integration_function(double tstart, double tend, double tstep,
 			 int* invar_part,			 
 			 double* invar,
 			 particle_const* part_params,
-			 // need to pass in the particle constants for variational particles too
-			 //particle_const* part_const,
-			 //double* part_const,
-			 particle_const* var_part_params,			 
+			 particle_const* var_part_params, // particle constants for variational particles too
 			 int n_alloc,			 
 			 int *n_out,
 			 int nsubsteps,
@@ -553,11 +550,6 @@ int integration_function(double tstart, double tend, double tstep,
     
     sim->t = tstart;
     sim->dt = tstep;    // time step in days, this is just an initial value.
-
-    // Set up simulation constants
-    // The gravitational constant should be set using the ephemeris routines,
-    // so that it is ensured to consistent with the units used in those routines.
-    //sim->G = 0.295912208285591100E-03; // Gravitational constant (AU, solar masses, days)
 
     // TODO: decide how flexible these should be.
     sim->integrator = REB_INTEGRATOR_IAS15;
@@ -597,7 +589,7 @@ int integration_function(double tstart, double tend, double tstep,
 	tp.vy =  instate[6*i+4];
 	tp.vz =  instate[6*i+5];
 
-	// Could probably tie the next two statements together
+	// Could probably tie the next statements together
 	// in one function
 	reb_add(sim, tp);
 	assist->N++;

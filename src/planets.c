@@ -14,7 +14,7 @@
 #include "const.h"
 
 #ifndef JPL_EPHEM_FILE
-#define JPL_EPHEM_FILE "../linux_m13000p17000.441"
+#define JPL_EPHEM_FILE "../../data/linux_m13000p17000.441"
 #endif
 
 int body[11] = {
