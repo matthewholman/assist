@@ -502,7 +502,7 @@ int nsubsteps = 10;
 // invar_part:  index of host particle that each variational
 //              particle refers to.
 // invar:       input states of variational particles
-// part_const   non-grav. constants characterizing test particles
+// part_params   non-grav. constants characterizing test particles
 // n_alloc:     number of overall times steps for which there
 //              is space allocated.
 // nsubsteps:   number of substeps of output per overall
@@ -517,11 +517,13 @@ int integration_function(double tstart, double tend, double tstep,
 			 double epsilon,
 			 int n_particles,
 			 double* instate,
+			 //particle_params* part_params,
+			 double* part_params,			 
 			 int n_var,
 			 int* invar_part,			 
 			 double* invar,
-			 particle_const* part_params,
-			 particle_const* var_part_params, // particle constants for variational particles too
+			 //particle_params* var_part_params, // particle constants for variational particles too
+			 double* var_part_params, // particle constants for variational particles too			 
 			 int n_alloc,			 
 			 int *n_out,
 			 int nsubsteps,
@@ -532,22 +534,6 @@ int integration_function(double tstart, double tend, double tstep,
 
     struct reb_simulation* sim = reb_create_simulation();
 
-    if(part_params != NULL){
-	for(int i=0; i<n_particles; i++){
-	    printf("%d %lf %lf %lf\n", i, part_params[i].A1, part_params[i].A2, part_params[i].A3);
-	    //printf("%d %lf %lf %lf\n", i,
-	    //part_params[3*i+0], part_params[3*i+1], part_params[3*i+2]);	    
-	}
-    }
-
-    if(var_part_params != NULL){
-	for(int i=0; i<n_var; i++){
-	    printf("var %d %lf %lf %lf\n", i, var_part_params[i].A1, var_part_params[i].A2, var_part_params[i].A3);
-	    //printf("%d %lf %lf %lf\n", i,
-	    //part_params[3*i+0], part_params[3*i+1], part_params[3*i+2]);	    
-	}
-    }
-    
     sim->t = tstart;
     sim->dt = tstep;    // time step in days, this is just an initial value.
 
@@ -593,12 +579,15 @@ int integration_function(double tstart, double tend, double tstep,
 	// in one function
 	reb_add(sim, tp);
 	assist->N++;
-	assist->particle_params = realloc(assist->particle_params, (assist->N)*sizeof(particle_const));
-	assist->particle_params[i].A1 = part_params[i].A1;
-	assist->particle_params[i].A2 = part_params[i].A2;
-	assist->particle_params[i].A3 = part_params[i].A3;		
-	//printf("%d %lf %lf %lf\n", i, part_params[i].A1, part_params[i].A2, part_params[i].A3);	
-	//assist_add(assist, params);	
+	assist->particle_params = realloc(assist->particle_params, (assist->N)*sizeof(particle_params));
+	//assist->particle_params[i].A1 = part_params[i].A1;
+	//assist->particle_params[i].A2 = part_params[i].A2;
+	//assist->particle_params[i].A3 = part_params[i].A3;		
+	assist->particle_params[3*i+0] = part_params[3*i+0];
+	assist->particle_params[3*i+1] = part_params[3*i+1];
+	assist->particle_params[3*i+2] = part_params[3*i+2];		
+	//printf("%d %lf %lf %lf\n", i, part_params[i].A1, part_params[i].A2, part_params[i].A3);
+	//printf("%d %lf %lf %lf\n", i, part_params[3*i+0], part_params[3*i+1], part_params[3*i+2]);		
     }
 
     // Add and initialize variational particles
@@ -618,10 +607,13 @@ int integration_function(double tstart, double tend, double tstep,
         sim->particles[var_i].vz = invar[6*i+5];
 
 	assist->N++;
-	assist->particle_params = realloc(assist->particle_params, (assist->N)*sizeof(particle_const));
-	assist->particle_params[var_i].A1 = var_part_params[i].A1;
-	assist->particle_params[var_i].A2 = var_part_params[i].A2;
-	assist->particle_params[var_i].A3 = var_part_params[i].A3;		
+	assist->particle_params = realloc(assist->particle_params, (assist->N)*sizeof(particle_params));
+	//assist->particle_params[var_i].A1 = var_part_params[i].A1;
+	//assist->particle_params[var_i].A2 = var_part_params[i].A2;
+	//assist->particle_params[var_i].A3 = var_part_params[i].A3;		
+	assist->particle_params[3*var_i+0] = var_part_params[3*i+0];
+	assist->particle_params[3*var_i+1] = var_part_params[3*i+1];
+	assist->particle_params[3*var_i+2] = var_part_params[3*i+2];		
 
 	// If non-gravs are being considered and the derivatives w.r.t.
 	// the non-grav parameters are needed, 
@@ -645,8 +637,6 @@ int integration_function(double tstart, double tend, double tstep,
     assist->nsubsteps = nsubsteps;
     assist->hg = hg;
 
-    //assist->part_params = part_params;    
-
     ts->n_particles = n_particles;
     ts->n_alloc = n_alloc;
 
@@ -664,9 +654,6 @@ int integration_function(double tstart, double tend, double tstep,
     *n_out = sim->steps_done;
 
     int status = sim->status;
-
-    printf("%p %p\n", assist, ts);
-    fflush(stdout);
 
     // explicitly free all the memory allocated by ASSIST
     ts->t = NULL;
@@ -1453,20 +1440,13 @@ void non_gravs(struct reb_simulation* sim,
 
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
 
-    //particle_const* part_const = NULL;
-    particle_const* part_params = NULL;    
-    printf("%p\n", assist->particle_params);
+    //particle_params* part_params = NULL;
+    double* part_params = NULL;        
     
     if(assist->particle_params == NULL)
 	return;
     
-    //particle_const*
     part_params = assist->particle_params;
-    for(int i=0; i<N_real+N_var; i++){
-	printf("ng: %d %lf %lf %lf\n", i, part_params[i].A1, part_params[i].A2, part_params[i].A3);
-	//printf("ng: %d %lf %lf %lf\n", i,
-	//part_params[3*i+0], part_params[3*i+1], part_params[3*i+2]);	
-    }
 
     double GMsun;
     //double x, y, z, vx, vy, vz, ax, ay, az;
@@ -1485,8 +1465,6 @@ void non_gravs(struct reb_simulation* sim,
     // The non-grav parameters are specific to each object being
     // integrated.
 
-    // Figure out a good way to pass in the non-grav terms
-    
     // Normal asteroids
     //double A1 = 0.0;
     //double A2 = 0.0;
@@ -1503,7 +1481,7 @@ void non_gravs(struct reb_simulation* sim,
     //double A3 = 0.0;
 
     // 2020 SO
-    //double A1 = 2.840852439404E-9; //0.0;
+    //double A1 = 2.840852439404E-9;
     //double A2 = -2.521527931094E-10;
     //double A3= 2.317289821804E-10;
 
@@ -1513,12 +1491,15 @@ void non_gravs(struct reb_simulation* sim,
     // Loop over test particles
     for (int j=0; j<N_real; j++){
 
-	double A1 = part_params[j].A1;
-	double A2 = part_params[j].A2;
-	double A3 = part_params[j].A3;
-	//double A1 = part_const[3*j+0];
-	//double A2 = part_const[3*j+1];
-	//double A3 = part_const[3*j+2];
+	//double A1 = part_params[j].A1;
+	//double A2 = part_params[j].A2;
+	//double A3 = part_params[j].A3;
+	double A1 = part_params[3*j+0];
+	double A2 = part_params[3*j+1];
+	double A3 = part_params[3*j+2];
+
+	printf(" A123: %lf %lf %lf\n", A1, A2, A3);
+	
 
 	// If A1, A2, and A3 are zero, skip.
 	if(A1==0. && A2==0. && A3==0.)
@@ -1678,9 +1659,12 @@ void non_gravs(struct reb_simulation* sim,
 
 		// Getting the variations in the non-grav params
 		// There might be cleaner way to do this indexing.
-		double dA1 = part_params[N_real+v].A1;
-		double dA2 = part_params[N_real+v].A2;
-		double dA3 = part_params[N_real+v].A3;
+		//double dA1 = part_params[N_real+v].A1;
+		//double dA2 = part_params[N_real+v].A2;
+		//double dA3 = part_params[N_real+v].A3;
+		double dA1 = part_params[3*(N_real+v)+0];
+		double dA2 = part_params[3*(N_real+v)+1];
+		double dA3 = part_params[3*(N_real+v)+2];
 
 		printf("dA123: %lf %lf %lf\n", dA1, dA2, dA3);
 
