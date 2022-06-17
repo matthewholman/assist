@@ -354,7 +354,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     // TODO: eliminate the output files after testing
     // or make this more flexible
     FILE *outfile = NULL;
-    outfile = fopen("acc.out", "w");
+    //outfile = fopen("acc.out", "w");
 
     // These should be executed in order from smallest
     // to largest
@@ -371,7 +371,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     FILE *eih_file = NULL;
-    eih_file = fopen("eih_acc.out", "w");
+    //eih_file = fopen("eih_acc.out", "w");
     
     //eih_GR(sim, eih_loop_limit,
     //xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
@@ -380,7 +380,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     FILE *vfile = NULL;
     static int first=1;
     if(first==1){
-	vfile = fopen("vary_acc.out", "w");
+	//vfile = fopen("vary_acc.out", "w");
     }
     
     //test_vary(sim, vfile);
@@ -590,8 +590,6 @@ int integration_function(double tstart, double tend, double tstep,
 	    assist->particle_params[3*i+0] = part_params[3*i+0];
 	    assist->particle_params[3*i+1] = part_params[3*i+1];
 	    assist->particle_params[3*i+2] = part_params[3*i+2];
-	}else{
-	    printf("NULL\n");
 	}
     }
 
@@ -628,10 +626,7 @@ int integration_function(double tstart, double tend, double tstep,
 	    assist->particle_params[3*var_i+0] = var_part_params[3*i+0];
 	    assist->particle_params[3*var_i+1] = var_part_params[3*i+1];
 	    assist->particle_params[3*var_i+2] = var_part_params[3*i+2];
-	}else{
-	    printf("NULL\n");
 	}
-
     }
 
     // Allocate memory.
