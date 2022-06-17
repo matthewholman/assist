@@ -595,6 +595,12 @@ int integration_function(double tstart, double tend, double tstep,
 	}
     }
 
+    // Need to ensure that if n_var != 0 that
+    // invar != NULL.
+    // update the return value
+    if(n_var != 0 && invar == NULL)
+	return 0;
+
     // Add and initialize variational particles
     for(int i=0; i<n_var; i++){
 
@@ -622,6 +628,8 @@ int integration_function(double tstart, double tend, double tstep,
 	    assist->particle_params[3*var_i+0] = var_part_params[3*i+0];
 	    assist->particle_params[3*var_i+1] = var_part_params[3*i+1];
 	    assist->particle_params[3*var_i+2] = var_part_params[3*i+2];
+	}else{
+	    printf("NULL\n");
 	}
 
     }

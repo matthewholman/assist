@@ -121,7 +121,7 @@ def integration_function(tstart, tend, tstep,
 
     _integration_function.restype = c_int
 
-    # Should be defined as a table entry
+    # Should be defined as an entry in a table of returned values
     return_value = 5
 
     # Should be tunable parameters
@@ -138,6 +138,7 @@ def integration_function(tstart, tend, tstep,
     
     while(return_value == 5 and iters<max_iters):
 
+        # Don't understand where the 10 values below come from.
         n_alloc = int(fac*n_alloc)
         tsize = (n_alloc*nsubsteps+1 + 10)    
         ssize = (n_alloc*nsubsteps+1 + 10)*6*(n_particles+n_var)
@@ -147,16 +148,48 @@ def integration_function(tstart, tend, tstep,
 
         n_out = c_int()
 
+        # Some of the passed values could be the equivalent of
+        # NULL, including part_param_arr, invar_part, invar,
+        # and var_part_param_arr.  Other passed values, such as
+        # instate cannot be NULL.
+        # We should think of a clean way to deal with these
+        # cases.
+
+        if part_param_arr != None:
+            part_param_arg = part_param_arr.ctypes.data_as(POINTER(c_double)),
+        else:
+            part_param_arg = None
+
+        if invar_part != None:
+            invar_part_arg = invar_part.ctypes.data_as(POINTER(c_int))
+        else:
+            invar_part_arg = None
+
+        if invar != None:
+            invar_arg = invar.ctypes.data_as(POINTER(c_double))
+        else:
+            invar_arg = None
+
+        if var_part_param_arr != None:
+            var_part_param_arg = var_part_param_arr.ctypes.data_as(POINTER(c_double)),
+        else:
+            var_part_param_arg = None
+            
+            
         return_value = _integration_function(tstart, tend, tstep,
                                              geocentric,
                                              epsilon,
                                              n_particles,
                                              instate_arr.ctypes.data_as(POINTER(c_double)),
-                                             part_param_arr.ctypes.data_as(POINTER(c_double)),
+                                             part_param_arg,
+                                             #part_param_arr.ctypes.data_as(POINTER(c_double)),
                                              n_var,
-                                             invar_part.ctypes.data_as(POINTER(c_int)),
-                                             invar.ctypes.data_as(POINTER(c_double)),
-                                             var_part_param_arr.ctypes.data_as(POINTER(c_double)),
+                                             invar_part_arg,
+                                             #invar_part.ctypes.data_as(POINTER(c_int)),
+                                             invar_arg,
+                                             #invar.ctypes.data_as(POINTER(c_double)),
+                                             var_part_param_arg,
+                                             #var_part_param_arr.ctypes.data_as(POINTER(c_double)),
                                              n_alloc,
                                              byref(n_out),
                                              nsubsteps,
