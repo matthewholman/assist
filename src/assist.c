@@ -498,13 +498,15 @@ int nsubsteps = 10;
 // geocentric:  1==geocentric equations of motion, 0==barycentric
 // n_particles: number of input test particles
 // instate:     input states of test particles
+// part_params: input non-grav parameters for test particles
 // n_var:       number of input variational particles
 // invar_part:  index of host particle that each variational
 //              particle refers to.
 // invar:       input states of variational particles
-// part_params   non-grav. constants characterizing test particles
+// var_part_params: input non-grav parameters for variational particles
 // n_alloc:     number of overall times steps for which there
 //              is space allocated.
+// n_out:       number of outputs
 // nsubsteps:   number of substeps of output per overall
 //              time step.
 // hg:          array of output substep times as a fraction of
@@ -517,12 +519,10 @@ int integration_function(double tstart, double tend, double tstep,
 			 double epsilon,
 			 int n_particles,
 			 double* instate,
-			 //particle_params* part_params,
 			 double* part_params,			 
 			 int n_var,
 			 int* invar_part,			 
 			 double* invar,
-			 //particle_params* var_part_params, // particle constants for variational particles too
 			 double* var_part_params, // particle constants for variational particles too			 
 			 int n_alloc,			 
 			 int *n_out,
@@ -554,14 +554,14 @@ int integration_function(double tstart, double tend, double tstep,
     // These quantities are specific to IAS15.  Perhaps something more flexible could
     // be done so that other REBOUND integration routines could be explored.
 
-    // Don't hard code this.
     sim->ri_ias15.min_dt = min_dt;    // to avoid very small time steps (default: 0.0, suggestion 1e-2)
-    //sim->ri_ias15.max_dt = max_dt;  // to avoid very large time steps (default: inf, suggestion 32.0)
-    //sim->ri_ias15.epsilon = 1e-8;   // to avoid convergence issue with geocentric orbits (default: 1e-9)
     sim->ri_ias15.epsilon = epsilon;  // to avoid convergence issue with geocentric orbits (default: 1e-9)
 
-    // Attach the assist struct to the simulation.
+    // Attach an assist struct to the simulation
+    // and initialize some values.
     struct assist_extras* assist = assist_attach(sim);
+    assist->particle_params = NULL;
+    assist->N = 0;    
 
     // Add and initialize particles    
     for(int i=0; i<n_particles; i++){
@@ -575,27 +575,30 @@ int integration_function(double tstart, double tend, double tstep,
 	tp.vy =  instate[6*i+4];
 	tp.vz =  instate[6*i+5];
 
+	reb_add(sim, tp);	
+
 	// Could probably tie the next statements together
-	// in one function
-	reb_add(sim, tp);
+	// in one function with the previous call.  For each
+	// real or variational particle added to rebound, there
+	// needs to be a set of extra parameters.
+	// The number of non-grav parameters should be flexible,
+	// rather than fixed at 3.	
 	assist->N++;
-	assist->particle_params = realloc(assist->particle_params, (assist->N)*sizeof(particle_params));
-	//assist->particle_params[i].A1 = part_params[i].A1;
-	//assist->particle_params[i].A2 = part_params[i].A2;
-	//assist->particle_params[i].A3 = part_params[i].A3;		
-	assist->particle_params[3*i+0] = part_params[3*i+0];
-	assist->particle_params[3*i+1] = part_params[3*i+1];
-	assist->particle_params[3*i+2] = part_params[3*i+2];		
-	//printf("%d %lf %lf %lf\n", i, part_params[i].A1, part_params[i].A2, part_params[i].A3);
-	//printf("%d %lf %lf %lf\n", i, part_params[3*i+0], part_params[3*i+1], part_params[3*i+2]);		
+	// If part_params is NULL, skip this part
+	if(part_params != NULL){
+	    assist->particle_params = realloc(assist->particle_params, (assist->N)*3*sizeof(double));
+	    assist->particle_params[3*i+0] = part_params[3*i+0];
+	    assist->particle_params[3*i+1] = part_params[3*i+1];
+	    assist->particle_params[3*i+2] = part_params[3*i+2];
+	}else{
+	    printf("NULL\n");
+	}
     }
 
     // Add and initialize variational particles
     for(int i=0; i<n_var; i++){
 
 	// invar_part[i] contains the index of the test particle that we vary.
-	// Could probably tie the next two statements together
-	// in one function
         int var_i = reb_add_var_1st_order(sim, invar_part[i]);
 	//assist_add(assist, params);	
 	
@@ -606,22 +609,21 @@ int integration_function(double tstart, double tend, double tstep,
         sim->particles[var_i].vy = invar[6*i+4]; 
         sim->particles[var_i].vz = invar[6*i+5];
 
+	// Could probably tie the next statements together
+	// in one function with the previous call.  For each
+	// real or variational particle added to rebound, there
+	// needs to be a set of extra parameters.
+	// The number of non-grav parameters should be flexible,
+	// rather than fixed at 3.	
 	assist->N++;
-	assist->particle_params = realloc(assist->particle_params, (assist->N)*sizeof(particle_params));
-	//assist->particle_params[var_i].A1 = var_part_params[i].A1;
-	//assist->particle_params[var_i].A2 = var_part_params[i].A2;
-	//assist->particle_params[var_i].A3 = var_part_params[i].A3;		
-	assist->particle_params[3*var_i+0] = var_part_params[3*i+0];
-	assist->particle_params[3*var_i+1] = var_part_params[3*i+1];
-	assist->particle_params[3*var_i+2] = var_part_params[3*i+2];		
+	// If var_part_params is null, skip this part.
+	if(var_part_params != NULL){	
+	    assist->particle_params = realloc(assist->particle_params, (assist->N)*3*sizeof(double));
+	    assist->particle_params[3*var_i+0] = var_part_params[3*i+0];
+	    assist->particle_params[3*var_i+1] = var_part_params[3*i+1];
+	    assist->particle_params[3*var_i+2] = var_part_params[3*i+2];
+	}
 
-	// If non-gravs are being considered and the derivatives w.r.t.
-	// the non-grav parameters are needed, 
-	// this is the place to add a parameter variation array for
-	// each variational particle.  These need to point to the
-	// same variational particle, and that index probably needs
-	// to be stored in a structure.
- 
     }
 
     // Allocate memory.
@@ -640,8 +642,10 @@ int integration_function(double tstart, double tend, double tstep,
     ts->n_particles = n_particles;
     ts->n_alloc = n_alloc;
 
+    // Do the integration
     reb_integrate(sim, tend);
 
+    // This should be handled different for python.
     if (sim->messages){
 	for(int i=0; i<reb_max_messages_N; i++){
 	    printf("mess: %d", i);
@@ -704,13 +708,11 @@ void store_function(struct reb_simulation* sim){
     static double* outtime;
     static double* outstate;
 
-    int n_alloc;
-
     int step = sim->steps_done;
 
     outtime = ts->t;
     outstate = ts->state;
-    n_alloc= ts->n_alloc;
+    int n_alloc= ts->n_alloc;
 
     if(step==0){
 
@@ -1498,7 +1500,7 @@ void non_gravs(struct reb_simulation* sim,
 	double A2 = part_params[3*j+1];
 	double A3 = part_params[3*j+2];
 
-	printf(" A123: %lf %lf %lf\n", A1, A2, A3);
+	//printf(" A123: %lf %lf %lf\n", A1, A2, A3);
 	
 
 	// If A1, A2, and A3 are zero, skip.
@@ -1666,7 +1668,7 @@ void non_gravs(struct reb_simulation* sim,
 		double dA2 = part_params[3*(N_real+v)+1];
 		double dA3 = part_params[3*(N_real+v)+2];
 
-		printf("dA123: %lf %lf %lf\n", dA1, dA2, dA3);
+		//printf("dA123: %lf %lf %lf\n", dA1, dA2, dA3);
 
 		// Get the dA1, dA2, dA3 values.  These would normally be
 		// 0 or 1, and they don't change with time

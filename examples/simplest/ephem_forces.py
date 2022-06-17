@@ -100,22 +100,23 @@ def integration_function(tstart, tend, tstep,
     # Set up call to integration_function
     _integration_function = assist_lib.integration_function
 
-    _integration_function.argtypes = (c_double, c_double, c_double,
-                                      c_int,
-                                      c_double,
-                                      c_int,
-                                      POINTER(c_double),
-                                      c_int,
-                                      POINTER(c_int),
-                                      POINTER(c_double),
-                                      POINTER(c_double),
-                                      c_int,
-                                      POINTER(c_int),
-                                      c_int,
-                                      POINTER(c_double),                                      
-                                      POINTER(c_double),
-                                      POINTER(c_double),
-                                      c_double)
+    _integration_function.argtypes = (c_double, c_double, c_double, #tstart, tend, tstep
+                                      c_int,                        #geocentric
+                                      c_double,                     #epsilon
+                                      c_int,                        #n_particles
+                                      POINTER(c_double),            #instate
+                                      POINTER(c_double),            #part_params
+                                      c_int,                        #n_var
+                                      POINTER(c_int),               #invar_part
+                                      POINTER(c_double),            #invar
+                                      POINTER(c_double),            #var_part_params
+                                      c_int,                        #n_alloc
+                                      POINTER(c_int),               #n_out
+                                      c_int,                        #nsubsteps
+                                      POINTER(c_double),            #hg (rename this)                
+                                      POINTER(c_double),            #outtime
+                                      POINTER(c_double),            #outstate
+                                      c_double)                     #min_dt
                                       #c_double)
 
     _integration_function.restype = c_int
@@ -151,10 +152,11 @@ def integration_function(tstart, tend, tstep,
                                              epsilon,
                                              n_particles,
                                              instate_arr.ctypes.data_as(POINTER(c_double)),
+                                             part_param_arr.ctypes.data_as(POINTER(c_double)),
                                              n_var,
                                              invar_part.ctypes.data_as(POINTER(c_int)),
                                              invar.ctypes.data_as(POINTER(c_double)),
-                                             part_const_arr.ctypes.data_as(POINTER(c_double)),                                             
+                                             var_part_param_arr.ctypes.data_as(POINTER(c_double)),
                                              n_alloc,
                                              byref(n_out),
                                              nsubsteps,
@@ -179,6 +181,7 @@ def integration_function(tstart, tend, tstep,
     outstate = outstate[:nsubsteps*n_out.value+1]
     outtime = outtime[:nsubsteps*n_out.value+1]
 
+    print(n_particles)
     states = outstate[:,0:n_particles,:]
     var_state = outstate[:,n_particles:,:]
     var_ng = None
