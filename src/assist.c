@@ -97,7 +97,7 @@ static int ephem(const int i, const double jde, double* const GM,
 	    JPL_EPHEM_GM1, // 1 mercury
 	    JPL_EPHEM_GM2, // 2 venus
 	    GMe,           // 3 earth
-	    GMm,           // 4 earth
+	    GMm,           // 4 moon
 	    JPL_EPHEM_GM4, // 5 mars
 	    JPL_EPHEM_GM5, // 6 jupiter
 	    JPL_EPHEM_GM6, // 7 saturn
@@ -305,16 +305,24 @@ int all_ephem(const int i, const double t, double* const GM,
 
 void assist_additional_forces(struct reb_simulation* sim){
 
-    // implement additional_forces here    
+    // implement additional_forces here
+    //printf("here\n");
+    //fflush(stdout);
+
+    struct assist_extras* assist = (struct assist_extras*) sim->extras;
+
+    //printf("there\n");
+    //fflush(stdout);
 
     // TODO: Constant should be hard-codes.
     // geo flag should be set from the outside.
 
-    int* geo = 0;    
-
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;    
 
+    int geo = assist->geocentric;
+
+    //printf("here geo: %d\n", geo);
 
     int N_ephem, N_ast;
     int number_bodies(int* N_ephem, int* N_ast);
@@ -323,7 +331,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     // The limit of the EIH GR limit should be a free
     // parameter
-    int eih_loop_limit = N_ephem; // = 1;
+    int eih_loop_limit = N_ephem; // 1; // N_ephem;
 
     const double t = sim->t;
 
@@ -334,7 +342,8 @@ void assist_additional_forces(struct reb_simulation* sim){
     // Check which center is used.
     // The current options are the barycenter (default) and geocenter.
     // We might consider adding the heliocenter.
-    if(*geo == 1){
+
+    if(geo == 1){
 	// geocentric
 	// Get mass, position, velocity, and acceleration of the Earth for later use.
 	// The offset position is used to adjust the particle positions.
@@ -358,24 +367,27 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     // These should be executed in order from smallest
     // to largest
-    
-    direct(sim, xo, yo, zo, outfile);
-
-    earth_J2J4(sim, xo, yo, zo, outfile);
-
-    solar_J2(sim, xo, yo, zo, outfile);
-
-    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
-
-    // Pick one or the other of the next two routines
-    simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     FILE *eih_file = NULL;
     //eih_file = fopen("eih_acc.out", "w");
     
-    //eih_GR(sim, eih_loop_limit,
-    //xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
-    //outfile, eih_file);
+    eih_GR(sim, eih_loop_limit,
+	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
+	   outfile, eih_file);
+    
+    earth_J2J4(sim, xo, yo, zo, outfile);
+
+    direct(sim, xo, yo, zo, outfile);
+    
+    //solar_J2(sim, xo, yo, zo, outfile);
+
+    //non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+
+    // Pick one or the other of the next two routines
+
+    //simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+
+
 
     FILE *vfile = NULL;
     static int first=1;
@@ -395,7 +407,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     fflush(outfile);
     fclose(outfile);
 
-    if(*geo == 1){
+    if(geo == 1){
 	// geocentric
 	// TODO: This part will need work for the variational equations
 	// to work properly.
@@ -561,7 +573,8 @@ int integration_function(double tstart, double tend, double tstep,
     // and initialize some values.
     struct assist_extras* assist = assist_attach(sim);
     assist->particle_params = NULL;
-    assist->N = 0;    
+    assist->N = 0;
+    assist->geocentric = geocentric;
 
     // Add and initialize particles    
     for(int i=0; i<n_particles; i++){
@@ -990,9 +1003,16 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
     double GM;
     double x, y, z, vx, vy, vz, ax, ay, az;
 
+    static const order[] = {26, 25, 24, 23, 22, 21, 20, 19, 18, 17,
+			    16, 15, 14, 13, 12, 11, 10, 9, 8, 5, 4, 
+			    1, 2, 7, 6, 3, 0};
+
     // Direct forces from massives bodies
-    for (int i=0; i<N_tot; i++){
-	
+    //for (int i=0; i<N_tot; i++){
+    for (int k=0; k<N_tot; k++){
+	//for (int i=N_tot-1; i>=0; i--){    
+
+	int i = order[k];
         // Get position and mass of massive body i.
 	// TOOD: make a version that returns the positions, velocities,
 	// and accelerations for all the bodies at a given time.
@@ -1029,7 +1049,12 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
     // Loop over the perturbers
     // We should put a check at the top to see if there are any variational
     // particles.
-    for (int i=0; i<N_tot; i++){
+
+    for (int k=0; k<N_tot; k++){    
+	//for (int i=N_tot-1; i>=0; i--){
+	//for (int i=0; i<N_tot; i++){
+
+	int i = order[k];
 
         // Get position and mass of massive body i.	
 	int flag = all_ephem(i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
@@ -1184,17 +1209,17 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
         const double J3e_prefac = 5.*J3e*Re_eq*Re_eq*Re_eq/r2/r2/r/2.;
         const double J3e_fac = 3.-7.*costheta2;
 
-        resx += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
-        resy += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
-	resz += -GMearth*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
+	//resx += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
+        //resy += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
+	//resz += -GMearth*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
 	
 	// J4 terms
         const double J4e_prefac = 5.*J4e*Re_eq*Re_eq*Re_eq*Re_eq/r2/r2/r2/r/8.;
         const double J4e_fac = 63.*costheta2*costheta2-42.*costheta2 + 3.;
 
-        resx += GMearth*J4e_prefac*J4e_fac*dx;
-        resy += GMearth*J4e_prefac*J4e_fac*dy;
-        resz += GMearth*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
+        //resx += GMearth*J4e_prefac*J4e_fac*dx;
+        //resy += GMearth*J4e_prefac*J4e_fac*dy;
+        //resz += GMearth*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
 
 	// Rotate back to original frame
 	double resxp = - resx*sina      - resy*cosa*sind + resz*cosa*cosd;
@@ -1275,14 +1300,14 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 		double daz =   ddxp * dxdz + ddyp * dydz + ddzp * dzdz;
 
 		// J3 part		
-		dax +=   ddxp * dxdxJ3 + ddyp * dxdyJ3 + ddzp * dxdzJ3;
-		day +=   ddxp * dxdyJ3 + ddyp * dydyJ3 + ddzp * dydzJ3;
-		daz +=   ddxp * dxdzJ3 + ddyp * dydzJ3 + ddzp * dzdzJ3;
+		//dax +=   ddxp * dxdxJ3 + ddyp * dxdyJ3 + ddzp * dxdzJ3;
+		//day +=   ddxp * dxdyJ3 + ddyp * dydyJ3 + ddzp * dydzJ3;
+		//daz +=   ddxp * dxdzJ3 + ddyp * dydzJ3 + ddzp * dzdzJ3;
 
 		// J4 part		
-		dax +=   ddxp * dxdxJ4 + ddyp * dxdyJ4 + ddzp * dxdzJ4;
-		day +=   ddxp * dxdyJ4 + ddyp * dydyJ4 + ddzp * dydzJ4;
-		daz +=   ddxp * dxdzJ4 + ddyp * dydzJ4 + ddzp * dzdzJ4;
+		//dax +=   ddxp * dxdxJ4 + ddyp * dxdyJ4 + ddzp * dxdzJ4;
+		//day +=   ddxp * dxdyJ4 + ddyp * dydyJ4 + ddzp * dydzJ4;
+		//daz +=   ddxp * dxdzJ4 + ddyp * dydzJ4 + ddzp * dzdzJ4;
 
 		// Rotate back to original frame
 		double daxp = - dax*sina      - day*cosa*sind + daz*cosa*cosd;
@@ -2214,9 +2239,9 @@ void eih_GR(struct reb_simulation* sim,
 	    gry += -prefacij*dyij*factor;
 	    grz += -prefacij*dzij*factor;
 	    
-	    //particles[i].ax += -prefacij*dxij*factor;
-	    //particles[i].ay += -prefacij*dyij*factor;
-	    //particles[i].az += -prefacij*dzij*factor;
+	    particles[i].ax += -prefacij*dxij*factor;
+	    particles[i].ay += -prefacij*dyij*factor;
+	    particles[i].az += -prefacij*dzij*factor;
 
 	    // Variational equation terms go here.
 
@@ -2310,9 +2335,9 @@ void eih_GR(struct reb_simulation* sim,
 	dzdvy += dterm7z_sumdvy/C2;
 	dzdvz += dterm7z_sumdvz/C2;
 	
-	//particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
-	//particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
-	//particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+	particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
+	particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
+	particles[i].az += term7z_sum/C2 + term8z_sum/C2;
 
 	// Variational equation terms go here.
 	for (int v=0; v < sim->var_config_N; v++){
@@ -2338,9 +2363,9 @@ void eih_GR(struct reb_simulation* sim,
 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
 
 		// Accumulate acceleration terms
-		//particles_var1[0].ax += dax;
-		//particles_var1[0].ay += day;
-		//particles_var1[0].az += daz;
+		particles_var1[0].ax += dax;
+		particles_var1[0].ay += day;
+		particles_var1[0].az += daz;
 		
 	    }
 	}

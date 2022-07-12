@@ -155,27 +155,26 @@ def integration_function(tstart, tend, tstep,
         # We should think of a clean way to deal with these
         # cases.
 
-        if part_param_arr != None:
-            part_param_arg = part_param_arr.ctypes.data_as(POINTER(c_double)),
+        if np.all(part_param_arr) != None:
+            part_param_arg = part_param_arr.ctypes.data_as(POINTER(c_double))
         else:
             part_param_arg = None
 
-        if invar_part != None:
+        if np.all(invar_part) != None:
             invar_part_arg = invar_part.ctypes.data_as(POINTER(c_int))
         else:
             invar_part_arg = None
 
-        if invar != None:
+        if np.all(invar) != None:
             invar_arg = invar.ctypes.data_as(POINTER(c_double))
         else:
             invar_arg = None
 
-        if var_part_param_arr != None:
-            var_part_param_arg = var_part_param_arr.ctypes.data_as(POINTER(c_double)),
+        if np.all(var_part_param_arr) != None:
+            var_part_param_arg = var_part_param_arr.ctypes.data_as(POINTER(c_double))
         else:
             var_part_param_arg = None
-            
-            
+
         return_value = _integration_function(tstart, tend, tstep,
                                              geocentric,
                                              epsilon,
@@ -214,7 +213,6 @@ def integration_function(tstart, tend, tstep,
     outstate = outstate[:nsubsteps*n_out.value+1]
     outtime = outtime[:nsubsteps*n_out.value+1]
 
-    print(n_particles)
     states = outstate[:,0:n_particles,:]
     var_state = outstate[:,n_particles:,:]
     var_ng = None
