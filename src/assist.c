@@ -379,9 +379,9 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     direct(sim, xo, yo, zo, outfile);
     
-    //solar_J2(sim, xo, yo, zo, outfile);
+    solar_J2(sim, xo, yo, zo, outfile);
 
-    //non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     // Pick one or the other of the next two routines
 
@@ -1009,7 +1009,7 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
 
     // Direct forces from massives bodies
     //for (int i=0; i<N_tot; i++){
-    for (int k=0; k<N_tot; k++){
+    for (int k=0; k<N_tot; k++){    
 	//for (int i=N_tot-1; i>=0; i--){    
 
 	int i = order[k];
@@ -1209,17 +1209,17 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
         const double J3e_prefac = 5.*J3e*Re_eq*Re_eq*Re_eq/r2/r2/r/2.;
         const double J3e_fac = 3.-7.*costheta2;
 
-	//resx += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
-        //resy += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
-	//resz += -GMearth*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
+	resx += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
+        resy += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
+	resz += -GMearth*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
 	
 	// J4 terms
         const double J4e_prefac = 5.*J4e*Re_eq*Re_eq*Re_eq*Re_eq/r2/r2/r2/r/8.;
         const double J4e_fac = 63.*costheta2*costheta2-42.*costheta2 + 3.;
 
-        //resx += GMearth*J4e_prefac*J4e_fac*dx;
-        //resy += GMearth*J4e_prefac*J4e_fac*dy;
-        //resz += GMearth*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
+        resx += GMearth*J4e_prefac*J4e_fac*dx;
+        resy += GMearth*J4e_prefac*J4e_fac*dy;
+        resz += GMearth*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
 
 	// Rotate back to original frame
 	double resxp = - resx*sina      - resy*cosa*sind + resz*cosa*cosd;
@@ -1300,14 +1300,14 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 		double daz =   ddxp * dxdz + ddyp * dydz + ddzp * dzdz;
 
 		// J3 part		
-		//dax +=   ddxp * dxdxJ3 + ddyp * dxdyJ3 + ddzp * dxdzJ3;
-		//day +=   ddxp * dxdyJ3 + ddyp * dydyJ3 + ddzp * dydzJ3;
-		//daz +=   ddxp * dxdzJ3 + ddyp * dydzJ3 + ddzp * dzdzJ3;
+		dax +=   ddxp * dxdxJ3 + ddyp * dxdyJ3 + ddzp * dxdzJ3;
+		day +=   ddxp * dxdyJ3 + ddyp * dydyJ3 + ddzp * dydzJ3;
+		daz +=   ddxp * dxdzJ3 + ddyp * dydzJ3 + ddzp * dzdzJ3;
 
 		// J4 part		
-		//dax +=   ddxp * dxdxJ4 + ddyp * dxdyJ4 + ddzp * dxdzJ4;
-		//day +=   ddxp * dxdyJ4 + ddyp * dydyJ4 + ddzp * dydzJ4;
-		//daz +=   ddxp * dxdzJ4 + ddyp * dydzJ4 + ddzp * dzdzJ4;
+		dax +=   ddxp * dxdxJ4 + ddyp * dxdyJ4 + ddzp * dxdzJ4;
+		day +=   ddxp * dxdyJ4 + ddyp * dydyJ4 + ddzp * dydzJ4;
+		daz +=   ddxp * dxdzJ4 + ddyp * dydzJ4 + ddzp * dzdzJ4;
 
 		// Rotate back to original frame
 		double daxp = - dax*sina      - day*cosa*sind + daz*cosa*cosd;
@@ -1544,7 +1544,16 @@ void non_gravs(struct reb_simulation* sim,
         const double r = sqrt(r2);
 
 	// We may need to make this more general.
-	const double g = 1.0/r2;
+	//const double g = 1.0/r2;
+
+	// 'Oumuamua
+	double ALN = 0.04083733261;
+	double NK = 2.6;
+	double NM = 2.0;
+	double NN = 3.0;
+	double r0 = 5.0;
+	
+	const double g = ALN*pow(r/r0, -NM)*pow(1.0+pow(r/r0, NN), -NK);
 
 	double dvx = p.vx + (vxo - vxr);
 	double dvy = p.vy + (vyo - vyr);
@@ -1576,6 +1585,7 @@ void non_gravs(struct reb_simulation* sim,
         const double rdotv = dx*dvx  + dy*dvy  + dz*dvz;
         const double vdott = dvx*tx  + dvy*ty  + dvz*tz;
 
+	// Need to update this for the new g(r) function.
 	const double dgdr = -2.*g/r;
         const double dgx  = dgdr*dx/r;
         const double dgy  = dgdr*dy/r;
