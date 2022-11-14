@@ -128,6 +128,8 @@ struct _jpl_s * jpl_init(void)
         ret += read(fd, &jpl->cau, sizeof(double));
         ret += read(fd, &jpl->cem, sizeof(double));
 
+	printf("%lf %lf %lf %d\n", jpl->beg, jpl->end, jpl->inc, jpl->num);
+
         // number of coefficients is assumed
         for (p = 0; p < _NUM_JPL; p++)
                 jpl->ncm[p] = 3;
@@ -326,6 +328,12 @@ int jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, int n, int m)
         blk = (u_int32_t)((jde - pl->beg) / pl->inc);
         t = fmod(jde - pl->beg, pl->inc) / pl->inc;
         z = pl->map + (blk + 2) * pl->rec;
+	// JD 2451504.5 TDB corresponds to block 171210
+	u_int32_t blk_off = 171210;
+	double t_ref = 2451504.5;
+        //blk = (u_int32_t)((jde - t_ref) / pl->inc) + blk_off;
+        //t = fmod(jde - t_ref, pl->inc) / pl->inc;
+        //z = pl->map + (blk + 2) * pl->rec;
 
         // the magick of function pointers
         _help[n](pl, z, t, &pos);

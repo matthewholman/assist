@@ -363,13 +363,13 @@ void assist_additional_forces(struct reb_simulation* sim){
     // TODO: eliminate the output files after testing
     // or make this more flexible
     FILE *outfile = NULL;
-    //outfile = fopen("acc.out", "w");
+    outfile = fopen("acc.out", "w");
 
     // These should be executed in order from smallest
     // to largest
 
     FILE *eih_file = NULL;
-    //eih_file = fopen("eih_acc.out", "w");
+    eih_file = fopen("eih_acc.out", "w");
     
     eih_GR(sim, eih_loop_limit,
 	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
@@ -392,7 +392,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     FILE *vfile = NULL;
     static int first=1;
     if(first==1){
-	//vfile = fopen("vary_acc.out", "w");
+	vfile = fopen("vary_acc.out", "w");
     }
     
     //test_vary(sim, vfile);
@@ -1010,8 +1010,6 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
     // Direct forces from massives bodies
     //for (int i=0; i<N_tot; i++){
     for (int k=0; k<N_tot; k++){    
-	//for (int i=N_tot-1; i>=0; i--){    
-
 	int i = order[k];
         // Get position and mass of massive body i.
 	// TOOD: make a version that returns the positions, velocities,
@@ -1069,6 +1067,13 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
 
 	    // This stuff was already computed above.
 	    // We can recycle it.
+	    //
+	    // We could also skip real particles that
+	    // have no corresponding variational particles. 
+	    // For that we need an array, indexed on the
+	    // real particles, that stores, for example, the
+	    // number of associated variational particles.
+	    //
 	    const double dx = particles[j].x + (xo - x);
 	    const double dy = particles[j].y + (yo - y);
 	    const double dz = particles[j].z + (zo - z);
@@ -1088,7 +1093,7 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
 	    // Loop over variational particles
 	    // Update the accelerations for the variational
 	    // particles that are associated with current
-	    // real particle.
+	    // real particle.  
 
 	    for (int v=0; v < sim->var_config_N; v++){
 		struct reb_variational_configuration const vc = sim->var_config[v];

@@ -33,4 +33,4 @@ except:
 
 from .extras import Extras
 
-__all__ = ["__version__", "__build__", "__githash__", "Extras"]
+__all__ = [["__libpath__", "__version__", "__build__", "__githash__", "Extras"]
