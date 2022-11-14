@@ -1590,8 +1590,10 @@ void non_gravs(struct reb_simulation* sim,
         const double rdotv = dx*dvx  + dy*dvy  + dz*dvz;
         const double vdott = dvx*tx  + dvy*ty  + dvz*tz;
 
-	// Need to update this for the new g(r) function.
-	const double dgdr = -2.*g/r;
+	// Need to update this for the new g(r) function. Done
+	//const double dgdr = -2.*g/r;
+	const double dgdr = (ALN/r0)*(-NM*pow(r/r0, -NM-1)*pow(1.0+pow(r/r0, NN), -NK)
+                                      +pow(r/r0, -NM)*(-NK*NN)*pow(r/r0, NN-1)*pow(1.0+pow(r/r0, NN), -NK-1));
         const double dgx  = dgdr*dx/r;
         const double dgy  = dgdr*dy/r;
         const double dgz  = dgdr*dz/r;
