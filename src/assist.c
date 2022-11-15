@@ -121,7 +121,7 @@ static int ephem(const int i, const double jde, double* const GM,
     
     *GM = JPL_GM[i];
 
-    jpl_calc(pl, &now, jde, ebody[i], PLAN_BAR); 
+    jpl_calc(pl, &now, jde, 0.0, ebody[i], PLAN_BAR);
 
     // Convert to au/day and au/day^2
     vecpos_div(now.u, pl->cau);

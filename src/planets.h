@@ -5,7 +5,7 @@
 struct _jpl_s * jpl_init(void);
 int jpl_free(struct _jpl_s *jpl);
 void jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1, double *u, double *v, double *w);
-int jpl_calc(struct _jpl_s *jpl, struct mpos_s *now, double jde, int n, int m);
+int jpl_calc(struct _jpl_s *jpl, struct mpos_s *now, double jde, double rel, int n, int m);
 double jpl_mass(struct _jpl_s *pl, int tar);
 
 // these are the body codes for the user to specify

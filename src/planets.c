@@ -309,7 +309,7 @@ static void _lun(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
 static void (* _help[_NUM_TEST])(struct _jpl_s *, double *, double, struct mpos_s *)
     = { _bar, _sun, _ear, _emb, _lun, _mer, _ven, _mar, _jup, _sat, _ura, _nep, _plu};
 
-int jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, int n, int m)
+int jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, double rel, int n, int m)
 {
         struct mpos_s pos;
         struct mpos_s ref;
@@ -317,23 +317,17 @@ int jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, int n, int m)
         u_int32_t blk;
         int p;
 
-        if (pl == NULL || now == NULL)
+        if (pl == NULL || pl->map == NULL || now == NULL)
                 return -1;
 
         // check if covered by this file
-        if (jde < pl->beg || jde > pl->end || pl->map == NULL)
+        if (jde + rel < pl->beg || jde + rel > pl->end)
                 return -1;
 
         // compute record number and 'offset' into record
-        blk = (u_int32_t)((jde - pl->beg) / pl->inc);
-        t = fmod(jde - pl->beg, pl->inc) / pl->inc;
+        blk = (u_int32_t)((jde + rel - pl->beg) / pl->inc);
         z = pl->map + (blk + 2) * pl->rec;
-	// JD 2451504.5 TDB corresponds to block 171210
-	u_int32_t blk_off = 171210;
-	double t_ref = 2451504.5;
-        //blk = (u_int32_t)((jde - t_ref) / pl->inc) + blk_off;
-        //t = fmod(jde - t_ref, pl->inc) / pl->inc;
-        //z = pl->map + (blk + 2) * pl->rec;
+        t = ((jde - pl->beg - (double)blk * pl->inc) + rel) / pl->inc;
 
         // the magick of function pointers
         _help[n](pl, z, t, &pos);
@@ -345,7 +339,7 @@ int jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, int n, int m)
                 now->w[p] = pos.w[p] - ref.w[p];
         }
 
-        now->jde = jde;
+        now->jde = jde + rel;
         return 0;
 }
 
