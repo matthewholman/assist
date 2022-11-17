@@ -43,7 +43,7 @@ class build_ext(_build_ext):
         # get site-packages dir to add to paths in case REBOUND & ASSIST installed simul in tmp dir
         rebdirsp = get_python_lib()+'/'#[p for p in sys.path if p.endswith('site-packages')][0]+'/'
         self.include_dirs.append(rebdir)
-        sources = [ 'src/core.c'],
+        sources = [ 'src/assist.c', 'src/spk.c', 'src/planets.c'],
         self.library_dirs.append(rebdir+'/../')
         self.library_dirs.append(rebdirsp)
         for ext in self.extensions:
@@ -62,7 +62,7 @@ if sys.platform == 'darwin':
     extra_link_args.append('-Wl,-install_name,@rpath/libassist'+suffix)
 
 libassistmodule = Extension('libassist',
-        sources = [ 'src/core.c'],
+        sources = [ 'src/assist.c','src/spk.c', 'src/planets.c'],
                     include_dirs = ['src'],
                     library_dirs = [],
                     runtime_library_dirs = ["."],
