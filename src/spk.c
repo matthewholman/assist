@@ -73,14 +73,14 @@ static int _com(const char *buf)
 }
 
 // display output strings to console
-static void _sho(const char *buf)
-{
-	int n, p;
-
-	// this doesn't always handle the newlines correctly
-	for (n = 0; buf[n+1] != '\0';)
-		n += fprintf(stdout, "%s\n", &buf[n]) - 1;
-}
+//static void _sho(const char *buf)
+//{
+//	int n;
+//
+//	// this doesn't always handle the newlines correctly
+//	for (n = 0; buf[n+1] != '\0';)
+//		n += fprintf(stdout, "%s\n", &buf[n]) - 1;
+//}
 
 struct spk_s * spk_init(const char *path)
 {
@@ -92,7 +92,6 @@ struct spk_s * spk_init(const char *path)
 	int fd, nd, ni, nc;
 	int m, n, c, b, B;
 	off_t off;
-	int num;
 
 	if ((fd = open(path, O_RDONLY)) < 0)
 		return NULL;
@@ -229,7 +228,6 @@ int spk_find(struct spk_s *pl, int tar)
 
 int spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos)
 {
-	struct sum_s *sum;
 	int n, b, p, P, R;
 	double T[32], S[32];
 	double *val, z;
@@ -246,7 +244,7 @@ int spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos
 
 	// find location of 'directory' describing the data records
 	n = (int)((jde + rel - pl->beg[m]) / pl->res[m]);
-	val = pl->map + sizeof(double) * (pl->two[m][n] - 1);
+	val = (double*)pl->map + sizeof(double) * (pl->two[m][n] - 1);
 
 	// record size and number of coefficients per coordinate
 	R = (int)val[-1];
@@ -254,7 +252,7 @@ int spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos
 
 	// pick out the precise record
 	b = (int)(((jde - _jul(val[-3])) + rel) / (val[-2] / 86400.0));
-	val = pl->map + sizeof(double) * (pl->one[m][n] - 1)
+	val = (double*)pl->map + sizeof(double) * (pl->one[m][n] - 1)
 			+ sizeof(double) * b * R;
 
 	// scale to interpolation units
