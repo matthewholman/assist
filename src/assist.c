@@ -231,7 +231,7 @@ static int ast_ephem(const int i, const double jde, double* const GM, double* co
     // generally
 
     *GM = JPL_GM[i];
-    spk_calc(spl, i, jde, &pos);          
+    spk_calc(spl, i, jde, 0.0, &pos);
     *x = pos.u[0];
     *y = pos.u[1];
     *z = pos.u[2];

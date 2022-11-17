@@ -15,29 +15,30 @@
 
 static double _rad(double *u)
 {
-	return sqrt(u[0] * u[0] + u[1] * u[1] + u[2] * u[2]) / C_AU;
+	return sqrt(u[0] * u[0] + u[1] * u[1] + u[2] * u[2]);
 }
 
 int main(int argc, char **argv)
 {
 	struct spk_s *pl;
 	struct mpos_s pos;
-	double jde, r;
+	double jde, rel, r;
 	int p, n;
 
 	memset(&pos, 0, sizeof(struct mpos_s));
+	jde = 2450000.0;
 
 	for (p = 1; p < argc; p++) {
 		if ((pl = spk_init(argv[p])) == NULL)
 			{ perror(argv[p]); continue; }
 
-		jde = 2450000.0 + 10000.0 * drand48();
-		fprintf(stdout, "# %s %d %.6f\n", argv[0], pl->num, jde);
+		rel = 10000.0 * drand48();
+		fprintf(stdout, "# %s %d %.6f\n", argv[0], pl->num, jde + rel);
 
 		// use spk_find to look for a specific body
 
 		for (n = 0; n < pl->num; n++) {
-			spk_calc(pl, n, jde, &pos);
+			spk_calc(pl, n, jde, rel, &pos);
 			r = _rad(pos.u);
 
 			fprintf(stdout, "%02d %3d %3d %+12.12e %+12.12e %+12.12e %+12.12e %+12.12e %+12.12e -> %.3f\n",

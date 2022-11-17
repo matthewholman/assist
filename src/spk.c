@@ -227,25 +227,25 @@ int spk_find(struct spk_s *pl, int tar)
  *
  */
 
-int spk_calc(struct spk_s *pl, int m, double jde, struct mpos_s *pos)
+int spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos)
 {
 	struct sum_s *sum;
 	int n, b, p, P, R;
 	double T[32], S[32];
-	double *val;
+	double *val, z;
 
 	if (pl == NULL || pos == NULL)
 		return -1;
 	if (m < 0 || m >= pl->num)
 		return -1;
 
-	pos->jde = jde;
+	pos->jde = jde + rel;
 
 	for (n = 0; n < 3; n++)
 		pos->u[n] = pos->v[n] = 0.0;
 
 	// find location of 'directory' describing the data records
-	n = (int)((jde - pl->beg[m]) / pl->res[m]);
+	n = (int)((jde + rel - pl->beg[m]) / pl->res[m]);
 	val = pl->map + sizeof(double) * (pl->two[m][n] - 1);
 
 	// record size and number of coefficients per coordinate
@@ -253,21 +253,20 @@ int spk_calc(struct spk_s *pl, int m, double jde, struct mpos_s *pos)
 	P = (R - 2) / 3; // must be < 32 !!
 
 	// pick out the precise record
-	b = (int)((jde - _jul(val[-3])) / (val[-2] / 86400.0));
+	b = (int)(((jde - _jul(val[-3])) + rel) / (val[-2] / 86400.0));
 	val = pl->map + sizeof(double) * (pl->one[m][n] - 1)
 			+ sizeof(double) * b * R;
 
 	// scale to interpolation units
-	jde -= _jul(val[0]);
-	jde /= val[1] / 86400.0;
+	z = ((jde - _jul(val[0])) + rel) / (val[1] / 86400.0);
 
 	// set up Chebyshev polynomials
 	T[0] = 1.0; S[0] = 0.0;
-	T[1] = jde; S[1] = 1.0;
+	T[1] = z;   S[1] = 1.0;
 
 	for (p = 2; p < P; p++) {
-		T[p] = 2.0 * jde * T[p-1] - T[p-2];
-		S[p] = 2.0 * jde * S[p-1] + 2.0 * T[p-1] - S[p-2];
+		T[p] = 2.0 * z * T[p-1] - T[p-2];
+		S[p] = 2.0 * z * S[p-1] + 2.0 * T[p-1] - S[p-2];
 	}
 
 	for (n = 0; n < 3; n++) {
