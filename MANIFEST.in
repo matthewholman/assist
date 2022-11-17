@@ -1,5 +1,13 @@
+include src/assist.c
+include src/constants.c
+include src/get_mass.c
+include src/planets.c
+include src/spk.c
+include src/spkhead.c
+include src/assist.h
+include src/const.h
+include src/planets.h
+include src/spk.h
 include README.rst
 include LICENSE
-recursive-include src *.h
-recursive-include src *.c
-include assist/assist.h
+include version.txt

@@ -62,7 +62,7 @@ if sys.platform == 'darwin':
     extra_link_args.append('-Wl,-install_name,@rpath/libassist'+suffix)
 
 libassistmodule = Extension('libassist',
-        sources = [ 'src/assist.c','src/spk.c', 'src/planets.c'],
+                  sources = [ 'src/assist.c','src/spk.c', 'src/planets.c'],
                     include_dirs = ['src'],
                     library_dirs = [],
                     runtime_library_dirs = ["."],
@@ -77,7 +77,7 @@ with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='assist',
-    version='1.0.0',
+    version='1.0.1b1',
     description='A library high accuracy ephemeris in REBOUND',
     long_description=long_description,
     url='https://github.com/matthewholman/assist',
@@ -106,6 +106,7 @@ setup(name='assist',
     ],
     keywords='astronomy astrophysics nbody integrator',
     packages=['assist'],
+    package_data = {'assist':['assist.h']},      
     cmdclass={'build_ext':build_ext},
     setup_requires=['rebound>=3.10.0', 'numpy'],
     install_requires=['rebound>=3.10.0', 'numpy'],
