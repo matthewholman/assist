@@ -77,7 +77,7 @@ with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='assist',
-    version='1.0.1b1',
+    version='1.0.1b3',
     description='A library high accuracy ephemeris in REBOUND',
     long_description=long_description,
     url='https://github.com/matthewholman/assist',
