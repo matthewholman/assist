@@ -327,7 +327,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     int N_ephem, N_ast;
     int number_bodies(int* N_ephem, int* N_ast);
 
-    const int N_tot = number_bodies(&N_ephem, &N_ast);    
+    number_bodies(&N_ephem, &N_ast);    
 
     // The limit of the EIH GR limit should be a free
     // parameter
@@ -728,7 +728,6 @@ void store_function(struct reb_simulation* sim){
 
     outtime = ts->t;
     outstate = ts->state;
-    int n_alloc= ts->n_alloc;
 
     if(step==0){
 
@@ -874,10 +873,6 @@ void store_coefficients(struct reb_simulation* sim){
 
     static int last_steps_done = 0;
 
-    double s[9]; // Summation coefficients
-
-    struct assist_extras* assist = (struct assist_extras*) sim->extras;
-
     //int nsubsteps = assist->nsubsteps;
     //double* hg = assist->hg;
 
@@ -900,10 +895,6 @@ void store_coefficients(struct reb_simulation* sim){
 	//printf("initial step %d %lf\n", step, sim->t);
 	
     }else if(step > last_steps_done){
-
-	// Convenience variable.  The 'br' field contains the 
-	// set of coefficients from the last completed step.
-	const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
 
 	double* x0 = malloc(sizeof(double)*N3);
 	double* v0 = malloc(sizeof(double)*N3);
@@ -1003,7 +994,7 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
     double GM;
     double x, y, z, vx, vy, vz, ax, ay, az;
 
-    static const order[] = {26, 25, 24, 23, 22, 21, 20, 19, 18, 17,
+    static const int order[] = {26, 25, 24, 23, 22, 21, 20, 19, 18, 17,
 			    16, 15, 14, 13, 12, 11, 10, 9, 8, 5, 4, 
 			    1, 2, 7, 6, 3, 0};
 
@@ -1467,7 +1458,6 @@ void non_gravs(struct reb_simulation* sim,
 
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
-    const unsigned int N_var = sim->N_var;  // N includes real+variational particles    
 
     const double t = sim->t;    
 
@@ -1896,7 +1886,6 @@ void eih_GR(struct reb_simulation* sim,
     // The Sun center is reference for these calculations.
     double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
     all_ephem(0, t, &GM, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
-    const double GMsun = GM;    
 
     xr  = xs;  yr  = ys;  zr = zs;
     vxr = vxs; vyr = vys; vzr = vzs;
@@ -1905,7 +1894,7 @@ void eih_GR(struct reb_simulation* sim,
     int N_ephem, N_ast;
     int number_bodies(int* N_ephem, int* N_ast);
 
-    const int N_tot = number_bodies(&N_ephem, &N_ast);
+    number_bodies(&N_ephem, &N_ast);
 
     double beta = 1.0;
     double gamma = 1.0;
