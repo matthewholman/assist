@@ -45,7 +45,7 @@ static int all_ephem(const int i, const double t, double* const GM,
 		      double* const ax, double* const ay, double* const az
 """
 
-def all_ephem(i, t):
+def all_ephem(i, jd_ref, t):
     """
     Gets the position, velocity, and acceleration of a body from the 
     ephemeris.
@@ -59,7 +59,7 @@ def all_ephem(i, t):
     _all_ephem = assist_lib.all_ephem
     #_all_ephem = assist.all_ephem    
     _all_ephem.restype = c_int
-    _all_ephem.argtypes = (c_int, c_double, 
+    _all_ephem.argtypes = (c_int, c_double, c_double, 
                                       POINTER(c_double),
                                       POINTER(c_double),
                                       POINTER(c_double),
@@ -81,7 +81,7 @@ def all_ephem(i, t):
     ay = c_double()
     az = c_double()
 
-    return_value = _all_ephem(i, t, byref(GM),
+    return_value = _all_ephem(i, jd_ref, t, byref(GM),
                               byref(x), byref(y), byref(z),
                               byref(vx), byref(vy), byref(vz),
                               byref(ax), byref(ay), byref(az))

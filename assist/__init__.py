@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+print("__init__")
 #Find suffix
 import sysconfig
 suffix = sysconfig.get_config_var('EXT_SUFFIX')
@@ -27,7 +28,7 @@ try:
     moduleversion = pkg_resources.require("assist")[0].version
     libassistversion = __version__
     if moduleversion != libassistversion:
-        print("WARNING: python module and libassist have different version numbers: '%s' vs '%s'.\n".format(moduleversion, libassistversion))
+        print("WARNING: python module and libassist have different version numbers: ", moduleversion, libassistversion)
 except:
     pass    # this check fails in python 3. Problem with setuptools
 

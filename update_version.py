@@ -22,10 +22,10 @@ with open("version.txt") as f:
 #            index[i+1] = underline
 #        f.write(index[i])
 
-with open("README.md") as f:
+with open("README.rst") as f:
     readme = f.readlines()
 
-with open("README.md","w") as f:
+with open("README.rst","w") as f:
     for i in range(0,len(readme)):
         if "![Version]" in readme[i]:
             readme[i] = "[![Version](https://img.shields.io/badge/assist-v"+assistversion+"-green.svg?style=flat)](https://assist.readthedocs.org)\n"

@@ -75,6 +75,7 @@ struct assist_extras {
     //particle_params* particle_params;
     double* particle_params;
     int N;
+    double jd_ref;
 };
 
 /**
