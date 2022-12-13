@@ -362,7 +362,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     // TODO: eliminate the output files after testing
     // or make this more flexible
     FILE *outfile = NULL;
-    outfile = fopen("acc.out", "w");
+    //outfile = fopen("acc.out", "w");
 
     // These should be executed in order from smallest
     // to largest
@@ -370,19 +370,19 @@ void assist_additional_forces(struct reb_simulation* sim){
     int flag_count=0;
     
     FILE *eih_file = NULL;
-    eih_file = fopen("eih_acc.out", "w");
+    //eih_file = fopen("eih_acc.out", "w");
 
-    eih_GR(sim, eih_loop_limit,
-	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
-	   outfile, eih_file);
+    //eih_GR(sim, eih_loop_limit,
+    //xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
+    //outfile, eih_file);
 
-    earth_J2J4(sim, xo, yo, zo, outfile);
+    //earth_J2J4(sim, xo, yo, zo, outfile);
 
     direct(sim, xo, yo, zo, outfile);
 
-    solar_J2(sim, xo, yo, zo, outfile);
+    //solar_J2(sim, xo, yo, zo, outfile);
 
-    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    //non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     // Pick one or the other of the next two routines
 
@@ -397,7 +397,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     }
     
     //test_vary(sim, vfile);
-    test_vary_2nd(sim, vfile);    
+    //test_vary_2nd(sim, vfile);    
 
     if(first==1){
 	fclose(vfile);
@@ -1007,13 +1007,17 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
 
     // Direct forces from massives bodies
     //for (int i=0; i<N_tot; i++){
-    for (int k=0; k<N_tot; k++){    
+    for (int k=0; k<N_tot; k++){
+    //for (int k=0; k<1; k++){        
 	int i = order[k];
+	//int i = k;
         // Get position and mass of massive body i.
 	// TOOD: make a version that returns the positions, velocities,
 	// and accelerations for all the bodies at a given time.
 
 	int flag = all_ephem(i, jd_ref, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
+
+	x = y = z = 0.0;
 
 	if(flag != NO_ERR){
 	    char outstring[50];
@@ -1048,14 +1052,17 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
     // We should put a check at the top to see if there are any variational
     // particles.
 
-    for (int k=0; k<N_tot; k++){    
+    for (int k=0; k<N_tot; k++){
+    //for (int k=0; k<1; k++){        
 	//for (int i=N_tot-1; i>=0; i--){
 	//for (int i=0; i<N_tot; i++){
 
 	int i = order[k];
+	//int i = k;
 
         // Get position and mass of massive body i.	
 	int flag = all_ephem(i, jd_ref, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
+	x = y = z = 0.0;	
 	if(flag != NO_ERR){
 	    char outstring[50];
 	    sprintf(outstring, "%s %d %d\n", "Ephemeris error c ", i, flag);	    	    
@@ -1526,6 +1533,14 @@ void non_gravs(struct reb_simulation* sim,
     //double A2 = -2.521527931094E-10;
     //double A3= 2.317289821804E-10;
 
+    //double A1 = 2.840852439404E-9;
+    //double A2 = -2.521527931094E-10;
+    //double A3= 2.317289821804E-10;
+
+    //double A1 = 0.0;
+    //double A2 = -1e-4;
+    //double A3= 0.0;
+    
     // if no particles have non-zero non-grav
     // constants, skip the whole thing.
     
@@ -1555,7 +1570,7 @@ void non_gravs(struct reb_simulation* sim,
         const double r = sqrt(r2);
 
 	// We may need to make this more general.
-	//const double g = 1.0/r2;
+	const double g = 1.0/r2;
 
 	// 'Oumuamua
 	double ALN = 0.04083733261;
@@ -1564,7 +1579,7 @@ void non_gravs(struct reb_simulation* sim,
 	double NN = 3.0;
 	double r0 = 5.0;
 	
-	const double g = ALN*pow(r/r0, -NM)*pow(1.0+pow(r/r0, NN), -NK);
+	//const double g = ALN*pow(r/r0, -NM)*pow(1.0+pow(r/r0, NN), -NK);
 
 	double dvx = p.vx + (vxo - vxr);
 	double dvy = p.vy + (vyo - vyr);
@@ -1744,6 +1759,114 @@ void non_gravs(struct reb_simulation* sim,
 
 }
 
+void potential_GR(struct reb_simulation* sim,
+	       double xo, double yo, double zo,
+	       double vxo, double vyo, double vzo,	       
+	       FILE *outfile){
+    
+    struct assist_extras* assist = (struct assist_extras*) sim->extras;
+    const double jd_ref = assist->jd_ref;
+    
+    // Nobili and Roxburgh GR treatment
+
+    const double au = JPL_EPHEM_CAU;    
+    const double c = (JPL_EPHEM_CLIGHT/au)*86400;
+    const double C2 = c*c;  // This could be stored as C2.
+    
+    const unsigned int N = sim->N;  // N includes real+variational particles
+    const unsigned int N_real = N - sim->N_var;
+
+    const double t = sim->t;    
+
+    struct reb_particle* const particles = sim->particles;
+
+    double GM;
+
+    double xr, yr, zr, vxr, vyr, vzr, axr, ayr, azr;
+    
+    // The Sun center is reference for these calculations.
+    double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
+
+    all_ephem(0, jd_ref, t, &GM, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
+    const double GMsun = GM;
+
+    xs = ys = zs = 0.0;
+
+    xr  = xs;  yr  = ys;  zr = zs;
+    vxr = vxs; vyr = vys; vzr = vzs;
+    axr = axs; ayr = ays; azr = azs;    
+
+    for (int j=0; j<N_real; j++){
+
+        struct reb_particle p = particles[j];
+
+	p.x += (xo - xr);
+	p.y += (yo - yr);
+	p.z += (zo - zr);
+
+        const double r2 = p.x*p.x + p.y*p.y + p.z*p.z;
+        const double r = sqrt(r2);
+
+	const double prefac = -6.0*GMsun*GMsun/(C2*r2*r2);
+
+	particles[j].ax += prefac*p.x;
+	particles[j].ay += prefac*p.y;
+	particles[j].az += prefac*p.z;
+
+	if(outfile){
+	    fprintf(outfile, "%s %25.16le %25.16le %25.16le %25.16le\n", "potential GR", t,
+		    prefac*p.x,
+		    prefac*p.y,
+		    prefac*p.z);
+	    fflush(outfile);
+	}
+
+	// Constants for variational equations
+	// Only evaluate if there are variational particles
+	const double dpdr = -prefac/r;
+
+	// This section can be optimized.
+	const double dxdx = prefac + -4.0*prefac*(p.x/r)*(p.x/r);
+	const double dxdy =          -4.0*prefac*(p.x/r)*(p.y/r);
+	const double dxdz =          -4.0*prefac*(p.x/r)*(p.z/r);
+
+	// This section can be optimized.	
+	const double dydx =          -4.0*prefac*(p.y/r)*(p.x/r);
+	const double dydy = prefac + -4.0*prefac*(p.y/r)*(p.y/r);
+	const double dydz =          -4.0*prefac*(p.y/r)*(p.z/r);
+
+	// This section can be optimized.		
+	const double dzdx =          -4.0*prefac*(p.z/r)*(p.x/r);
+	const double dzdy =          -4.0*prefac*(p.z/r)*(p.y/r);
+	const double dzdz = prefac + -4.0*prefac*(p.z/r)*(p.z/r);
+
+
+	for (int v=0; v < sim->var_config_N; v++){
+	    struct reb_variational_configuration const vc = sim->var_config[v];
+	    int tp = vc.testparticle;
+	    struct reb_particle* const particles_var1 = particles + vc.index;		
+	    if(tp == j){
+	    
+		// variational particle coords
+		const double ddx = particles_var1[0].x;
+		const double ddy = particles_var1[0].y;
+		const double ddz = particles_var1[0].z;
+
+		// Matrix multiplication
+		const double dax =   ddx  * dxdx  + ddy  * dxdy  + ddz  * dxdz;
+		const double day =   ddx  * dydx  + ddy  * dydy  + ddz  * dydz;
+		const double daz =   ddx  * dzdx  + ddy  * dzdy  + ddz  * dzdz;
+
+		// Accumulate acceleration terms
+		particles_var1[0].ax += dax;
+		particles_var1[0].ay += day;
+		particles_var1[0].az += daz;
+		
+	    }
+	}
+    }
+}
+
 void simple_GR(struct reb_simulation* sim,
 	       double xo, double yo, double zo,
 	       double vxo, double vyo, double vzo,	       
@@ -1773,7 +1896,9 @@ void simple_GR(struct reb_simulation* sim,
     double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
 
     all_ephem(0, jd_ref, t, &GM, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
-    const double GMsun = GM;    
+    const double GMsun = GM;
+
+    xs = ys = zs = 0.0;
 
     xr  = xs;  yr  = ys;  zr = zs;
     vxr = vxs; vyr = vys; vzr = vzs;

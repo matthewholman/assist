@@ -128,7 +128,7 @@ struct _jpl_s * jpl_init(void)
         ret += read(fd, &jpl->cau, sizeof(double));
         ret += read(fd, &jpl->cem, sizeof(double));
 
-	printf("%lf %lf %lf %d\n", jpl->beg, jpl->end, jpl->inc, jpl->num);
+	//printf("%lf %lf %lf %d\n", jpl->beg, jpl->end, jpl->inc, jpl->num);
 
         // number of coefficients is assumed
         for (p = 0; p < _NUM_JPL; p++)

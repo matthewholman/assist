@@ -229,6 +229,7 @@ int spk_find(struct spk_s *pl, int tar)
 
 int spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos)
 {
+
 	int n, b, p, P, R;
 	double T[32], S[32];
 	double *val, z;
@@ -246,7 +247,7 @@ int spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos
 	// find location of 'directory' describing the data records
 	n = (int)((jde + rel - pl->beg[m]) / pl->res[m]);
 	//val = (double*)pl->map + sizeof(double) * (pl->two[m][n] - 1);
-	val = pl->map + sizeof(double) * (pl->two[m][n] - 1);	
+	val = (void *)pl->map + sizeof(double) * (pl->two[m][n] - 1);	
 
 	// record size and number of coefficients per coordinate
 	R = (int)val[-1];
@@ -256,7 +257,7 @@ int spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos
 	b = (int)(((jde - _jul(val[-3])) + rel) / (val[-2] / 86400.0));
 	//val = (double*)pl->map + sizeof(double) * (pl->one[m][n] - 1)
 	//+ sizeof(double) * b * R;
-	val = pl->map + sizeof(double) * (pl->one[m][n] - 1)
+	val = (void *)pl->map + sizeof(double) * (pl->one[m][n] - 1)
 			+ sizeof(double) * b * R;
 
 	// scale to interpolation units
@@ -276,14 +277,18 @@ int spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos
 
 		// sum interpolation stuff
 		for (p = 0; p < P; p++) {
-			pos->u[n] += val[b + p] * T[p];
-			pos->v[n] += val[b + p] * S[p];
+		    pos->u[n] += val[b + p] * T[p];
+		    pos->v[n] += val[b + p] * S[p];
+			
 		}
 
 		// restore units to [AU] and [AU/day]
 		pos->u[n] /= 149597870.7;
 		pos->v[n] /= 149597870.7 / 86400.0;
 		pos->v[n] /= val[1];
+		fflush(stdout);
+			
+		
 	}
 
 	return 0;
