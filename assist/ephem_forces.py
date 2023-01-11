@@ -88,6 +88,48 @@ def all_ephem(i, jd_ref, t):
 
     return GM.value, np.array((x.value, y.value, z.value, vx.value, vy.value, vz.value, ax.value, ay.value, az.value))
 
+def all_ephem_cache(i, jd_ref, t):
+    """
+    Gets the position, velocity, and acceleration of a body from the 
+    ephemeris.
+    
+    *Returns*
+        (GM, (x, y, z, vx, vy, vz, ax, ay, az)) : tuple of floats
+    
+    """
+    
+    # Set up call to all_ephem
+    _all_ephem_cache = assist_lib.all_ephem_cache
+    _all_ephem_cache.restype = c_int
+    _all_ephem_cache.argtypes = (c_int, c_double, c_double, 
+                                      POINTER(c_double),
+                                      POINTER(c_double),
+                                      POINTER(c_double),
+                                      POINTER(c_double),
+                                      POINTER(c_double),
+                                      POINTER(c_double),
+                                      POINTER(c_double),
+                                      POINTER(c_double),
+                                      POINTER(c_double))
+
+    GM = c_double()    
+    x = c_double()
+    y = c_double()
+    z = c_double()
+    vx = c_double()
+    vy = c_double()
+    vz = c_double()
+    ax = c_double()
+    ay = c_double()
+    az = c_double()
+
+    return_value = _all_ephem_cache(i, jd_ref, t, byref(GM),
+                              byref(x), byref(y), byref(z),
+                              byref(vx), byref(vy), byref(vz),
+                              byref(ax), byref(ay), byref(az))
+
+    return GM.value, np.array((x.value, y.value, z.value, vx.value, vy.value, vz.value, ax.value, ay.value, az.value))
+
 
 
 def integration_function(tstart, tend, tstep,
@@ -101,9 +143,9 @@ def integration_function(tstart, tend, tstep,
                          var_part_param_arr,                         
                          hg,
                          nsubsteps=10,
-                         epsilon = 1e-9,
-                         min_dt = 0.01):
-                         #max_dt = 1e10):
+                         epsilon = 1e-8,
+                         min_dt = 0.01,
+                         jd_ref = 2451545.0):
 
     if (tend-tstart)/tstep < 0.0:
         print('tstep is in the wrong direction')
@@ -113,7 +155,8 @@ def integration_function(tstart, tend, tstep,
     _integration_function = assist_lib.integration_function
     #_integration_function = assist.integration_function    
 
-    _integration_function.argtypes = (c_double, c_double, c_double, #tstart, tend, tstep
+    _integration_function.argtypes = (c_double,                     #jd_ref
+                                      c_double, c_double, c_double, #tstart, tend, tstep
                                       c_int,                        #geocentric
                                       c_double,                     #epsilon
                                       c_int,                        #n_particles
@@ -188,7 +231,8 @@ def integration_function(tstart, tend, tstep,
         else:
             var_part_param_arg = None
 
-        return_value = _integration_function(tstart, tend, tstep,
+        return_value = _integration_function(jd_ref,
+                                             tstart, tend, tstep,
                                              geocentric,
                                              epsilon,
                                              n_particles,
@@ -243,7 +287,8 @@ def production_integration_function_wrapper(
         geocentric=0,
         epsilon=1e-8,
         tstep_min = 0.01,
-        tstep_max = 32):
+        tstep_max = 32,
+        jd_ref = 2451545.0):
 
     nsubsteps = 10
     hg = np.arange(0, 1.1, 0.1, dtype=np.double)
@@ -340,8 +385,9 @@ def production_integration_function_wrapper(
         #print(epoch, tstart, tstep, geocentric, n_particles) #,
         #print(instate_arr, n_var, invar_part, invar, hg, nsubsteps)
 
-        outtime, states, var_state, var_ng, return_value = integration_function(epoch,
-                                                                                tstart,
+        outtime, states, var_state, var_ng, return_value = integration_function(jd_ref,
+                                                                                epoch-jd_ref,
+                                                                                tstart-jd_ref,
                                                                                 tstep,
                                                                                 geocentric,
                                                                                 n_particles,
@@ -355,8 +401,9 @@ def production_integration_function_wrapper(
                                                                                 min_dt = tstep_min)
                                                                                 #max_dt = tstep_max)
 
-        outtime, states, var_state, var_ng, return_value = integration_function(tstart,
-                                                                                tend,
+        outtime, states, var_state, var_ng, return_value = integration_function(jd_ref,
+                                                                                tstart-jd_ref,
+                                                                                tend-jd_ref,
                                                                                 tstep,
                                                                                 geocentric,
                                                                                 n_particles,
@@ -382,8 +429,9 @@ def production_integration_function_wrapper(
 
     elif f >= 1.:
 
-        outtime, states, var_state, var_ng, return_value = integration_function(epoch,
-                                                                                tend,
+        outtime, states, var_state, var_ng, return_value = integration_function(jd_ref,
+                                                                                epoch-jd_ref,
+                                                                                tend-jd_ref,
                                                                                 -tstep,
                                                                                 geocentric,
                                                                                 n_particles,
@@ -397,8 +445,9 @@ def production_integration_function_wrapper(
                                                                                 min_dt = tstep_min)
                                                                                 #max_dt = tstep_max)
 
-        outtime, states, var_state, var_ng, return_value = integration_function(tend,
-                                                                                tstart,
+        outtime, states, var_state, var_ng, return_value = integration_function(jd_ref,
+                                                                                tend-jd_ref,
+                                                                                tstart-jd_ref,
                                                                                 -tstep,
                                                                                 geocentric,
                                                                                 n_particles,
@@ -438,8 +487,9 @@ def production_integration_function_wrapper(
 
     else:
 
-         outtime0, states0, var_state0, var_ng0, return_value0 = integration_function(epoch,
-                                                                                      tstart,
+         outtime0, states0, var_state0, var_ng0, return_value0 = integration_function(jd_ref,
+                                                                                      epoch-jd_ref,
+                                                                                      tstart-jd_ref,
                                                                                       -tstep,
                                                                                       geocentric,
                                                                                       n_particles,
@@ -454,8 +504,8 @@ def production_integration_function_wrapper(
                                                                                       #max_dt = tstep_max)
         
 
-         outtime1, states1, var_state1, var_ng1, return_value1 = integration_function(epoch,
-                                                                                      tend,
+         outtime1, states1, var_state1, var_ng1, return_value1 = integration_function(epoch-jd_ref,
+                                                                                      tend-jd_ref,
                                                                                       tstep,
                                                                                       geocentric,
                                                                                       n_particles,

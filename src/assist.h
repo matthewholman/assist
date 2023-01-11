@@ -45,6 +45,10 @@ typedef struct {
 } tstate;
 
 typedef struct {
+  double x, y, z, vx, vy, vz, ax, ay, az;
+} state;
+
+typedef struct {
     double* t;
     double* state;
     tstate* last_state;
@@ -53,10 +57,9 @@ typedef struct {
 } timestate;
 
 typedef struct {
-    double A1;
-    double A2;
-    double A3;        
-} particle_const;
+    double t;
+    tstate* tstates;
+} ephem_block;
 
 typedef struct {
     double A1;
@@ -113,7 +116,8 @@ void assist_error(struct assist_extras* assist, const char* const msg);
 void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist); // Initializes all pointers and values.
 void assist_free_pointers(struct assist_extras* assist);
 
-int integration_function(double tstart, double tend, double tstep,
+int integration_function(double jd_ref,
+			 double tstart, double tend, double tstep,
 			 int geocentric,
 			 double epsilon,
 			 int n_particles,
@@ -147,6 +151,11 @@ void non_gravs(struct reb_simulation* sim,
 	       FILE *outfile);
 
 void simple_GR(struct reb_simulation* sim,
+	       double xo, double yo, double zo,
+	       double vxo, double vyo, double vzo,	       
+	       FILE *outfile);
+
+void potential_GR(struct reb_simulation* sim,
 	       double xo, double yo, double zo,
 	       double vxo, double vyo, double vzo,	       
 	       FILE *outfile);

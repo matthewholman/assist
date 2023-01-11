@@ -51,6 +51,7 @@ int main(int argc, char* argv[]){
     int *invar_part; // This stores the particle index that goes with the variational particle
     double *invar;
     double* cov_mat;
+    double jd_ref = 2451545.0;
     
     //particle_params* part_paramst = NULL;
     //particle_params* invar_part_params = NULL;
@@ -98,7 +99,8 @@ int main(int argc, char* argv[]){
 
     printf("entering integration_function\n");
     int n_steps;
-    int status = integration_function(tstart, tend, tstep, 0, 1e-9,
+    int status = integration_function(jd_ref,
+				      tstart, tend, tstep, 0, 1e-9,
 				      n_particles, instate,
 				      part_paramst,
 				      n_var, invar_part, invar,

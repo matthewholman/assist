@@ -118,8 +118,8 @@ static int ephem(const int i, const double jd_ref, const double t,
       initialized = 1;
     }
 
-    // Get position, velocity, and mass of body i in barycentric coords. 
-    
+    // Get position, velocity, and mass of body i in barycentric coords.
+
     *GM = JPL_GM[i];
 
     jpl_calc(pl, &now, jd_ref, t, ebody[i], PLAN_BAR);
@@ -173,30 +173,6 @@ static int ast_ephem(const int i, const double jd_ref, const double t, double* c
 	JPL_EPHEM_MA0004  // 4 vesta
     };
 
-    /*
-    const static double JPL_GM[16] =    
-    {
-	    3.2191392075878588e-15, // 107 camilla
-	    JPL_EPHEM_MA0001, // 1 Ceres
-	    //1.3964518123081070e-13, // 1 ceres
-	    2.0917175955133682e-15, // 65 cybele	
-	    8.6836253492286545e-15, // 511 davida
-	    4.5107799051436795e-15, // 15 eunomia
-	    2.4067012218937576e-15, // 31 euphrosyne	    
-	    5.9824315264869841e-15, // 52 europa
-	    1.2542530761640810e-14, // 10 hygiea
-	    6.3110343420878887e-15, // 704 interamnia
-	    2.5416014973471498e-15, // 7 iris	    
-	    4.2823439677995011e-15, // 3 juno
-	    3.0471146330043200e-14, // 2 pallas
-	    3.5445002842488978e-15, // 16 psyche
-	    4.8345606546105521e-15, // 87 sylvia
-	    2.6529436610356353e-15, // 88 thisbe
-	    3.8548000225257904e-14, // 4 vesta          
-
-    };
-    */
-    
     if(i<0 || i>15){
 	return(ERR_NAST);
     }
@@ -258,7 +234,7 @@ int all_ephem(const int i, const double jd_ref, const double t, double* const GM
 		      double* const x, double* const y, double* const z,
 		      double* const vx, double* const vy, double* const vz,
 		      double* const ax, double* const ay, double* const az
-		      ){    
+		      ){
 
     int number_bodies(int* N_ephem, int* N_ast);
     static int N_ast = -1;
@@ -271,15 +247,6 @@ int all_ephem(const int i, const double jd_ref, const double t, double* const GM
     static double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
     static double GMs;
     static double t_last = -1e99;
-
-    // For any given step, using the IAS15 integrator,
-    // all_ephem will need to access the positions and GM values
-    // for 27 bodies at the times of 8 different substeps.
-    // The integrator loops through through the same substeps
-    // to convergence.
-    // TODO: We can optimize by saving the positions
-    // of the perturbers, rather than reevaluating them at
-    // each iteration.
     
     // Get position and mass of massive body i.
     if(i < N_ephem){
@@ -300,8 +267,11 @@ int all_ephem(const int i, const double jd_ref, const double t, double* const GM
 
 	// Translate massive asteroids from heliocentric to barycentric.
 	*x += xs; *y += ys; *z += zs;
+	// velocities and accelerations are not needed for these
+	// bodies
 	*vx = NAN; *vy = NAN; *vz = NAN;
-	*ax = NAN; *ay = NAN; *az = NAN;		
+	*ax = NAN; *ay = NAN; *az = NAN;
+
     }
 
     return(NO_ERR);
@@ -315,10 +285,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
     int geo = assist->geocentric;
-    const double jd_ref = assist->geocentric;
-
-    // TODO: Constant should be hard-codes.
-    // geo flag should be set from the outside.
+    const double jd_ref = assist->jd_ref;
 
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;    
@@ -330,7 +297,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     // The limit of the EIH GR limit should be a free
     // parameter
-    int eih_loop_limit = N_ephem; // 1; // N_ephem;
+    int eih_loop_limit = N_ephem;
 
     const double t = sim->t;
 
@@ -362,40 +329,50 @@ void assist_additional_forces(struct reb_simulation* sim){
     // TODO: eliminate the output files after testing
     // or make this more flexible
     FILE *outfile = NULL;
+    // Uncomment this line and recompile for testing.    
     //outfile = fopen("acc.out", "w");
 
     // These should be executed in order from smallest
     // to largest
 
-    int flag_count=0;
-    
-    FILE *eih_file = NULL;
-    //eih_file = fopen("eih_acc.out", "w");
-
-    //eih_GR(sim, eih_loop_limit,
-    //xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
-    //outfile, eih_file);
-
-    //earth_J2J4(sim, xo, yo, zo, outfile);
-
-    direct(sim, xo, yo, zo, outfile);
-
-    //solar_J2(sim, xo, yo, zo, outfile);
-
-    //non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
-
-    // Pick one or the other of the next two routines
-
+    // Pick one of the three GR routines
+    //potential_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
+    //sim->force_is_velocity_dependent = 1;    
     //simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
+    /*
+    direct(sim, xo, yo, zo, outfile);
+    earth_J2J4(sim, xo, yo, zo, outfile);
+    solar_J2(sim, xo, yo, zo, outfile);        
+    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
+    sim->force_is_velocity_dependent = 1;
+    //simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
+    eih_GR(sim, eih_loop_limit,
+	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
+	   outfile, eih_file);
+    */
+    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    earth_J2J4(sim, xo, yo, zo, outfile);
+    solar_J2(sim, xo, yo, zo, outfile);        
+    
+    FILE *eih_file = NULL;
+    // Uncomment this line and recompile for testing.
+    //eih_file = fopen("eih_acc.out", "w");
 
+    sim->force_is_velocity_dependent = 1;
+    eih_GR(sim, eih_loop_limit,
+	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
+	   outfile, eih_file);
 
+    direct(sim, xo, yo, zo, outfile);
+    
     FILE *vfile = NULL;
     static int first=1;
     if(first==1){
 	vfile = fopen("vary_acc.out", "w");
     }
-    
+
+    // Uncomment one of these lines and recompile for testing.
     //test_vary(sim, vfile);
     //test_vary_2nd(sim, vfile);    
 
@@ -527,7 +504,8 @@ int nsubsteps = 10;
 // outtime:     array of output times.
 // outstate:    array of output states.
 // min_dt:      minimum allowed time step.
-int integration_function(double tstart, double tend, double tstep,
+int integration_function(double jd_ref,
+			 double tstart, double tend, double tstep,
 			 int geocentric,
 			 double epsilon,
 			 int n_particles,
@@ -545,7 +523,8 @@ int integration_function(double tstart, double tend, double tstep,
 			 double* outstate,
 			 double min_dt){
 
-    int flag_count=0;
+    //const double au = JPL_EPHEM_CAU;    
+    //const double c = (JPL_EPHEM_CLIGHT/au)*86400;
     
     struct reb_simulation* sim = reb_create_simulation();
 
@@ -578,7 +557,7 @@ int integration_function(double tstart, double tend, double tstep,
     assist->particle_params = NULL;
     assist->N = 0;
     assist->geocentric = geocentric;
-    assist->jd_ref = 2451545.0; // Make this flexible
+    assist->jd_ref = jd_ref; // 2451545.0; 
 
     // Add and initialize particles    
     for(int i=0; i<n_particles; i++){
@@ -925,17 +904,6 @@ void store_coefficients(struct reb_simulation* sim){
 	    a0[k1] = last_state[j].ay;
 	    a0[k2] = last_state[j].az;
 
-	    //printf("\n%d\n", j);
-	    //printf("%.16le %.16le %.16le\n", x0[k0], v0[k0], a0[k0]);
-	    //printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
-	    //b.p0[k0], b.p1[k0], b.p2[k0], b.p3[k0], b.p4[k0], b.p5[k0], b.p6[k0]);
-	    //printf("%.16le %.16le %.16le\n", x0[k1], v0[k1], a0[k1]);
-	    //printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
-	    //b.p0[k1], b.p1[k1], b.p2[k1], b.p3[k1], b.p4[k1], b.p5[k1], b.p6[k1]);
-	    //printf("%.16le %.16le %.16le\n", x0[k2], v0[k2], a0[k2]);	    
-	    //printf("%.16le %.16le %.16le %.16le %.16le %.16le %.16le\n",
-	    //b.p0[k2], b.p1[k2], b.p2[k2], b.p3[k2], b.p4[k2], b.p5[k2], b.p6[k2]);	    
-
 	}
 
 	free(x0);
@@ -1001,23 +969,27 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
     double GM;
     double x, y, z, vx, vy, vz, ax, ay, az;
 
-    static const int order[] = {26, 25, 24, 23, 22, 21, 20, 19, 18, 17,
-			    16, 15, 14, 13, 12, 11, 10, 9, 8, 5, 4, 
-			    1, 2, 7, 6, 3, 0};
+    static const int order[] = {13, 16, 20, 25, 11, 23, 21, 15,
+				24, 17, 19, 14, 18, 22, 26, 12,
+				10,  4,  5,  1,  9,  8,  3,  2,  7, 6, 0};
 
+    /*
+    static const int order[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+				10, 11, 12, 13, 14, 15, 16, 17, 18,
+				19, 20, 21, 22, 23, 24, 25, 26};
+    */
+    
     // Direct forces from massives bodies
     //for (int i=0; i<N_tot; i++){
     for (int k=0; k<N_tot; k++){
-    //for (int k=0; k<1; k++){        
 	int i = order[k];
 	//int i = k;
+
         // Get position and mass of massive body i.
 	// TOOD: make a version that returns the positions, velocities,
 	// and accelerations for all the bodies at a given time.
 
 	int flag = all_ephem(i, jd_ref, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
-
-	x = y = z = 0.0;
 
 	if(flag != NO_ERR){
 	    char outstring[50];
@@ -1037,7 +1009,7 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
 	    const double prefac = GM/(_r*_r*_r);
 
 	    if(outfile){
-		fprintf(outfile, "%3d %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le\n", i, t, GM, dx, dy, dz, -prefac*dx, -prefac*dy, -prefac*dz);
+		fprintf(outfile, "%3d %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le\n", i, jd_ref+t, GM, dx, dy, dz, -prefac*dx, -prefac*dy, -prefac*dz);
 	    }
 
 	    particles[j].ax -= prefac*dx;
@@ -1053,16 +1025,13 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
     // particles.
 
     for (int k=0; k<N_tot; k++){
-    //for (int k=0; k<1; k++){        
-	//for (int i=N_tot-1; i>=0; i--){
 	//for (int i=0; i<N_tot; i++){
-
 	int i = order[k];
 	//int i = k;
 
         // Get position and mass of massive body i.	
 	int flag = all_ephem(i, jd_ref, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
-	x = y = z = 0.0;	
+
 	if(flag != NO_ERR){
 	    char outstring[50];
 	    sprintf(outstring, "%s %d %d\n", "Ephemeris error c ", i, flag);	    	    
@@ -1163,7 +1132,6 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     double xr, yr, zr; //, vxr, vyr, vzr, axr, ayr, azr;
     xr = xe;  yr = ye;  zr = ze;
 
-    // Hard-coded constants.  BEWARE!
     const double J2e = JPL_EPHEM_J2E;
     const double J3e = JPL_EPHEM_J3E;
     const double J4e = JPL_EPHEM_J4E;
@@ -1246,7 +1214,7 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
 	resz =  reszp;
 
 	if(outfile){	
-	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "J24", t, resx, resy, resz);
+	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "J24", jd_ref+t, resx, resy, resz);
 	    fflush(outfile);
 	}
 	
@@ -1414,7 +1382,7 @@ void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE 
 	resz =  reszp;
 
 	if(outfile){
-	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "J2", t, resx, resy, resz);
+	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "J2", jd_ref+t, resx, resy, resz);
 	    fflush(outfile);
 	}
 
@@ -1513,11 +1481,6 @@ void non_gravs(struct reb_simulation* sim,
     // The non-grav parameters are specific to each object being
     // integrated.
 
-    // Normal asteroids
-    //double A1 = 0.0;
-    //double A2 = 0.0;
-    //double A3 = 0.0;
-
     // 2020 CD3
     //double A1= 1.903810165823E-10;
     //double A2 = 0.0;
@@ -1533,14 +1496,6 @@ void non_gravs(struct reb_simulation* sim,
     //double A2 = -2.521527931094E-10;
     //double A3= 2.317289821804E-10;
 
-    //double A1 = 2.840852439404E-9;
-    //double A2 = -2.521527931094E-10;
-    //double A3= 2.317289821804E-10;
-
-    //double A1 = 0.0;
-    //double A2 = -1e-4;
-    //double A3= 0.0;
-    
     // if no particles have non-zero non-grav
     // constants, skip the whole thing.
     
@@ -1570,16 +1525,26 @@ void non_gravs(struct reb_simulation* sim,
         const double r = sqrt(r2);
 
 	// We may need to make this more general.
-	const double g = 1.0/r2;
+	//const double g = 1.0/r2;
+
+	// Need to make these more flexible
 
 	// 'Oumuamua
-	double ALN = 0.04083733261;
-	double NK = 2.6;
-	double NM = 2.0;
-	double NN = 3.0;
-	double r0 = 5.0;
+	//double alpha = 0.04083733261;
+	//double nk = 2.6;
+	//double nm = 2.0;
+	//double nn = 3.0;
+	//double r0 = 5.0;
+
+	// Standard --> r^-2
+	double alpha = 1.0;
+	double nk = 0.0;
+	double nm = 2.0;
+	double nn = 5.093;
+	double r0 = 1.0;
 	
-	//const double g = ALN*pow(r/r0, -NM)*pow(1.0+pow(r/r0, NN), -NK);
+	const double g = alpha*pow(r/r0, -nm)*pow(1.0+pow(r/r0, nn), -nk);
+	//const double g = 1.0/r2;	
 
 	double dvx = p.vx + (vxo - vxr);
 	double dvy = p.vy + (vyo - vyr);
@@ -1594,10 +1559,18 @@ void non_gravs(struct reb_simulation* sim,
 
 	double tx = hy*dz - hz*dy;
 	double ty = hz*dx - hx*dz;
-	double tz = hx*dy - hy*dx;	
-	
+	double tz = hx*dy - hy*dx;
+
         const double t2 = tx*tx + ty*ty + tz*tz;
         const double _t = sqrt(t2);
+
+	if(outfile){	
+	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "NG", jd_ref+t,
+		    A1*g*dx/r + A2*g*tx/_t + A3*g*hx/h,
+		    A1*g*dy/r + A2*g*ty/_t + A3*g*hy/h,
+		    A1*g*dz/r + A2*g*tz/_t + A3*g*hz/h);
+	    fflush(outfile);
+	}
 
 	particles[j].ax += A1*g*dx/r + A2*g*tx/_t + A3*g*hx/h;
         particles[j].ay += A1*g*dy/r + A2*g*ty/_t + A3*g*hy/h;
@@ -1613,8 +1586,8 @@ void non_gravs(struct reb_simulation* sim,
 
 	// Need to update this for the new g(r) function. Done
 	//const double dgdr = -2.*g/r;
-	const double dgdr = (ALN/r0)*(-NM*pow(r/r0, -NM-1)*pow(1.0+pow(r/r0, NN), -NK)
-                                      +pow(r/r0, -NM)*(-NK*NN)*pow(r/r0, NN-1)*pow(1.0+pow(r/r0, NN), -NK-1));
+	const double dgdr = (alpha/r0)*(-nm*pow(r/r0, -nm-1)*pow(1.0+pow(r/r0, nn), -nk)
+                                      +pow(r/r0, -nm)*(-nk*nn)*pow(r/r0, nn-1)*pow(1.0+pow(r/r0, nn), -nk-1));
         const double dgx  = dgdr*dx/r;
         const double dgy  = dgdr*dy/r;
         const double dgz  = dgdr*dz/r;
@@ -1727,9 +1700,6 @@ void non_gravs(struct reb_simulation* sim,
 
 		// Getting the variations in the non-grav params
 		// There might be cleaner way to do this indexing.
-		//double dA1 = part_params[N_real+v].A1;
-		//double dA2 = part_params[N_real+v].A2;
-		//double dA3 = part_params[N_real+v].A3;
 		double dA1 = part_params[3*(N_real+v)+0];
 		double dA2 = part_params[3*(N_real+v)+1];
 		double dA3 = part_params[3*(N_real+v)+2];
@@ -1790,7 +1760,7 @@ void potential_GR(struct reb_simulation* sim,
     all_ephem(0, jd_ref, t, &GM, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
     const double GMsun = GM;
 
-    xs = ys = zs = 0.0;
+    //xs = ys = zs = 0.0;
 
     xr  = xs;  yr  = ys;  zr = zs;
     vxr = vxs; vyr = vys; vzr = vzs;
@@ -1814,7 +1784,7 @@ void potential_GR(struct reb_simulation* sim,
 	particles[j].az += prefac*p.z;
 
 	if(outfile){
-	    fprintf(outfile, "%s %25.16le %25.16le %25.16le %25.16le\n", "potential GR", t,
+	    fprintf(outfile, "%s %25.16le %25.16le %25.16le %25.16le\n", "potential GR", jd_ref+t,
 		    prefac*p.x,
 		    prefac*p.y,
 		    prefac*p.z);
@@ -1823,7 +1793,7 @@ void potential_GR(struct reb_simulation* sim,
 
 	// Constants for variational equations
 	// Only evaluate if there are variational particles
-	const double dpdr = -prefac/r;
+	//const double dpdr = -prefac/r;
 
 	// This section can be optimized.
 	const double dxdx = prefac + -4.0*prefac*(p.x/r)*(p.x/r);
@@ -1879,6 +1849,7 @@ void simple_GR(struct reb_simulation* sim,
 
     const double au = JPL_EPHEM_CAU;    
     const double c = (JPL_EPHEM_CLIGHT/au)*86400;
+
     const double C2 = c*c;  // This could be stored as C2.
     
     const unsigned int N = sim->N;  // N includes real+variational particles
@@ -1898,7 +1869,7 @@ void simple_GR(struct reb_simulation* sim,
     all_ephem(0, jd_ref, t, &GM, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
     const double GMsun = GM;
 
-    xs = ys = zs = 0.0;
+    //xs = ys = zs = 0.0;
 
     xr  = xs;  yr  = ys;  zr = zs;
     vxr = vxs; vyr = vys; vzr = vzs;
@@ -1928,7 +1899,7 @@ void simple_GR(struct reb_simulation* sim,
 	particles[j].az += prefac*(A*p.z + B*p.vz);
 
 	if(outfile){
-	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", t,
+	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", jd_ref+t,
 		    prefac*(A*p.x + B*p.vx),
 		    prefac*(A*p.y + B*p.vy),
 		    prefac*(A*p.z + B*p.vz));
@@ -2013,7 +1984,7 @@ void eih_GR(struct reb_simulation* sim,
     const double au = JPL_EPHEM_CAU;    
     const double c = (JPL_EPHEM_CLIGHT/au)*86400;
     const double C2 = c*c;  // This could be stored as C2.
-    
+
     // Doesn't need to be hard-coded.
     //const double c = 173.14463267424031;
     //const double C2 = c*c;  // This could be stored as C2.
@@ -2462,7 +2433,7 @@ void eih_GR(struct reb_simulation* sim,
 	grz += term7z_sum/C2 + term8z_sum/C2;
 
 	if(outfile){
-	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", t,
+	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", jd_ref+t,
 		    grx, gry, grz);
 	    fflush(outfile);
 	}
