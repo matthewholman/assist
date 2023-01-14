@@ -51,20 +51,6 @@ enum {
     ERR_NEPH,      // planet number out of range
 };
 
-int ebody[11] = {
-        PLAN_SOL,                       // Sun (in barycentric)
-        PLAN_MER,                       // Mercury center
-        PLAN_VEN,                       // Venus center
-        PLAN_EAR,                       // Earth center
-        PLAN_LUN,                       // Moon center
-        PLAN_MAR,                       // Mars center
-        PLAN_JUP,                       // ...
-        PLAN_SAT,
-        PLAN_URA,
-        PLAN_NEP,
-        PLAN_PLU
-};
-
 #define STRINGIFY(s) str(s)
 #define str(s) #s
 
@@ -121,6 +107,20 @@ static int ephem(const int i, const double jd_ref, const double t,
     // Get position, velocity, and mass of body i in barycentric coords.
 
     *GM = JPL_GM[i];
+
+    static const int ebody[11] = {
+        PLAN_SOL,                       // Sun (in barycentric)
+        PLAN_MER,                       // Mercury center
+        PLAN_VEN,                       // Venus center
+        PLAN_EAR,                       // Earth center
+        PLAN_LUN,                       // Moon center
+        PLAN_MAR,                       // Mars center
+        PLAN_JUP,                       // ...
+        PLAN_SAT,
+        PLAN_URA,
+        PLAN_NEP,
+        PLAN_PLU
+    };
 
     jpl_calc(pl, &now, jd_ref, t, ebody[i], PLAN_BAR);
 
