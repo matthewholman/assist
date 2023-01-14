@@ -61,6 +61,7 @@ const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets upda
 // Forward function declarations
 static void store_function(struct reb_simulation* sim);
 static void assist_heartbeat(struct reb_simulation* r);
+static void assist_additional_force_direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
 static void assist_additional_force_solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
 static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
 static void assist_additional_force_non_gravitational(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
@@ -351,7 +352,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     //assist_additional_force_simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     /*
-    direct(sim, xo, yo, zo, outfile);
+    assist_additional_force_direct(sim, xo, yo, zo, outfile);
     assist_additional_force_earth_J2J4(sim, xo, yo, zo, outfile);
     assist_additional_force_solar_J2(sim, xo, yo, zo, outfile);        
     assist_additional_force_non_gravitational(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
@@ -374,7 +375,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
 	   outfile, eih_file);
 
-    direct(sim, xo, yo, zo, outfile);
+    assist_additional_force_direct(sim, xo, yo, zo, outfile);
     
     FILE *vfile = NULL;
     static int first=1;
@@ -948,7 +949,7 @@ static void assist_heartbeat(struct reb_simulation* sim){
     store_last_state(sim);
 }
 
-void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
+static void assist_additional_force_direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
 
     //const double G = sim->G;
     const unsigned int N = sim->N;  // N includes real+variational particles

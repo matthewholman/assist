@@ -138,8 +138,6 @@ int integration_function(double jd_ref,
 			 double min_dt);
 
 
-void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
-
 void test_vary(struct reb_simulation* sim, FILE *vfile);
 
 void test_vary_2nd(struct reb_simulation* sim, FILE *vfile);
