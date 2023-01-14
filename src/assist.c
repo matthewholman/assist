@@ -57,6 +57,11 @@ enum {
 const char* assist_build_str = __DATE__ " " __TIME__;   // Date and time build string. 
 const char* assist_version_str = "1.0.1b6";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets updated automatically. Do not edit manually.
+    
+// Forward function declarations
+static void store_function(struct reb_simulation* sim);
+static void assist_heartbeat(struct reb_simulation* r);
+
 
 static int ephem(const int i, const double jd_ref, const double t,
 		 double* const GM,
@@ -532,7 +537,7 @@ int integration_function(double jd_ref,
     // TODO: decide how flexible these should be.
     sim->integrator = REB_INTEGRATOR_IAS15;
     sim->save_messages = 1;
-    sim->heartbeat = heartbeat;
+    sim->heartbeat = assist_heartbeat;
     sim->display_data = NULL;
     sim->collision = REB_COLLISION_NONE;  // This is important and needs to be considered carefully.
     sim->collision_resolve = reb_collision_resolve_merge; // Not sure what this is for.
@@ -686,7 +691,7 @@ int integration_function(double jd_ref,
 
 //static const double hg[11]   =   { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 
-void store_function(struct reb_simulation* sim){
+static void store_function(struct reb_simulation* sim){
     int N = sim->N;
     int N3 = 3*N;
 
@@ -848,7 +853,7 @@ void store_function(struct reb_simulation* sim){
 
 }
 
-void store_coefficients(struct reb_simulation* sim){
+static void store_coefficients(struct reb_simulation* sim){
     int N = sim->N;
     int N3 = 3*N;
 
@@ -911,7 +916,7 @@ void store_coefficients(struct reb_simulation* sim){
 
 }
 
-void store_last_state(struct reb_simulation* sim){
+static void store_last_state(struct reb_simulation* sim){
 
     //timestate* ts = ((struct assist_extras*) sim->extras)->ts;
     tstate* last_state = ((struct assist_extras*) sim->extras)->last_state;    
@@ -931,19 +936,11 @@ void store_last_state(struct reb_simulation* sim){
     }
 }
 
-void heartbeat(struct reb_simulation* sim){
-
-    void store_function(struct reb_simulation* sim);
-    void store_last_state(struct reb_simulation* sim);
-    void store_coefficients(struct reb_simulation* sim);
-
+static void assist_heartbeat(struct reb_simulation* sim){
     store_function(sim);
     store_coefficients(sim);    
-
     reb_update_acceleration(sim);
-
     store_last_state(sim);
-
 }
 
 void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){

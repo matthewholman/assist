@@ -137,7 +137,6 @@ int integration_function(double jd_ref,
 			 double* outstate,
 			 double min_dt);
 
-void heartbeat(struct reb_simulation* r);
 
 void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
 
