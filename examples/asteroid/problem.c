@@ -37,8 +37,8 @@ int main(int argc, char* argv[]){
 
     // Allocate memory for output.
     int n_alloc = ((tend-tstart)/tstep + 1)*n_substeps;
-    double* outstate = (double *) malloc((8*n_alloc)*6*sizeof(double));
-    double* outtime  = (double *) malloc((8*n_alloc)*sizeof(double));
+    double* outstate = (double *) malloc((n_alloc)*6*sizeof(double));
+    double* outtime  = (double *) malloc((n_alloc)*sizeof(double));
 
     int n_steps_done;
     int status = integration_function(
