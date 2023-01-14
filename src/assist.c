@@ -61,7 +61,12 @@ const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets upda
 // Forward function declarations
 static void store_function(struct reb_simulation* sim);
 static void assist_heartbeat(struct reb_simulation* r);
-
+static void assist_additional_force_solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
+static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
+static void assist_additional_force_non_gravitational(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
+static void assist_additional_force_potential_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
+static void assist_additional_force_simple_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
+static void assist_additional_force_eih_GR(struct reb_simulation* sim, int eih_loop_limit, double xo, double yo, double zo, double vxo, double vyo, double vzo, double axo, double ayo, double azo,	FILE *outfile, FILE *eih_file);
 
 static int ephem(const int i, const double jd_ref, const double t,
 		 double* const GM,
@@ -341,31 +346,31 @@ void assist_additional_forces(struct reb_simulation* sim){
     // to largest
 
     // Pick one of the three GR routines
-    //potential_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
+    //assist_additional_force_potential_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
     //sim->force_is_velocity_dependent = 1;    
-    //simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    //assist_additional_force_simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     /*
     direct(sim, xo, yo, zo, outfile);
-    earth_J2J4(sim, xo, yo, zo, outfile);
-    solar_J2(sim, xo, yo, zo, outfile);        
-    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
+    assist_additional_force_earth_J2J4(sim, xo, yo, zo, outfile);
+    assist_additional_force_solar_J2(sim, xo, yo, zo, outfile);        
+    assist_additional_force_non_gravitational(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
     sim->force_is_velocity_dependent = 1;
-    //simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
-    eih_GR(sim, eih_loop_limit,
+    //assist_additional_force_simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
+    assist_additional_force_eih_GR(sim, eih_loop_limit,
 	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
 	   outfile, eih_file);
     */
-    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
-    earth_J2J4(sim, xo, yo, zo, outfile);
-    solar_J2(sim, xo, yo, zo, outfile);        
+    assist_additional_force_non_gravitational(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    assist_additional_force_earth_J2J4(sim, xo, yo, zo, outfile);
+    assist_additional_force_solar_J2(sim, xo, yo, zo, outfile);        
     
     FILE *eih_file = NULL;
     // Uncomment this line and recompile for testing.
     //eih_file = fopen("eih_acc.out", "w");
 
     sim->force_is_velocity_dependent = 1;
-    eih_GR(sim, eih_loop_limit,
+    assist_additional_force_eih_GR(sim, eih_loop_limit,
 	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
 	   outfile, eih_file);
 
@@ -1095,7 +1100,7 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
     }
 }
 
-void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
+static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
 
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
     const double jd_ref = assist->jd_ref;
@@ -1302,7 +1307,7 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     }
 }
 
-void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
+static void assist_additional_force_solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
 
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
     const double jd_ref = assist->jd_ref;
@@ -1436,7 +1441,7 @@ void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE 
 
 }
 
-void non_gravs(struct reb_simulation* sim,
+static void assist_additional_force_non_gravitational(struct reb_simulation* sim,
 	       double xo, double yo, double zo,
 	       double vxo, double vyo, double vzo,	       
 	       FILE *outfile){
@@ -1724,7 +1729,7 @@ void non_gravs(struct reb_simulation* sim,
 
 }
 
-void potential_GR(struct reb_simulation* sim,
+static void assist_additional_force_potential_GR(struct reb_simulation* sim,
 	       double xo, double yo, double zo,
 	       double vxo, double vyo, double vzo,	       
 	       FILE *outfile){
@@ -1832,7 +1837,7 @@ void potential_GR(struct reb_simulation* sim,
     }
 }
 
-void simple_GR(struct reb_simulation* sim,
+static void assist_additional_force_simple_GR(struct reb_simulation* sim,
 	       double xo, double yo, double zo,
 	       double vxo, double vyo, double vzo,	       
 	       FILE *outfile){
@@ -1961,7 +1966,7 @@ void simple_GR(struct reb_simulation* sim,
     }
 }
 
-void eih_GR(struct reb_simulation* sim,
+static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	    int eih_loop_limit,
 	    double xo, double yo, double zo,
 	    double vxo, double vyo, double vzo,
