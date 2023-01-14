@@ -479,8 +479,6 @@ void assist_error(struct assist_extras* assist, const char* const msg){
     }
 }
 
-int nsubsteps = 10;    
-
 // integration_function
 // tstart: integration start time in tdb
 // tend:   integration end time in tdb
