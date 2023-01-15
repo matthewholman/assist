@@ -69,7 +69,7 @@ int ebody[11] = {
 #define str(s) #s
 
 const char* assist_build_str = __DATE__ " " __TIME__;   // Date and time build string. 
-const char* assist_version_str = "1.0.1b6";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* assist_version_str = "1.0.1b7";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets updated automatically. Do not edit manually.
 
 static int ephem(const int i, const double jd_ref, const double t,
@@ -850,68 +850,6 @@ void store_function(struct reb_simulation* sim){
 
 }
 
-void store_coefficients(struct reb_simulation* sim){
-    int N = sim->N;
-    int N3 = 3*N;
-
-    static int last_steps_done = 0;
-
-    //int nsubsteps = assist->nsubsteps;
-    //double* hg = assist->hg;
-
-    timestate* ts = ((struct assist_extras*) sim->extras)->ts;
-    tstate* last_state = ((struct assist_extras*) sim->extras)->last_state;    
-
-    static double* outtime;
-    static double* outstate;
-
-    int n_alloc;
-
-    int step = sim->steps_done;
-
-    outtime = ts->t;
-    outstate = ts->state;
-    n_alloc= ts->n_alloc;
-
-    if(step==0){
-
-	//printf("initial step %d %lf\n", step, sim->t);
-	
-    }else if(step > last_steps_done){
-
-	double* x0 = malloc(sizeof(double)*N3);
-	double* v0 = malloc(sizeof(double)*N3);
-	double* a0 = malloc(sizeof(double)*N3);
-
-	//double t = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
-	//printf("%lf %lf \n", sim->t-sim->dt_last_done, sim->dt_last_done);
-	
-	for(int j=0;j<N;j++) {
-
-	    const int k0 = 3*j+0;
-	    const int k1 = 3*j+1;
-	    const int k2 = 3*j+2;
-
-	    x0[k0] = last_state[j].x;
-	    x0[k1] = last_state[j].y;
-	    x0[k2] = last_state[j].z;
-
-	    v0[k0] = last_state[j].vx;
-	    v0[k1] = last_state[j].vy;
-	    v0[k2] = last_state[j].vz;	
-
-	    a0[k0] = last_state[j].ax;
-	    a0[k1] = last_state[j].ay;
-	    a0[k2] = last_state[j].az;
-
-	}
-
-	free(x0);
-	free(v0);
-	free(a0);
-    }
-
-}
 
 void store_last_state(struct reb_simulation* sim){
 
