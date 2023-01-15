@@ -312,7 +312,7 @@ int jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, double rel, int 
 
         // compute record number and 'offset' into record
         blk = (u_int32_t)((jde + rel - pl->beg) / pl->inc);
-        z = pl->map + (blk + 2) * pl->rec;
+        z = (double*)pl->map + (blk + 2) * pl->rec/sizeof(double);
         t = ((jde - pl->beg - (double)blk * pl->inc) + rel) / pl->inc;
 
         // the magick of function pointers
