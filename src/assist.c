@@ -51,26 +51,23 @@ enum {
     ERR_NEPH,      // planet number out of range
 };
 
-int ebody[11] = {
-        PLAN_SOL,                       // Sun (in barycentric)
-        PLAN_MER,                       // Mercury center
-        PLAN_VEN,                       // Venus center
-        PLAN_EAR,                       // Earth center
-        PLAN_LUN,                       // Moon center
-        PLAN_MAR,                       // Mars center
-        PLAN_JUP,                       // ...
-        PLAN_SAT,
-        PLAN_URA,
-        PLAN_NEP,
-        PLAN_PLU
-};
-
 #define STRINGIFY(s) str(s)
 #define str(s) #s
 
 const char* assist_build_str = __DATE__ " " __TIME__;   // Date and time build string. 
 const char* assist_version_str = "1.0.1b7";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets updated automatically. Do not edit manually.
+    
+// Forward function declarations
+static void store_function(struct reb_simulation* sim);
+static void assist_heartbeat(struct reb_simulation* r);
+static void assist_additional_force_direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
+static void assist_additional_force_solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
+static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
+static void assist_additional_force_non_gravitational(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
+static void assist_additional_force_potential_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
+static void assist_additional_force_simple_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
+static void assist_additional_force_eih_GR(struct reb_simulation* sim, int eih_loop_limit, double xo, double yo, double zo, double vxo, double vyo, double vzo, double axo, double ayo, double azo,	FILE *outfile, FILE *eih_file);
 
 static int ephem(const int i, const double jd_ref, const double t,
 		 double* const GM,
@@ -121,6 +118,20 @@ static int ephem(const int i, const double jd_ref, const double t,
     // Get position, velocity, and mass of body i in barycentric coords.
 
     *GM = JPL_GM[i];
+
+    static const int ebody[11] = {
+        PLAN_SOL,                       // Sun (in barycentric)
+        PLAN_MER,                       // Mercury center
+        PLAN_VEN,                       // Venus center
+        PLAN_EAR,                       // Earth center
+        PLAN_LUN,                       // Moon center
+        PLAN_MAR,                       // Mars center
+        PLAN_JUP,                       // ...
+        PLAN_SAT,
+        PLAN_URA,
+        PLAN_NEP,
+        PLAN_PLU
+    };
 
     jpl_calc(pl, &now, jd_ref, t, ebody[i], PLAN_BAR);
 
@@ -336,35 +347,34 @@ void assist_additional_forces(struct reb_simulation* sim){
     // to largest
 
     // Pick one of the three GR routines
-    //potential_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
+    //assist_additional_force_potential_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
     //sim->force_is_velocity_dependent = 1;    
-    //simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    //assist_additional_force_simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     /*
-    direct(sim, xo, yo, zo, outfile);
-    earth_J2J4(sim, xo, yo, zo, outfile);
-    solar_J2(sim, xo, yo, zo, outfile);        
-    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
+    assist_additional_force_direct(sim, xo, yo, zo, outfile);
+    assist_additional_force_earth_J2J4(sim, xo, yo, zo, outfile);
+    assist_additional_force_solar_J2(sim, xo, yo, zo, outfile);        
+    assist_additional_force_non_gravitational(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
     sim->force_is_velocity_dependent = 1;
-    //simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
-    eih_GR(sim, eih_loop_limit,
+    //assist_additional_force_simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
+    assist_additional_force_eih_GR(sim, eih_loop_limit,
 	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
 	   outfile, eih_file);
     */
-    non_gravs(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
-    earth_J2J4(sim, xo, yo, zo, outfile);
-    solar_J2(sim, xo, yo, zo, outfile);        
+    assist_additional_force_non_gravitational(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    assist_additional_force_earth_J2J4(sim, xo, yo, zo, outfile);
+    assist_additional_force_solar_J2(sim, xo, yo, zo, outfile);        
     
     FILE *eih_file = NULL;
     // Uncomment this line and recompile for testing.
     //eih_file = fopen("eih_acc.out", "w");
 
-    sim->force_is_velocity_dependent = 1;
-    eih_GR(sim, eih_loop_limit,
+    assist_additional_force_eih_GR(sim, eih_loop_limit,
 	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
 	   outfile, eih_file);
 
-    direct(sim, xo, yo, zo, outfile);
+    assist_additional_force_direct(sim, xo, yo, zo, outfile);
     
     FILE *vfile = NULL;
     static int first=1;
@@ -451,6 +461,7 @@ void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist)
     sim->extras = assist;
     sim->extras_cleanup = assist_extras_cleanup;
     sim->additional_forces = assist_additional_forces;
+    sim->force_is_velocity_dependent = 1;
 }
 
 void assist_free_pointers(struct assist_extras* assist){
@@ -478,8 +489,6 @@ void assist_error(struct assist_extras* assist, const char* const msg){
         reb_error(assist->sim, msg);
     }
 }
-
-int nsubsteps = 10;    
 
 // integration_function
 // tstart: integration start time in tdb
@@ -534,7 +543,7 @@ int integration_function(double jd_ref,
     // TODO: decide how flexible these should be.
     sim->integrator = REB_INTEGRATOR_IAS15;
     sim->save_messages = 1;
-    sim->heartbeat = heartbeat;
+    sim->heartbeat = assist_heartbeat;
     sim->display_data = NULL;
     sim->collision = REB_COLLISION_NONE;  // This is important and needs to be considered carefully.
     sim->collision_resolve = reb_collision_resolve_merge; // Not sure what this is for.
@@ -688,7 +697,7 @@ int integration_function(double jd_ref,
 
 //static const double hg[11]   =   { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 
-void store_function(struct reb_simulation* sim){
+static void store_function(struct reb_simulation* sim){
     int N = sim->N;
     int N3 = 3*N;
 
@@ -850,8 +859,7 @@ void store_function(struct reb_simulation* sim){
 
 }
 
-
-void store_last_state(struct reb_simulation* sim){
+static void store_last_state(struct reb_simulation* sim){
 
     //timestate* ts = ((struct assist_extras*) sim->extras)->ts;
     tstate* last_state = ((struct assist_extras*) sim->extras)->last_state;    
@@ -871,22 +879,13 @@ void store_last_state(struct reb_simulation* sim){
     }
 }
 
-void heartbeat(struct reb_simulation* sim){
-
-    void store_function(struct reb_simulation* sim);
-    void store_last_state(struct reb_simulation* sim);
-    void store_coefficients(struct reb_simulation* sim);
-
+static void assist_heartbeat(struct reb_simulation* sim){
     store_function(sim);
-    store_coefficients(sim);    
-
     reb_update_acceleration(sim);
-
     store_last_state(sim);
-
 }
 
-void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
+static void assist_additional_force_direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
 
     //const double G = sim->G;
     const unsigned int N = sim->N;  // N includes real+variational particles
@@ -1038,7 +1037,7 @@ void direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *o
     }
 }
 
-void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
+static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
 
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
     const double jd_ref = assist->jd_ref;
@@ -1245,7 +1244,7 @@ void earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FIL
     }
 }
 
-void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
+static void assist_additional_force_solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile){
 
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
     const double jd_ref = assist->jd_ref;
@@ -1379,7 +1378,7 @@ void solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE 
 
 }
 
-void non_gravs(struct reb_simulation* sim,
+static void assist_additional_force_non_gravitational(struct reb_simulation* sim,
 	       double xo, double yo, double zo,
 	       double vxo, double vyo, double vzo,	       
 	       FILE *outfile){
@@ -1667,7 +1666,7 @@ void non_gravs(struct reb_simulation* sim,
 
 }
 
-void potential_GR(struct reb_simulation* sim,
+static void assist_additional_force_potential_GR(struct reb_simulation* sim,
 	       double xo, double yo, double zo,
 	       double vxo, double vyo, double vzo,	       
 	       FILE *outfile){
@@ -1775,7 +1774,7 @@ void potential_GR(struct reb_simulation* sim,
     }
 }
 
-void simple_GR(struct reb_simulation* sim,
+static void assist_additional_force_simple_GR(struct reb_simulation* sim,
 	       double xo, double yo, double zo,
 	       double vxo, double vyo, double vzo,	       
 	       FILE *outfile){
@@ -1904,7 +1903,7 @@ void simple_GR(struct reb_simulation* sim,
     }
 }
 
-void eih_GR(struct reb_simulation* sim,
+static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	    int eih_loop_limit,
 	    double xo, double yo, double zo,
 	    double vxo, double vyo, double vzo,

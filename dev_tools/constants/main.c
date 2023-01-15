@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "planets.h"
 #include "spk.h"
+#include "planets.h"
 
 int main(int argc, char **argv)
 {

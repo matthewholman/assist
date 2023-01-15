@@ -17,20 +17,6 @@
 #define JPL_EPHEM_FILE "../../data/linux_m13000p17000.441"
 #endif
 
-int body[11] = {
-        PLAN_SOL,                       // Sun (in barycentric)
-        PLAN_MER,                       // Mercury center
-        PLAN_VEN,                       // Venus center
-        PLAN_EAR,                       // Earth center
-        PLAN_LUN,                       // Moon center
-        PLAN_MAR,                       // Mars center
-        PLAN_JUP,                       // ...
-        PLAN_SAT,
-        PLAN_URA,
-        PLAN_NEP,
-        PLAN_PLU
-};
-
 /*
  *  jpl_work
  *
