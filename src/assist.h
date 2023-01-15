@@ -45,10 +45,6 @@ typedef struct {
 } tstate;
 
 typedef struct {
-  double x, y, z, vx, vy, vz, ax, ay, az;
-} state;
-
-typedef struct {
     double* t;
     double* state;
     tstate* last_state;

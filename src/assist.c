@@ -370,7 +370,6 @@ void assist_additional_forces(struct reb_simulation* sim){
     // Uncomment this line and recompile for testing.
     //eih_file = fopen("eih_acc.out", "w");
 
-    sim->force_is_velocity_dependent = 1;
     assist_additional_force_eih_GR(sim, eih_loop_limit,
 	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
 	   outfile, eih_file);
@@ -462,6 +461,7 @@ void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist)
     sim->extras = assist;
     sim->extras_cleanup = assist_extras_cleanup;
     sim->additional_forces = assist_additional_forces;
+    sim->force_is_velocity_dependent = 1;
 }
 
 void assist_free_pointers(struct assist_extras* assist){

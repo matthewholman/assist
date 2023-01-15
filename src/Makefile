@@ -24,7 +24,7 @@ endif
 
 SOURCES=assist.c spk.c planets.c
 OBJECTS=$(SOURCES:.c=.o)
-HEADERS=assist.h
+HEADERS=$(SOURCES:.c=.h) const.h
 
 all: $(SOURCES) librebound.so libassist.so
 	
