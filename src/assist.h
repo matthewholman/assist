@@ -65,7 +65,6 @@ typedef struct {
 
 struct assist_extras {
     struct reb_simulation* sim;
-    double* c;
     int geocentric;
     tstate* last_state;
     timestate* ts;
@@ -73,7 +72,6 @@ struct assist_extras {
     double* hg;
     //particle_params* particle_params;
     double* particle_params;
-    int N;
     double jd_ref;
 };
 
