@@ -45,13 +45,6 @@ typedef struct {
 } tstate;
 
 typedef struct {
-    double* t;
-    double* state;
-    int n_alloc;
-    int n_particles;
-} timestate;
-
-typedef struct {
     double t;
     tstate* tstates;
 } ephem_block;
@@ -66,11 +59,13 @@ struct assist_extras {
     struct reb_simulation* sim;
     int geocentric;
     tstate* last_state;
-    timestate* ts;
     int nsubsteps;
     double* hg;
     //particle_params* particle_params;
     double* particle_params;
+    double* output_t; 
+    double* output_state;
+    int output_n_alloc;
     double jd_ref;
 };
 

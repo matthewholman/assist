@@ -176,8 +176,8 @@ int integration_function(double jd_ref,
 			 int *n_out,
 			 int nsubsteps,
 			 double* hg,
-			 double* outtime,
-			 double* outstate,
+			 double* output_t,
+			 double* output_state,
 			 double min_dt){
 
     //const double au = JPL_EPHEM_CAU;    
@@ -283,20 +283,15 @@ int integration_function(double jd_ref,
     }
 
     // Allocate memory.
-    timestate *ts = (timestate*) malloc(sizeof(timestate));
     tstate* last_state = (tstate*) malloc(sim->N*sizeof(tstate));
 
-    ts->t = outtime;
-    ts->state = outstate;        
-
+    assist->output_t = output_t;
+    assist->output_state = output_state;
+    assist->output_n_alloc = n_alloc;
     assist->last_state = last_state;
-    assist->ts = ts;
 
     assist->nsubsteps = nsubsteps;
     assist->hg = hg;
-
-    ts->n_particles = n_particles;
-    ts->n_alloc = n_alloc;
 
     // Do the integration
     reb_integrate(sim, tend);
@@ -316,9 +311,6 @@ int integration_function(double jd_ref,
     int status = sim->status;
 
     // explicitly free all the memory allocated by ASSIST
-    ts->t = NULL;
-    ts->state = NULL;
-    free(ts);
     free(last_state);
 
     //assist_free(assist);    // this explicitly frees all the memory allocated by ASSIST
@@ -357,16 +349,12 @@ static void store_function(struct reb_simulation* sim){
     int nsubsteps = assist->nsubsteps;
     double* hg = assist->hg;
 
-    timestate* ts = ((struct assist_extras*) sim->extras)->ts;
     tstate* last_state = ((struct assist_extras*) sim->extras)->last_state;    
 
-    static double* outtime;
-    static double* outstate;
+    double* outtime = assist->output_t;
+    double* outstate = assist->output_state;
 
     int step = sim->steps_done;
-
-    outtime = ts->t;
-    outstate = ts->state;
 
     if(step==0){
         int state_offset = 0;
@@ -498,7 +486,7 @@ static void store_function(struct reb_simulation* sim){
     }
     last_steps_done = sim->steps_done;
 
-    if((ts->n_alloc-step*nsubsteps) < 1){
+    if((assist->output_n_alloc-step*nsubsteps) < 1){
         sim->status = REB_EXIT_USER;
         return;
     }
@@ -506,8 +494,6 @@ static void store_function(struct reb_simulation* sim){
 }
 
 static void store_last_state(struct reb_simulation* sim){
-
-    //timestate* ts = ((struct assist_extras*) sim->extras)->ts;
     tstate* last_state = ((struct assist_extras*) sim->extras)->last_state;    
 
     int N = sim->N;    
