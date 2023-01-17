@@ -212,7 +212,6 @@ int integration_function(double jd_ref,
     // and initialize some values.
     struct assist_extras* assist = assist_attach(sim);
     assist->particle_params = NULL;
-    assist->N = 0;
     assist->geocentric = geocentric;
     assist->jd_ref = jd_ref; // 2451545.0; 
 
@@ -236,10 +235,11 @@ int integration_function(double jd_ref,
 	// needs to be a set of extra parameters.
 	// The number of non-grav parameters should be flexible,
 	// rather than fixed at 3.	
-	assist->N++;
+
+    int N = sim->N;
 	// If part_params is NULL, skip this part
 	if(part_params != NULL){
-	    assist->particle_params = realloc(assist->particle_params, (assist->N)*3*sizeof(double));
+	    assist->particle_params = realloc(assist->particle_params, N*3*sizeof(double));
 	    assist->particle_params[3*i+0] = part_params[3*i+0];
 	    assist->particle_params[3*i+1] = part_params[3*i+1];
 	    assist->particle_params[3*i+2] = part_params[3*i+2];
@@ -272,10 +272,10 @@ int integration_function(double jd_ref,
 	// needs to be a set of extra parameters.
 	// The number of non-grav parameters should be flexible,
 	// rather than fixed at 3.	
-	assist->N++;
+    int N = sim->N;
 	// If var_part_params is null, skip this part.
 	if(var_part_params != NULL){	
-	    assist->particle_params = realloc(assist->particle_params, (assist->N)*3*sizeof(double));
+	    assist->particle_params = realloc(assist->particle_params, N*3*sizeof(double));
 	    assist->particle_params[3*var_i+0] = var_part_params[3*i+0];
 	    assist->particle_params[3*var_i+1] = var_part_params[3*i+1];
 	    assist->particle_params[3*var_i+2] = var_part_params[3*i+2];
