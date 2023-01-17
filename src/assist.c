@@ -92,9 +92,11 @@ struct assist_extras* assist_attach(struct reb_simulation* sim){
         fprintf(stderr, "ASSIST Error: Simulation pointer passed to assist_attach was NULL.\n");
         return NULL;
     }
-    struct assist_extras* assist = malloc(sizeof(*assist));
+
     // Initialization separate from memory allocation because python handles memory management
+    struct assist_extras* assist = malloc(sizeof(*assist));
     assist_initialize(sim, assist); 
+    
     return assist;
 }
 
@@ -106,6 +108,11 @@ void assist_extras_cleanup(struct reb_simulation* r){
 
 void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist){
     assist->sim = sim;
+    assist->particle_params = NULL;
+    assist->jd_ref = 2451545.0; // default reference JD
+    
+    sim->integrator = REB_INTEGRATOR_IAS15;
+    sim->gravity = REB_GRAVITY_NONE;
     sim->extras = assist;
     sim->extras_cleanup = assist_extras_cleanup;
     sim->additional_forces = assist_additional_forces;
@@ -137,6 +144,19 @@ void assist_error(struct assist_extras* assist, const char* const msg){
         reb_error(assist->sim, msg);
     }
 }
+
+
+struct reb_particle assist_get_particle(struct assist_extras* assist, const int particle_id, const double t){
+    struct reb_particle p = {0};
+    double GM = 0;
+    int flag = assist_all_ephem(particle_id, assist->jd_ref, t, &GM, &p.x, &p.y, &p.z, &p.vx, &p.vy, &p.vz, &p.ax, &p.ay, &p.az);
+    if (flag != NO_ERR){
+        reb_error(assist->sim,"An error occured while trying to initialize particle from ephemeris data.");
+    }
+    p.m = GM/assist->sim->G;
+    return p;
+}
+
 
 // integration_function
 // tstart: integration start time in tdb
@@ -188,30 +208,18 @@ int integration_function(double jd_ref,
     sim->t = tstart;
     sim->dt = tstep;    // time step in days, this is just an initial value.
 
-    // TODO: decide how flexible these should be.
-    sim->integrator = REB_INTEGRATOR_IAS15;
-    sim->save_messages = 1;
-    sim->heartbeat = assist_heartbeat;
-    sim->display_data = NULL;
-    sim->collision = REB_COLLISION_NONE;  // This is important and needs to be considered carefully.
-    sim->collision_resolve = reb_collision_resolve_merge; // Not sure what this is for.
-    sim->gravity = REB_GRAVITY_NONE;
-
-    // This should be flexible.
-    // However, it should be set to 1 in most cases.
-    //sim->exact_finish_time = 0;
-    sim->exact_finish_time = 1;
-    
     // These quantities are specific to IAS15.  Perhaps something more flexible could
     // be done so that other REBOUND integration routines could be explored.
 
     sim->ri_ias15.min_dt = min_dt;    // to avoid very small time steps (default: 0.0, suggestion 1e-2)
     sim->ri_ias15.epsilon = epsilon;  // to avoid convergence issue with geocentric orbits (default: 1e-9)
+    
+    sim->heartbeat = assist_heartbeat;
+    sim->save_messages = 1;
 
     // Attach an assist struct to the simulation
     // and initialize some values.
     struct assist_extras* assist = assist_attach(sim);
-    assist->particle_params = NULL;
     assist->geocentric = geocentric;
     assist->jd_ref = jd_ref; // 2451545.0; 
 
