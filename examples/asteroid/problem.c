@@ -19,11 +19,11 @@ int main(int argc, char* argv[]){
     state[4] = 7.5504086883996860e-03;  // vy
     state[5] = 2.9800282074358684e-03;  // vz
    
-    double tstart = 2458849.5; // Initial time 
-    double tend = 2458949.5;   // Final time
-    double tstep = 20;         // Integration step size. 
+    double jd_ref = 2451545.0;  // Reference date in JD
+    double tstart = 7304.5;     // Initial time relative to jd_ref
+    double tend = 7404.5;       // Final time relative to jd_ref
+    double tstep = 20;          // Integration step size. 
     
-    double jd_ref = 2451545.0; // I do not understand what this variable does
     
     // Interpolate between integration steps on these substeps 
     int n_substeps = 4;
