@@ -65,7 +65,6 @@ typedef struct {
 
 struct assist_extras {
     struct reb_simulation* sim;
-    double* c;
     int geocentric;
     tstate* last_state;
     timestate* ts;
