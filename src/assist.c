@@ -371,138 +371,138 @@ static void store_function(struct reb_simulation* sim){
 
     if(step==0){
 
-	int state_offset = 0;
-	int time_offset = 0;
-	
-	outtime[time_offset++] = sim->t;
+        int state_offset = 0;
+        int time_offset = 0;
 
-	for(int j=0; j<N; j++){
-	    last_state[j].t = sim->t;	
-	    outstate[state_offset++] = sim->particles[j].x;
-	    outstate[state_offset++] = sim->particles[j].y;
-	    outstate[state_offset++] = sim->particles[j].z;
-	    outstate[state_offset++] = sim->particles[j].vx;
-	    outstate[state_offset++] = sim->particles[j].vy;
-	    outstate[state_offset++] = sim->particles[j].vz;
-	}
+        outtime[time_offset++] = sim->t;
+
+        for(int j=0; j<N; j++){
+            last_state[j].t = sim->t;	
+            outstate[state_offset++] = sim->particles[j].x;
+            outstate[state_offset++] = sim->particles[j].y;
+            outstate[state_offset++] = sim->particles[j].z;
+            outstate[state_offset++] = sim->particles[j].vx;
+            outstate[state_offset++] = sim->particles[j].vy;
+            outstate[state_offset++] = sim->particles[j].vz;
+        }
 
     }else if(sim->steps_done > last_steps_done){
 
-	// Convenience variable.  The 'br' field contains the 
-	// set of coefficients from the last completed step.
-	const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
+        // Convenience variable.  The 'br' field contains the 
+        // set of coefficients from the last completed step.
+        const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
 
-	double* x0 = malloc(sizeof(double)*N3);
-	double* v0 = malloc(sizeof(double)*N3);
-	double* a0 = malloc(sizeof(double)*N3);
+        double* x0 = malloc(sizeof(double)*N3);
+        double* v0 = malloc(sizeof(double)*N3);
+        double* a0 = malloc(sizeof(double)*N3);
 
-	for(int j=0;j<N;j++) {
+        for(int j=0;j<N;j++) {
 
-	    const int k0 = 3*j+0;
-	    const int k1 = 3*j+1;
-	    const int k2 = 3*j+2;
+            const int k0 = 3*j+0;
+            const int k1 = 3*j+1;
+            const int k2 = 3*j+2;
 
-	    x0[k0] = last_state[j].x;
-	    x0[k1] = last_state[j].y;
-	    x0[k2] = last_state[j].z;
+            x0[k0] = last_state[j].x;
+            x0[k1] = last_state[j].y;
+            x0[k2] = last_state[j].z;
 
-	    v0[k0] = last_state[j].vx;
-	    v0[k1] = last_state[j].vy;
-	    v0[k2] = last_state[j].vz;	
+            v0[k0] = last_state[j].vx;
+            v0[k1] = last_state[j].vy;
+            v0[k2] = last_state[j].vz;	
 
-	    a0[k0] = last_state[j].ax;
-	    a0[k1] = last_state[j].ay;
-	    a0[k2] = last_state[j].az;
-	    
-	}
-	int time_offset = (step-1)*nsubsteps+1;
+            a0[k0] = last_state[j].ax;
+            a0[k1] = last_state[j].ay;
+            a0[k2] = last_state[j].az;
 
-	// Loop over intervals using specified spacings      
-	for(int n=1;n<(nsubsteps+1);n++) {	    
+        }
+        int time_offset = (step-1)*nsubsteps+1;
 
-	    // The hg[n] values here define the substeps used in the
-	    // the integration, but they could be any values.
-	    // A natural alternative would be the Chebyshev nodes.
-	    // The degree would be altered, but the value would need
-	    // to be included in the output.
-	    // Another approach would be to output the ingredients for
-	    // the evaluations below.
-	    // x0, v0, a0, and 7 coefficients for each component
-	    // This has the advantage of providing a complete state
-	    // plus the accelerations at intervals.
+        // Loop over intervals using specified spacings      
+        for(int n=1;n<(nsubsteps+1);n++) {	    
 
-	    s[0] = sim->dt_last_done * hg[n];
+            // The hg[n] values here define the substeps used in the
+            // the integration, but they could be any values.
+            // A natural alternative would be the Chebyshev nodes.
+            // The degree would be altered, but the value would need
+            // to be included in the output.
+            // Another approach would be to output the ingredients for
+            // the evaluations below.
+            // x0, v0, a0, and 7 coefficients for each component
+            // This has the advantage of providing a complete state
+            // plus the accelerations at intervals.
 
-	    s[1] = s[0] * s[0] / 2.;
-	    s[2] = s[1] * hg[n] / 3.;
-	    s[3] = s[2] * hg[n] / 2.;
-	    s[4] = 3. * s[3] * hg[n] / 5.;
-	    s[5] = 2. * s[4] * hg[n] / 3.;
-	    s[6] = 5. * s[5] * hg[n] / 7.;
-	    s[7] = 3. * s[6] * hg[n] / 4.;
-	    s[8] = 7. * s[7] * hg[n] / 9.;
+            s[0] = sim->dt_last_done * hg[n];
 
-	    double t = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
+            s[1] = s[0] * s[0] / 2.;
+            s[2] = s[1] * hg[n] / 3.;
+            s[3] = s[2] * hg[n] / 2.;
+            s[4] = 3. * s[3] * hg[n] / 5.;
+            s[5] = 2. * s[4] * hg[n] / 3.;
+            s[6] = 5. * s[5] * hg[n] / 7.;
+            s[7] = 3. * s[6] * hg[n] / 4.;
+            s[8] = 7. * s[7] * hg[n] / 9.;
 
-	    outtime[time_offset++] = t;
+            double t = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
 
-	    // Predict positions at interval n using b values
-	    // for all the particles
-	    for(int j=0;j<N;j++) {  
-		const int k0 = 3*j+0;
-		const int k1 = 3*j+1;
-		const int k2 = 3*j+2;
+            outtime[time_offset++] = t;
 
-		double xx0 = x0[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
-		double xy0 = x0[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
-		double xz0 = x0[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
+            // Predict positions at interval n using b values
+            // for all the particles
+            for(int j=0;j<N;j++) {  
+                const int k0 = 3*j+0;
+                const int k1 = 3*j+1;
+                const int k2 = 3*j+2;
 
-		// Store the results
-		int offset = ((step-1)*nsubsteps + n)*6*N + 6*j;
-		outstate[offset+0] = xx0;
-		outstate[offset+1] = xy0;	  	  
-		outstate[offset+2] = xz0;
-	    }
+                double xx0 = x0[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
+                double xy0 = x0[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
+                double xz0 = x0[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
 
-	    s[0] = sim->dt_last_done * hg[n];
-	    s[1] =      s[0] * hg[n] / 2.;
-	    s[2] = 2. * s[1] * hg[n] / 3.;
-	    s[3] = 3. * s[2] * hg[n] / 4.;
-	    s[4] = 4. * s[3] * hg[n] / 5.;
-	    s[5] = 5. * s[4] * hg[n] / 6.;
-	    s[6] = 6. * s[5] * hg[n] / 7.;
-	    s[7] = 7. * s[6] * hg[n] / 8.;
+                // Store the results
+                int offset = ((step-1)*nsubsteps + n)*6*N + 6*j;
+                outstate[offset+0] = xx0;
+                outstate[offset+1] = xy0;	  	  
+                outstate[offset+2] = xz0;
+            }
 
-	    // Predict velocities at interval n using b values
-	    // for all the particles
-	    for(int j=0;j<N;j++) {
+            s[0] = sim->dt_last_done * hg[n];
+            s[1] =      s[0] * hg[n] / 2.;
+            s[2] = 2. * s[1] * hg[n] / 3.;
+            s[3] = 3. * s[2] * hg[n] / 4.;
+            s[4] = 4. * s[3] * hg[n] / 5.;
+            s[5] = 5. * s[4] * hg[n] / 6.;
+            s[6] = 6. * s[5] * hg[n] / 7.;
+            s[7] = 7. * s[6] * hg[n] / 8.;
 
-		const int k0 = 3*j+0;
-		const int k1 = 3*j+1;
-		const int k2 = 3*j+2;
+            // Predict velocities at interval n using b values
+            // for all the particles
+            for(int j=0;j<N;j++) {
 
-		double vx0 = v0[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
-		double vy0 = v0[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
-		double vz0 = v0[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
+                const int k0 = 3*j+0;
+                const int k1 = 3*j+1;
+                const int k2 = 3*j+2;
 
-		// Store the results
-		int offset = ((step-1)*nsubsteps + n)*6*N + 6*j;				
-		outstate[offset+3] = vx0;
-		outstate[offset+4] = vy0;	  	  
-		outstate[offset+5] = vz0;
+                double vx0 = v0[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
+                double vy0 = v0[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
+                double vz0 = v0[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
 
-	    }
-	}
+                // Store the results
+                int offset = ((step-1)*nsubsteps + n)*6*N + 6*j;				
+                outstate[offset+3] = vx0;
+                outstate[offset+4] = vy0;	  	  
+                outstate[offset+5] = vz0;
 
-	free(x0);
-	free(v0);
-	free(a0);
+            }
+        }
+
+        free(x0);
+        free(v0);
+        free(a0);
     }
     last_steps_done = sim->steps_done;
 
     if((ts->n_alloc-step*nsubsteps) < 1){
-	sim->status = REB_EXIT_USER;
-	return;
+        sim->status = REB_EXIT_USER;
+        return;
     }
 
 }
@@ -511,19 +511,19 @@ static void store_last_state(struct reb_simulation* sim){
 
     //timestate* ts = ((struct assist_extras*) sim->extras)->ts;
     tstate* last_state = ((struct assist_extras*) sim->extras)->last_state;    
-    
+
     int N = sim->N;    
     for(int j=0; j<N; j++){ 
-	last_state[j].t = sim->t;	
-	last_state[j].x = sim->particles[j].x;
-	last_state[j].y = sim->particles[j].y;
-	last_state[j].z = sim->particles[j].z;
-	last_state[j].vx = sim->particles[j].vx;
-	last_state[j].vy = sim->particles[j].vy;
-	last_state[j].vz = sim->particles[j].vz;
-	last_state[j].ax = sim->particles[j].ax;
-	last_state[j].ay = sim->particles[j].ay;
-	last_state[j].az = sim->particles[j].az;
+        last_state[j].t = sim->t;	
+        last_state[j].x = sim->particles[j].x;
+        last_state[j].y = sim->particles[j].y;
+        last_state[j].z = sim->particles[j].z;
+        last_state[j].vx = sim->particles[j].vx;
+        last_state[j].vy = sim->particles[j].vy;
+        last_state[j].vz = sim->particles[j].vz;
+        last_state[j].ax = sim->particles[j].ax;
+        last_state[j].ay = sim->particles[j].ay;
+        last_state[j].az = sim->particles[j].az;
     }
 }
 
