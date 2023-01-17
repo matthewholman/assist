@@ -13,16 +13,17 @@ int main(int argc, char* argv[]){
     // Initial conditions of asteroid
     int n_particles = 1;    
     double* state = malloc(n_particles*6*sizeof(double));
-    state[0] = 3.3388753502614090e+00;  // x in AU
-    state[1] = -9.1765182678903168e-01; // y
-    state[2] = -5.0385906775843303e-01; // z
-    state[3] = 2.8056633153049852e-03;  // vx in AU/day
-    state[4] = 7.5504086883996860e-03;  // vy
-    state[5] = 2.9800282074358684e-03;  // vz
+
+    state[0] = -2.724183384883979E+00 ;  // x in AU
+    state[1] = 3.613497537656375E-03 ;  // y
+    state[2] = 9.692679446383898E-02 ;  // z
+    state[3] = -1.374545432301129E-04 ;  // vx in AU/day
+    state[4] = -1.109218154000629E-02 ;  // vy
+    state[5] = 2.360000345736158E-04 ;  // vz
    
     double jd_ref = 2451545.0;  // All times are emasured relative to this Julian date 
-    double tstart = 7304.5;     // Initial time 
-    double tend = 7404.5;       // Final time
+    double tstart = 8416.5;     // Initial time 
+    double tend = 8446.5 ;       // Final time
     double tstep = 20;          // Integration step size. 
     
     
@@ -66,9 +67,39 @@ int main(int argc, char* argv[]){
     // Check final time
     assert(outtime[n_outs-1] == tend);
 
-    // Check x position. 
+    // Batch file to generate the JPL data (last queried on Jan 16th 2023)
+    // !$$SOF
+    // MAKE_EPHEM=YES
+    // COMMAND='DES=2003666;'
+    // EPHEM_TYPE=VECTORS
+    // CENTER='500@0'
+    // START_TIME='2023-01-17'
+    // STOP_TIME='2023-02-16'
+    // STEP_SIZE='1 DAYS'
+    // VEC_TABLE='3'
+    // REF_SYSTEM='ICRF'
+    // REF_PLANE='ECLIPTIC'
+    // VEC_CORR='NONE'
+    // OUT_UNITS='AU-D'
+    // VEC_LABELS='YES'
+    // VEC_DELTA_T='NO'
+    // CSV_FORMAT='NO'
+    // OBJ_DATA='YES'
+
+
+    double* jpl_horizons_output = malloc(n_particles*6*sizeof(double));
+    jpl_horizons_output[0] = -2.710320457933958E+00;
+    jpl_horizons_output[1] = -3.284425995373661E-01;
+    jpl_horizons_output[2] = 1.033508308499156E-01;
+    jpl_horizons_output[3] = 1.059255302926290E-03;
+    jpl_horizons_output[4] = -1.102056611134586E-02;
+    jpl_horizons_output[5] = 1.918473889773432E-04;
+    
     int offset = (n_outs-1)*6;
-    printf("%.20f\n", outstate[offset]);
-    assert(outstate[offset+0] == 3.50261534999964929682); // Note: this value is just a dummy. Hard code JPL values here.
+
+    for (int i=0;i<6;i++){
+        printf("diff: %.20f  %.20f   %.20f\n", state[i], outstate[i+offset],  jpl_horizons_output[i] - outstate[i+offset]);
+    }    
+        
 }
 
