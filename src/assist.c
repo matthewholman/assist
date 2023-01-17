@@ -274,15 +274,8 @@ int integration_function(double jd_ref,
 	// rather than fixed at 3.	
     int N = sim->N;
 	// If var_part_params is null, skip this part.
-<<<<<<< HEAD
-	if(var_part_params != NULL){
-	    printf("there\n");
-	    fflush(stdout);
-	    assist->particle_params = realloc(assist->particle_params, (assist->N)*3*sizeof(double));
-=======
 	if(var_part_params != NULL){	
 	    assist->particle_params = realloc(assist->particle_params, N*3*sizeof(double));
->>>>>>> 9a2f8273aa1a1cc2adf3cdc69f325ae001884686
 	    assist->particle_params[3*var_i+0] = var_part_params[3*i+0];
 	    assist->particle_params[3*var_i+1] = var_part_params[3*i+1];
 	    assist->particle_params[3*var_i+2] = var_part_params[3*i+2];
