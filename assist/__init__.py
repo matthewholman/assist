@@ -33,6 +33,6 @@ except:
 
 from .extras import Extras
 
-from .assist import all_ephem, all_ephem_cache, integration_function, production_integration_function_wrapper
+from .assist import all_ephem, integration_function, production_integration_function_wrapper
 
-__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Extras", "all_ephem", "all_ephem_cache", "integration_function", "production_integration_function_wrapper"]
+__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Extras", "all_ephem", "integration_function", "production_integration_function_wrapper"]

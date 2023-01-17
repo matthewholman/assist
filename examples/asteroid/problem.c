@@ -18,12 +18,14 @@ int main(int argc, char* argv[]){
     state[3] = 2.8056633153049852e-03;  // vx in AU/day
     state[4] = 7.5504086883996860e-03;  // vy
     state[5] = 2.9800282074358684e-03;  // vz
-   
-    double tstart = 2458849.5; // Initial time 
-    double tend = 2458949.5;   // Final time
-    double tstep = 20;         // Integration step size. 
-    
+
     double jd_ref = 2451545.0; // I do not understand what this variable does
+    
+    double tstart = 2458849.5-jd_ref; // Initial time 
+    double tend =   2458949.5-jd_ref; // Final time
+    double tstep = 20;                // Integration step size. 
+    
+    
     
     // Interpolate between integration steps on these substeps 
     int n_substeps = 4;
@@ -33,9 +35,11 @@ int main(int argc, char* argv[]){
     }
 
     // Allocate memory for output.
-    int n_alloc = ((tend-tstart)/tstep + 1)*n_substeps;
+    // Put in a factor to ensure enough memory allocated
+    int mem_fac = 2;
+    int n_alloc = ((tend-tstart)/tstep + 1)*mem_fac*n_substeps;
     double* outstate = (double *) malloc((n_alloc)*6*sizeof(double));
-    double* outtime  = (double *) malloc((n_alloc)*sizeof(double));
+    double* outtime  = (double *) malloc((n_alloc+1)*sizeof(double));
 
     int n_steps_done;
     int status = integration_function(
@@ -57,7 +61,7 @@ int main(int argc, char* argv[]){
             ); 
     if (status != REB_EXIT_SUCCESS) {
        printf("Warning! Simulation did *not* run successfully.\n");
-    } 
+    }
 
     // Number of outputs generated
     int n_outs = n_steps_done*n_substeps + 1;

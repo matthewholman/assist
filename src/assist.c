@@ -182,7 +182,7 @@ int integration_function(double jd_ref,
 
     //const double au = JPL_EPHEM_CAU;    
     //const double c = (JPL_EPHEM_CLIGHT/au)*86400;
-    
+
     struct reb_simulation* sim = reb_create_simulation();
 
     sim->t = tstart;
@@ -274,7 +274,9 @@ int integration_function(double jd_ref,
 	// rather than fixed at 3.	
 	assist->N++;
 	// If var_part_params is null, skip this part.
-	if(var_part_params != NULL){	
+	if(var_part_params != NULL){
+	    printf("there\n");
+	    fflush(stdout);
 	    assist->particle_params = realloc(assist->particle_params, (assist->N)*3*sizeof(double));
 	    assist->particle_params[3*var_i+0] = var_part_params[3*i+0];
 	    assist->particle_params[3*var_i+1] = var_part_params[3*i+1];
@@ -500,7 +502,7 @@ static void store_function(struct reb_simulation* sim){
     }
     last_steps_done = sim->steps_done;
 
-    if((ts->n_alloc-step) < 1){
+    if((ts->n_alloc-step*nsubsteps) < 1){
 	sim->status = REB_EXIT_USER;
 	return;
     }
