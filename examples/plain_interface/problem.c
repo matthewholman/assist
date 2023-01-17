@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
     struct assist_extras* ax = assist_attach(r);
 
     // One has the option to change other setting.
-    ax->jd_ref = 2451545.0; // Reference JD. This line can be uncommented as this is the default.
+    ax->jd_ref = 2451545.0; // Reference JD. This line can be commented out as this is the default.
     
     // Initial time, relative to ax->jd_ref
     r->t = 7304.5;
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]){
     reb_add_fmt(r, "a e omega primary",
         2.4,   // semi-major axis in AU
         0.1,   // eccentricity 
-        0.4,  // periastron in radians
+        0.4,   // periastron in radians
         sun);
     
     
