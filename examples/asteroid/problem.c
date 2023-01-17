@@ -24,7 +24,6 @@ int main(int argc, char* argv[]){
     double tend = 7404.5;       // Final time relative to jd_ref
     double tstep = 20;          // Integration step size. 
     
-    
     // Interpolate between integration steps on these substeps 
     int n_substeps = 4;
     double hg[n_substeps+1];
@@ -33,9 +32,11 @@ int main(int argc, char* argv[]){
     }
 
     // Allocate memory for output.
-    int n_alloc = ((tend-tstart)/tstep + 1)*n_substeps;
+    // Put in a factor to ensure enough memory allocated
+    int mem_fac = 2;
+    int n_alloc = ((tend-tstart)/tstep + 1)*mem_fac*n_substeps;
     double* outstate = (double *) malloc((n_alloc)*6*sizeof(double));
-    double* outtime  = (double *) malloc((n_alloc)*sizeof(double));
+    double* outtime  = (double *) malloc((n_alloc+1)*sizeof(double));
 
     int n_steps_done;
     int status = integration_function(
@@ -57,7 +58,7 @@ int main(int argc, char* argv[]){
             ); 
     if (status != REB_EXIT_SUCCESS) {
        printf("Warning! Simulation did *not* run successfully.\n");
-    } 
+    }
 
     // Number of outputs generated
     int n_outs = n_steps_done*n_substeps + 1;

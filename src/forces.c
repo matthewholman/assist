@@ -88,7 +88,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     // The limit of the EIH GR limit should be a free
     // parameter
-    int eih_loop_limit = N_ephem;
+    int eih_loop_limit = N_ephem; // 1;
 
     const double t = sim->t;
 
@@ -132,16 +132,20 @@ void assist_additional_forces(struct reb_simulation* sim){
     //assist_additional_force_simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
 
     /*
+    FILE *eih_file = NULL;
+    // Uncomment this line and recompile for testing.
+    //eih_file = fopen("eih_acc.out", "w");
+
     assist_additional_force_direct(sim, xo, yo, zo, outfile);
     assist_additional_force_earth_J2J4(sim, xo, yo, zo, outfile);
     assist_additional_force_solar_J2(sim, xo, yo, zo, outfile);        
     assist_additional_force_non_gravitational(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
-    sim->force_is_velocity_dependent = 1;
     //assist_additional_force_simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);    
     assist_additional_force_eih_GR(sim, eih_loop_limit,
 	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
 	   outfile, eih_file);
     */
+
     assist_additional_force_non_gravitational(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
     assist_additional_force_earth_J2J4(sim, xo, yo, zo, outfile);
     assist_additional_force_solar_J2(sim, xo, yo, zo, outfile);        
@@ -427,6 +431,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 				24, 17, 19, 14, 18, 22, 26, 12,
 				10,  4,  5,  1,  9,  8,  3,  2,  7, 6, 0};
 
+
     /*
     static const int order[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
 				10, 11, 12, 13, 14, 15, 16, 17, 18,
@@ -437,7 +442,6 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
     //for (int i=0; i<N_tot; i++){
     for (int k=0; k<N_tot; k++){
 	int i = order[k];
-	//int i = k;
 
         // Get position and mass of massive body i.
 	// TOOD: make a version that returns the positions, velocities,
@@ -645,7 +649,7 @@ static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, doubl
 	// J3 terms
         const double J3e_prefac = 5.*J3e*Re_eq*Re_eq*Re_eq/r2/r2/r/2.;
         const double J3e_fac = 3.-7.*costheta2;
-
+	
 	resx += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
         resy += -GMearth*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
 	resz += -GMearth*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
@@ -964,6 +968,7 @@ static void assist_additional_force_non_gravitational(struct reb_simulation* sim
 	double A3 = part_params[3*j+2];
 
 	//printf(" A123: %lf %lf %lf\n", A1, A2, A3);
+	//fflush(stdout);
 	
 
 	// If A1, A2, and A3 are zero, skip.

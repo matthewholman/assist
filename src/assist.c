@@ -202,7 +202,7 @@ int integration_function(double jd_ref,
 
     //const double au = JPL_EPHEM_CAU;    
     //const double c = (JPL_EPHEM_CLIGHT/au)*86400;
-    
+
     struct reb_simulation* sim = reb_create_simulation();
 
     sim->t = tstart;
@@ -508,7 +508,7 @@ static void store_function(struct reb_simulation* sim){
     }
     last_steps_done = sim->steps_done;
 
-    if((ts->n_alloc-step) < 1){
+    if((ts->n_alloc-step*nsubsteps) < 1){
 	sim->status = REB_EXIT_USER;
 	return;
     }
