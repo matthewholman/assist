@@ -318,7 +318,6 @@ int integration_function(double jd_ref,
     // explicitly free all the memory allocated by ASSIST
     ts->t = NULL;
     ts->state = NULL;
-    ts->last_state = NULL;
     free(ts);
     free(last_state);
 
@@ -370,7 +369,6 @@ static void store_function(struct reb_simulation* sim){
     outstate = ts->state;
 
     if(step==0){
-
         int state_offset = 0;
         int time_offset = 0;
 

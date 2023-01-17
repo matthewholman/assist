@@ -47,7 +47,6 @@ typedef struct {
 typedef struct {
     double* t;
     double* state;
-    tstate* last_state;
     int n_alloc;
     int n_particles;
 } timestate;
