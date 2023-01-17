@@ -1,7 +1,6 @@
 /**
- * This example demonstrates how to use ASSIST to integrate a test particle in 
- * the field of the Sun, planets, moon, and a set of massive asteroids, whose
- * positions come from JPL's DE440/441 ephemeris.
+ * A unit test integrating the asteroid Holman for 30 days, then comparing the 
+ * position and coordinates to JPL Horizon data.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +9,7 @@
 #include "assist.h"
 
 int main(int argc, char* argv[]){
-    // Initial conditions of asteroid
+    // Initial conditions of asteroid Holman
     int n_particles = 1;    
     double* state = malloc(n_particles*6*sizeof(double));
      
