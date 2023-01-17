@@ -151,15 +151,15 @@ void assist_error(struct assist_extras* assist, const char* const msg){
 //              particle refers to.
 // invar:       input states of variational particles
 // var_part_params: input non-grav parameters for variational particles
-// n_alloc:     number of overall times steps for which there
+// output_n_alloc:     number of overall times steps for which there
 //              is space allocated.
 // n_out:       number of outputs
 // nsubsteps:   number of substeps of output per overall
 //              time step.
 // hg:          array of output substep times as a fraction of
 //              the step interval, i.e. values 0 to 1.
-// outtime:     array of output times.
-// outstate:    array of output states.
+// output_t:      array of output times.
+// output_state:  array of output states.
 // min_dt:      minimum allowed time step.
 int integration_function(double jd_ref,
 			 double tstart, double tend, double tstep,
@@ -172,7 +172,7 @@ int integration_function(double jd_ref,
 			 int* invar_part,			 
 			 double* invar,
 			 double* var_part_params, // particle constants for variational particles too			 
-			 int n_alloc,			 
+			 int output_n_alloc,			 
 			 int *n_out,
 			 int nsubsteps,
 			 double* hg,
@@ -287,7 +287,7 @@ int integration_function(double jd_ref,
 
     assist->output_t = output_t;
     assist->output_state = output_state;
-    assist->output_n_alloc = n_alloc;
+    assist->output_n_alloc = output_n_alloc;
     assist->last_state = last_state;
 
     assist->nsubsteps = nsubsteps;
@@ -351,8 +351,8 @@ static void store_function(struct reb_simulation* sim){
 
     tstate* last_state = ((struct assist_extras*) sim->extras)->last_state;    
 
-    double* outtime = assist->output_t;
-    double* outstate = assist->output_state;
+    double* output_t = assist->output_t;
+    double* output_state = assist->output_state;
 
     int step = sim->steps_done;
 
@@ -360,16 +360,16 @@ static void store_function(struct reb_simulation* sim){
         int state_offset = 0;
         int time_offset = 0;
 
-        outtime[time_offset++] = sim->t;
+        output_t[time_offset++] = sim->t;
 
         for(int j=0; j<N; j++){
             last_state[j].t = sim->t;	
-            outstate[state_offset++] = sim->particles[j].x;
-            outstate[state_offset++] = sim->particles[j].y;
-            outstate[state_offset++] = sim->particles[j].z;
-            outstate[state_offset++] = sim->particles[j].vx;
-            outstate[state_offset++] = sim->particles[j].vy;
-            outstate[state_offset++] = sim->particles[j].vz;
+            output_state[state_offset++] = sim->particles[j].x;
+            output_state[state_offset++] = sim->particles[j].y;
+            output_state[state_offset++] = sim->particles[j].z;
+            output_state[state_offset++] = sim->particles[j].vx;
+            output_state[state_offset++] = sim->particles[j].vy;
+            output_state[state_offset++] = sim->particles[j].vz;
         }
 
     }else if(sim->steps_done > last_steps_done){
@@ -430,7 +430,7 @@ static void store_function(struct reb_simulation* sim){
 
             double t = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
 
-            outtime[time_offset++] = t;
+            output_t[time_offset++] = t;
 
             // Predict positions at interval n using b values
             // for all the particles
@@ -445,9 +445,9 @@ static void store_function(struct reb_simulation* sim){
 
                 // Store the results
                 int offset = ((step-1)*nsubsteps + n)*6*N + 6*j;
-                outstate[offset+0] = xx0;
-                outstate[offset+1] = xy0;	  	  
-                outstate[offset+2] = xz0;
+                output_state[offset+0] = xx0;
+                output_state[offset+1] = xy0;	  	  
+                output_state[offset+2] = xz0;
             }
 
             s[0] = sim->dt_last_done * hg[n];
@@ -473,9 +473,9 @@ static void store_function(struct reb_simulation* sim){
 
                 // Store the results
                 int offset = ((step-1)*nsubsteps + n)*6*N + 6*j;				
-                outstate[offset+3] = vx0;
-                outstate[offset+4] = vy0;	  	  
-                outstate[offset+5] = vz0;
+                output_state[offset+3] = vx0;
+                output_state[offset+4] = vy0;	  	  
+                output_state[offset+5] = vz0;
 
             }
         }
