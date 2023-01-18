@@ -107,26 +107,26 @@ struct reb_particle assist_get_particle(struct assist_extras* assist, const int 
 void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist); // Initializes all pointers and values.
 void assist_free_pointers(struct assist_extras* assist);
 
-int integration_function(double jd_ref,
-			 double tstart, double tend, double tstep,
-			 int geocentric,
-			 double epsilon,
-			 int n_particles,
-			 double* instate,
-			 //particle_params* part_params,
-			 double* part_params,
-			 int n_var,
-			 int* invar_part,			 
-			 double* invar,
-			 //particle_params* var_part_params,
-			 double* var_part_params,			 
-			 int n_alloc,			 
-			 int *n_out,
-			 int nsubsteps,
-			 double* hg,
-			 double* outtime,
-			 double* outstate,
-			 double min_dt);
+int assist_integrate(double jd_ref,
+		     double tstart, double tend, double tstep,
+		     int geocentric,
+		     double epsilon,
+		     int n_particles,
+		     double* instate,
+		     //particle_params* part_params,
+		     double* part_params,
+		     int n_var,
+		     int* invar_part,			 
+		     double* invar,
+		     //particle_params* var_part_params,
+		     double* var_part_params,			 
+		     int n_alloc,			 
+		     int *n_out,
+		     int nsubsteps,
+		     double* hg,
+		     double* outtime,
+		     double* outstate,
+		     double min_dt);
 
 
 void test_vary(struct reb_simulation* sim, FILE *vfile);

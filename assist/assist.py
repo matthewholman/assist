@@ -29,7 +29,7 @@ assist_lib = cdll.LoadLibrary(pymodulespath + '/../libassist' + suffix)
 
 class TimeState(Structure):
     """
-    A ctypes mapping to the structure populated by integration_function.
+    A ctypes mapping to the structure populated by assist_integrate.
     """
     _fields_ = [
         ('t', POINTER(c_double)),
@@ -152,7 +152,7 @@ def integration_function(tstart, tend, tstep,
         return None, None, None, None, -10
 
     # Set up call to integration_function
-    _integration_function = assist_lib.integration_function
+    _integration_function = assist_lib.assist_integrate
     #_integration_function = assist.integration_function    
 
     _integration_function.argtypes = (c_double,                     #jd_ref

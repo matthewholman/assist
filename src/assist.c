@@ -158,7 +158,7 @@ struct reb_particle assist_get_particle(struct assist_extras* assist, const int 
 }
 
 
-// integration_function
+// assist_integrate
 // tstart: integration start time in tdb
 // tend:   integration end time in tdb
 // tstep:  suggested initial time step (days)
@@ -181,24 +181,24 @@ struct reb_particle assist_get_particle(struct assist_extras* assist, const int 
 // output_t:      array of output times.
 // output_state:  array of output states.
 // min_dt:      minimum allowed time step.
-int integration_function(double jd_ref,
-			 double tstart, double tend, double tstep,
-			 int geocentric,
-			 double epsilon,
-			 int n_particles,
-			 double* instate,
-			 double* part_params,			 
-			 int n_var,
-			 int* invar_part,			 
-			 double* invar,
-			 double* var_part_params, // particle constants for variational particles too			 
-			 int output_n_alloc,			 
-			 int *n_out,
-			 int nsubsteps,
-			 double* hg,
-			 double* output_t,
-			 double* output_state,
-			 double min_dt){
+int assist_integrate(double jd_ref,
+		      double tstart, double tend, double tstep,
+		      int geocentric,
+		      double epsilon,
+		      int n_particles,
+		      double* instate,
+		      double* part_params,			 
+		      int n_var,
+		      int* invar_part,			 
+		      double* invar,
+		      double* var_part_params, // particle constants for variational particles too			 
+		      int output_n_alloc,			 
+		      int *n_out,
+		      int nsubsteps,
+		      double* hg,
+		      double* output_t,
+		      double* output_state,
+		      double min_dt){
 
     //const double au = JPL_EPHEM_CAU;    
     //const double c = (JPL_EPHEM_CLIGHT/au)*86400;
