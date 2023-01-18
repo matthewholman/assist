@@ -8,27 +8,6 @@ void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1,
 int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double jd_rel, int body);
 double assist_jpl_mass(struct _jpl_s *pl, int tar);
 
-// these are the body codes for the user to specify
-enum {
-        PLAN_BAR,                       // <0,0,0>
-        PLAN_SOL,                       // Sun (in barycentric)
-        PLAN_EAR,                       // Earth centre
-        PLAN_EMB,                       // Earth-Moon barycentre
-        PLAN_LUN,                       // Moon centre
-        PLAN_MER,                       // ... plus the rest
-        PLAN_VEN,
-        PLAN_MAR,
-        PLAN_JUP,
-        PLAN_SAT,
-        PLAN_URA,
-        PLAN_NEP,
-        PLAN_PLU,	
-
-        _NUM_TEST,
-};
-
-//int body[11];
-
 #define N_COMPONENTS_JPL 15
 struct _jpl_s {
         double beg, end;                // begin and end times
