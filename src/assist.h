@@ -66,6 +66,7 @@ struct assist_extras {
     double* output_t; 
     double* output_state;
     int output_n_alloc;
+    int steps_done;
     double jd_ref;
 };
 

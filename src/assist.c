@@ -348,12 +348,12 @@ static void store_function(struct reb_simulation* sim){
     int N = sim->N;
     int N3 = 3*N;
 
-    static int last_steps_done = 0;
 
     double s[9]; // Summation coefficients
 
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
 
+    int steps_done = assist->steps_done;
     int nsubsteps = assist->nsubsteps;
     double* hg = assist->hg;
 
@@ -380,7 +380,7 @@ static void store_function(struct reb_simulation* sim){
             output_state[state_offset++] = sim->particles[j].vz;
         }
 
-    }else if(sim->steps_done > last_steps_done){
+    }else if(sim->steps_done > steps_done){
 
         // Convenience variable.  The 'br' field contains the 
         // set of coefficients from the last completed step.
@@ -492,7 +492,7 @@ static void store_function(struct reb_simulation* sim){
         free(v0);
         free(a0);
     }
-    last_steps_done = sim->steps_done;
+    steps_done = sim->steps_done;
 
     if((assist->output_n_alloc-step*nsubsteps) < 1){
         sim->status = REB_EXIT_USER;
