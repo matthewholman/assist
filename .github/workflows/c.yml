@@ -41,3 +41,8 @@ jobs:
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Reproduce Holman trajectory (plain interface, backwards in time)
+        working-directory: ./unit_tests/plain_interface_reverse/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
