@@ -967,7 +967,7 @@ static void assist_additional_force_non_gravitational(struct reb_simulation* sim
 	double A2 = part_params[3*j+1];
 	double A3 = part_params[3*j+2];
 
-	//printf(" A123: %lf %lf %lf\n", A1, A2, A3);
+	//printf(" A123: %le %le %le\n", A1, A2, A3);
 	//fflush(stdout);
 	
 

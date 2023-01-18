@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
     double* outtime  = (double *) malloc((n_alloc)*sizeof(double));
 
     int n_steps_done;
-    int status = integration_function(
+    int status = assist_integrate(
             jd_ref,                 // I do not understand what this variable does
             tstart, tend, tstep,    // Time range of integration 
             0,                      // 1=geocentric, 0=barycentric
