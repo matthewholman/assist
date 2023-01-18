@@ -35,7 +35,7 @@ struct sum_s {
  *  spk_free
  *
  */
-int spk_free(struct spk_s *pl)
+int assist_spk_free(struct spk_s *pl)
 {
 	int m;
 
@@ -55,7 +55,7 @@ int spk_free(struct spk_s *pl)
 
 
 /*
- *  spk_init
+ *  assist_spk_init
  *
  */
 
@@ -82,7 +82,7 @@ static int _com(const char *buf)
 //		n += fprintf(stdout, "%s\n", &buf[n]) - 1;
 //}
 
-struct spk_s * spk_init(const char *path)
+struct spk_s * assist_spk_init(const char *path)
 {
 	struct spk_s *pl;
 	struct stat sb;
@@ -200,12 +200,12 @@ err:	perror(path);
 
 
 /*
- *  spk_find
+ *  assist_spk_find
  *
  *  See if we have the given body.
  *
  */
-int spk_find(struct spk_s *pl, int tar)
+int assist_spk_find(struct spk_s *pl, int tar)
 {
 	int n;
 
@@ -221,13 +221,13 @@ int spk_find(struct spk_s *pl, int tar)
 
 
 /*
- *  spk_calc
+ *  assist_spk_calc
  *
  *  Compute the position and velocity after fetching the chebyshev polynomials.
  *
  */
 
-int spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos)
+int assist_spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos)
 {
 
 	int n, b, p, P, R;

@@ -18,7 +18,7 @@
 #endif
 
 /*
- *  jpl_work
+ *  assist_jpl_work
  *
  *  Interpolate the appropriate Chebyshev polynomial coefficients.
  *
@@ -28,7 +28,7 @@
  *
  */
 
-void jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1, double *u, double *v, double *w)
+void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1, double *u, double *v, double *w)
 {
         double T[24], S[24];
         double U[24];
@@ -69,13 +69,13 @@ void jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1, double
 }
  
 /*
- *  jpl_init
+ *  assist_jpl_init
  *
  *  Initialise everything needed ... probaly not be compatible with a non-430 file.
  *
  */
 
-struct _jpl_s * jpl_init(void)
+struct _jpl_s * assist_jpl_init(void)
 {
         struct _jpl_s *jpl;
 	struct stat sb;
@@ -201,10 +201,10 @@ err:    close(fd);
 }
 
 /*
- *  jpl_free
+ *  assist_jpl_free
  *
  */
-int jpl_free(struct _jpl_s *jpl)
+int assist_jpl_free(struct _jpl_s *jpl)
 {
 	int p;
 
@@ -234,31 +234,31 @@ int jpl_free(struct _jpl_s *jpl)
 static void _bar(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
         { vecpos_nul(pos->u); vecpos_nul(pos->v); vecpos_nul(pos->w); }
 static void _sun(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { jpl_work(&z[jpl->off[JPL_SUN]], jpl->ncm[JPL_SUN], jpl->ncf[JPL_SUN], jpl->niv[JPL_SUN], t, jpl->inc, pos->u, pos->v, pos->w); }
+        { assist_jpl_work(&z[jpl->off[JPL_SUN]], jpl->ncm[JPL_SUN], jpl->ncf[JPL_SUN], jpl->niv[JPL_SUN], t, jpl->inc, pos->u, pos->v, pos->w); }
 static void _emb(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, pos->u, pos->v, pos->w); }
+        { assist_jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, pos->u, pos->v, pos->w); }
 static void _mer(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { jpl_work(&z[jpl->off[JPL_MER]], jpl->ncm[JPL_MER], jpl->ncf[JPL_MER], jpl->niv[JPL_MER], t, jpl->inc, pos->u, pos->v, pos->w); }
+        { assist_jpl_work(&z[jpl->off[JPL_MER]], jpl->ncm[JPL_MER], jpl->ncf[JPL_MER], jpl->niv[JPL_MER], t, jpl->inc, pos->u, pos->v, pos->w); }
 static void _ven(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { jpl_work(&z[jpl->off[JPL_VEN]], jpl->ncm[JPL_VEN], jpl->ncf[JPL_VEN], jpl->niv[JPL_VEN], t, jpl->inc, pos->u, pos->v, pos->w); }
+        { assist_jpl_work(&z[jpl->off[JPL_VEN]], jpl->ncm[JPL_VEN], jpl->ncf[JPL_VEN], jpl->niv[JPL_VEN], t, jpl->inc, pos->u, pos->v, pos->w); }
 static void _mar(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { jpl_work(&z[jpl->off[JPL_MAR]], jpl->ncm[JPL_MAR], jpl->ncf[JPL_MAR], jpl->niv[JPL_MAR], t, jpl->inc, pos->u, pos->v, pos->w); }
+        { assist_jpl_work(&z[jpl->off[JPL_MAR]], jpl->ncm[JPL_MAR], jpl->ncf[JPL_MAR], jpl->niv[JPL_MAR], t, jpl->inc, pos->u, pos->v, pos->w); }
 static void _jup(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { jpl_work(&z[jpl->off[JPL_JUP]], jpl->ncm[JPL_JUP], jpl->ncf[JPL_JUP], jpl->niv[JPL_JUP], t, jpl->inc, pos->u, pos->v, pos->w); }
+        { assist_jpl_work(&z[jpl->off[JPL_JUP]], jpl->ncm[JPL_JUP], jpl->ncf[JPL_JUP], jpl->niv[JPL_JUP], t, jpl->inc, pos->u, pos->v, pos->w); }
 static void _sat(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { jpl_work(&z[jpl->off[JPL_SAT]], jpl->ncm[JPL_SAT], jpl->ncf[JPL_SAT], jpl->niv[JPL_SAT], t, jpl->inc, pos->u, pos->v, pos->w); }
+        { assist_jpl_work(&z[jpl->off[JPL_SAT]], jpl->ncm[JPL_SAT], jpl->ncf[JPL_SAT], jpl->niv[JPL_SAT], t, jpl->inc, pos->u, pos->v, pos->w); }
 static void _ura(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { jpl_work(&z[jpl->off[JPL_URA]], jpl->ncm[JPL_URA], jpl->ncf[JPL_URA], jpl->niv[JPL_URA], t, jpl->inc, pos->u, pos->v, pos->w); }
+        { assist_jpl_work(&z[jpl->off[JPL_URA]], jpl->ncm[JPL_URA], jpl->ncf[JPL_URA], jpl->niv[JPL_URA], t, jpl->inc, pos->u, pos->v, pos->w); }
 static void _nep(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { jpl_work(&z[jpl->off[JPL_NEP]], jpl->ncm[JPL_NEP], jpl->ncf[JPL_NEP], jpl->niv[JPL_NEP], t, jpl->inc, pos->u, pos->v, pos->w); }
+        { assist_jpl_work(&z[jpl->off[JPL_NEP]], jpl->ncm[JPL_NEP], jpl->ncf[JPL_NEP], jpl->niv[JPL_NEP], t, jpl->inc, pos->u, pos->v, pos->w); }
 static void _plu(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { jpl_work(&z[jpl->off[JPL_PLU]], jpl->ncm[JPL_PLU], jpl->ncf[JPL_PLU], jpl->niv[JPL_PLU], t, jpl->inc, pos->u, pos->v, pos->w); }
+        { assist_jpl_work(&z[jpl->off[JPL_PLU]], jpl->ncm[JPL_PLU], jpl->ncf[JPL_PLU], jpl->niv[JPL_PLU], t, jpl->inc, pos->u, pos->v, pos->w); }
 
 static void _ear(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
 {
         struct mpos_s emb, lun;
-        jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, emb.u, emb.v, emb.w);
-        jpl_work(&z[jpl->off[JPL_LUN]], jpl->ncm[JPL_LUN], jpl->ncf[JPL_LUN], jpl->niv[JPL_LUN], t, jpl->inc, lun.u, lun.v, lun.w);
+        assist_jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, emb.u, emb.v, emb.w);
+        assist_jpl_work(&z[jpl->off[JPL_LUN]], jpl->ncm[JPL_LUN], jpl->ncf[JPL_LUN], jpl->niv[JPL_LUN], t, jpl->inc, lun.u, lun.v, lun.w);
 
         vecpos_set(pos->u, emb.u);
         vecpos_off(pos->u, lun.u, -1.0 / (1.0 + jpl->cem));
@@ -275,8 +275,8 @@ static void _lun(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
 {
         struct mpos_s emb, lun;
 
-        jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, emb.u, emb.v, emb.w);
-        jpl_work(&z[jpl->off[JPL_LUN]], jpl->ncm[JPL_LUN], jpl->ncf[JPL_LUN], jpl->niv[JPL_LUN], t, jpl->inc, lun.u, lun.v, lun.w);
+        assist_jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, emb.u, emb.v, emb.w);
+        assist_jpl_work(&z[jpl->off[JPL_LUN]], jpl->ncm[JPL_LUN], jpl->ncf[JPL_LUN], jpl->niv[JPL_LUN], t, jpl->inc, lun.u, lun.v, lun.w);
 
         vecpos_set(pos->u, emb.u);
         vecpos_off(pos->u, lun.u, jpl->cem / (1.0 + jpl->cem));
@@ -295,7 +295,7 @@ static void _lun(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
 static void (* _help[_NUM_TEST])(struct _jpl_s *, double *, double, struct mpos_s *)
     = { _bar, _sun, _ear, _emb, _lun, _mer, _ven, _mar, _jup, _sat, _ura, _nep, _plu};
 
-int jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, double rel, int n, int m)
+int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, double rel, int n, int m)
 {
         struct mpos_s pos;
         struct mpos_s ref;
@@ -330,10 +330,10 @@ int jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, double rel, int 
 }
 
 /*
- *  jpl_mass
+ *  assist_jpl_mass
  *
  */
-double jpl_mass(struct _jpl_s *pl, int tar)
+double assist_jpl_mass(struct _jpl_s *pl, int tar)
 {
 	char buf[8];
 	int n;

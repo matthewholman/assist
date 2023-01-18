@@ -237,7 +237,7 @@ static int ephem(const int i, const double jd_ref, const double t,
     }
 
     if (initialized == 0){
-      if ((pl = jpl_init()) == NULL) {
+      if ((pl = assist_jpl_init()) == NULL) {
 	  return(ERR_JPL_EPHEM);	  
       }
       initialized = 1;
@@ -261,7 +261,7 @@ static int ephem(const int i, const double jd_ref, const double t,
         PLAN_PLU
     };
 
-    jpl_calc(pl, &now, jd_ref, t, ebody[i], PLAN_BAR);
+    assist_jpl_calc(pl, &now, jd_ref, t, ebody[i], PLAN_BAR);
 
     // Convert to au/day and au/day^2
     vecpos_div(now.u, pl->cau);
@@ -335,7 +335,7 @@ static int ast_ephem(const int i, const double jd_ref, const double t, double* c
 	    fprintf(stderr, "Couldn't open asteroid file: %s\n", buf);
 	}
 
-	if ((spl = spk_init(buf)) == NULL) {
+	if ((spl = assist_spk_init(buf)) == NULL) {
 	    printf("Could find asteroid ephemeris file: %s\n", buf);
 	    return(ERR_JPL_AST);
 	}
@@ -349,7 +349,7 @@ static int ast_ephem(const int i, const double jd_ref, const double t, double* c
 
     *GM = JPL_GM[i];
 
-    spk_calc(spl, i, jd_ref, t, &pos);
+    assist_spk_calc(spl, i, jd_ref, t, &pos);
 
     *x = pos.u[0];
     *y = pos.u[1];
