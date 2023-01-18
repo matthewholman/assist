@@ -247,21 +247,7 @@ static int ephem(const int i, const double jd_ref, const double t,
 
     *GM = JPL_GM[i];
 
-    static const int ebody[11] = {
-        PLAN_SOL,                       // Sun (in barycentric)
-        PLAN_MER,                       // Mercury center
-        PLAN_VEN,                       // Venus center
-        PLAN_EAR,                       // Earth center
-        PLAN_LUN,                       // Moon center
-        PLAN_MAR,                       // Mars center
-        PLAN_JUP,                       // ...
-        PLAN_SAT,
-        PLAN_URA,
-        PLAN_NEP,
-        PLAN_PLU
-    };
-
-    assist_jpl_calc(pl, &now, jd_ref, t, ebody[i], PLAN_BAR);
+    assist_jpl_calc(pl, &now, jd_ref, t, i); 
 
     // Convert to au/day and au/day^2
     vecpos_div(now.u, pl->cau);

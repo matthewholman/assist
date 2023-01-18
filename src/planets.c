@@ -116,12 +116,13 @@ struct _jpl_s * assist_jpl_init(void)
 
 	//printf("%lf %lf %lf %d\n", jpl->beg, jpl->end, jpl->inc, jpl->num);
 
-        // number of coefficients is assumed
-        for (p = 0; p < _NUM_JPL; p++)
+        // number of coefficients for all components
+        for (p = 0; p < N_COMPONENTS_JPL; p++)
                 jpl->ncm[p] = 3;
 
-        jpl->ncm[JPL_NUT] = 2;
-        jpl->ncm[JPL_TDB] = 1;
+        // exceptions:
+        jpl->ncm[11] = 2; // nutations
+        jpl->ncm[14] = 1; // TT-TDB
 
         for (p = 0; p < 12; p++) {
                 ret += read(fd, &jpl->off[p], sizeof(int32_t));
@@ -161,14 +162,14 @@ struct _jpl_s * assist_jpl_init(void)
         }
 
         // adjust for correct indexing (ie: zero based)
-        for (p = 0; p < _NUM_JPL; p++)
+        for (p = 0; p < N_COMPONENTS_JPL; p++)
                 jpl->off[p] -= 1;
 
         // save file size, and determine 'kernel size'
         jpl->len = sb.st_size;
         jpl->rec = sizeof(double) * 2;
 
-        for (p = 0; p < _NUM_JPL; p++)
+        for (p = 0; p < N_COMPONENTS_JPL; p++)
                 jpl->rec += sizeof(double) * jpl->ncf[p] * jpl->niv[p] * jpl->ncm[p];
 
         // memory map the file, which makes us thread-safe with kernel caching
@@ -228,104 +229,84 @@ int assist_jpl_free(struct _jpl_s *jpl)
  *  jpl_calc
  *
  *  Caculate the position+velocity in _equatorial_ coordinates.
- *
+ *  Assumes pos is initially zero.
  */
-
-static void _bar(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { vecpos_nul(pos->u); vecpos_nul(pos->v); vecpos_nul(pos->w); }
-static void _sun(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { assist_jpl_work(&z[jpl->off[JPL_SUN]], jpl->ncm[JPL_SUN], jpl->ncf[JPL_SUN], jpl->niv[JPL_SUN], t, jpl->inc, pos->u, pos->v, pos->w); }
-static void _emb(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { assist_jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, pos->u, pos->v, pos->w); }
-static void _mer(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { assist_jpl_work(&z[jpl->off[JPL_MER]], jpl->ncm[JPL_MER], jpl->ncf[JPL_MER], jpl->niv[JPL_MER], t, jpl->inc, pos->u, pos->v, pos->w); }
-static void _ven(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { assist_jpl_work(&z[jpl->off[JPL_VEN]], jpl->ncm[JPL_VEN], jpl->ncf[JPL_VEN], jpl->niv[JPL_VEN], t, jpl->inc, pos->u, pos->v, pos->w); }
-static void _mar(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { assist_jpl_work(&z[jpl->off[JPL_MAR]], jpl->ncm[JPL_MAR], jpl->ncf[JPL_MAR], jpl->niv[JPL_MAR], t, jpl->inc, pos->u, pos->v, pos->w); }
-static void _jup(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { assist_jpl_work(&z[jpl->off[JPL_JUP]], jpl->ncm[JPL_JUP], jpl->ncf[JPL_JUP], jpl->niv[JPL_JUP], t, jpl->inc, pos->u, pos->v, pos->w); }
-static void _sat(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { assist_jpl_work(&z[jpl->off[JPL_SAT]], jpl->ncm[JPL_SAT], jpl->ncf[JPL_SAT], jpl->niv[JPL_SAT], t, jpl->inc, pos->u, pos->v, pos->w); }
-static void _ura(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { assist_jpl_work(&z[jpl->off[JPL_URA]], jpl->ncm[JPL_URA], jpl->ncf[JPL_URA], jpl->niv[JPL_URA], t, jpl->inc, pos->u, pos->v, pos->w); }
-static void _nep(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { assist_jpl_work(&z[jpl->off[JPL_NEP]], jpl->ncm[JPL_NEP], jpl->ncf[JPL_NEP], jpl->niv[JPL_NEP], t, jpl->inc, pos->u, pos->v, pos->w); }
-static void _plu(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-        { assist_jpl_work(&z[jpl->off[JPL_PLU]], jpl->ncm[JPL_PLU], jpl->ncf[JPL_PLU], jpl->niv[JPL_PLU], t, jpl->inc, pos->u, pos->v, pos->w); }
-
-static void _ear(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-{
-        struct mpos_s emb, lun;
-        assist_jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, emb.u, emb.v, emb.w);
-        assist_jpl_work(&z[jpl->off[JPL_LUN]], jpl->ncm[JPL_LUN], jpl->ncf[JPL_LUN], jpl->niv[JPL_LUN], t, jpl->inc, lun.u, lun.v, lun.w);
-
-        vecpos_set(pos->u, emb.u);
-        vecpos_off(pos->u, lun.u, -1.0 / (1.0 + jpl->cem));
-
-        vecpos_set(pos->v, emb.v);
-        vecpos_off(pos->v, lun.v, -1.0 / (1.0 + jpl->cem));
-
-        vecpos_set(pos->w, emb.w);
-        vecpos_off(pos->w, lun.w, -1.0 / (1.0 + jpl->cem));
-}
-
-/* This was not fully tested */
-static void _lun(struct _jpl_s *jpl, double *z, double t, struct mpos_s *pos)
-{
-        struct mpos_s emb, lun;
-
-        assist_jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, emb.u, emb.v, emb.w);
-        assist_jpl_work(&z[jpl->off[JPL_LUN]], jpl->ncm[JPL_LUN], jpl->ncf[JPL_LUN], jpl->niv[JPL_LUN], t, jpl->inc, lun.u, lun.v, lun.w);
-
-        vecpos_set(pos->u, emb.u);
-        vecpos_off(pos->u, lun.u, jpl->cem / (1.0 + jpl->cem));
-
-        vecpos_set(pos->v, emb.v);
-        vecpos_off(pos->v, lun.v, jpl->cem / (1.0 + jpl->cem));
-
-        vecpos_set(pos->w, emb.w);
-        vecpos_off(pos->w, lun.w, jpl->cem / (1.0 + jpl->cem));
-
-}
-
-
-// function pointers are used to avoid a pointless switch statement
-// Added _lun here (2020 Feb 26)
-static void (* _help[_NUM_TEST])(struct _jpl_s *, double *, double, struct mpos_s *)
-    = { _bar, _sun, _ear, _emb, _lun, _mer, _ven, _mar, _jup, _sat, _ura, _nep, _plu};
-
-int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *now, double jde, double rel, int n, int m)
-{
-        struct mpos_s pos;
-        struct mpos_s ref;
+int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double jd_rel, int body) {
         double t, *z;
         u_int32_t blk;
         int p;
 
-        if (pl == NULL || pl->map == NULL || now == NULL)
+        if (pl == NULL || pl->map == NULL || pos == NULL)
                 return -1;
 
         // check if covered by this file
-        if (jde + rel < pl->beg || jde + rel > pl->end)
+        if (jd_ref + jd_rel < pl->beg || jd_ref + jd_rel > pl->end)
                 return -1;
 
         // compute record number and 'offset' into record
-        blk = (u_int32_t)((jde + rel - pl->beg) / pl->inc);
+        blk = (u_int32_t)((jd_ref + jd_rel - pl->beg) / pl->inc);
         z = (double*)pl->map + (blk + 2) * pl->rec/sizeof(double);
-        t = ((jde - pl->beg - (double)blk * pl->inc) + rel) / pl->inc;
+        t = ((jd_ref - pl->beg - (double)blk * pl->inc) + jd_rel) / pl->inc;
 
-        // the magick of function pointers
-        _help[n](pl, z, t, &pos);
-        _help[m](pl, z, t, &ref);
+        switch (body) { // The indices in the pl-> arrays match the JPL component index for the body
+            case 0: // SUN
+                assist_jpl_work(&z[pl->off[10]], pl->ncm[10], pl->ncf[10], pl->niv[10], t, pl->inc, pos->u, pos->v, pos->w);
+                break;
+            case 1: // MER
+                assist_jpl_work(&z[pl->off[0]], pl->ncm[0], pl->ncf[0], pl->niv[0], t, pl->inc, pos->u, pos->v, pos->w);
+                break;
+            case 2: // VEN
+                assist_jpl_work(&z[pl->off[1]], pl->ncm[1], pl->ncf[1], pl->niv[1], t, pl->inc, pos->u, pos->v, pos->w);
+                break;
+            case 3: // EAR
+                {
+                    struct mpos_s emb, lun;
+                    assist_jpl_work(&z[pl->off[2]], pl->ncm[2], pl->ncf[2], pl->niv[2], t, pl->inc, emb.u, emb.v, emb.w); // earth moon barycenter
+                    assist_jpl_work(&z[pl->off[9]], pl->ncm[9], pl->ncf[9], pl->niv[9], t, pl->inc, lun.u, lun.v, lun.w);
 
-        for (p = 0; p < 3; p++) {
-                now->u[p] = pos.u[p] - ref.u[p];
-                now->v[p] = pos.v[p] - ref.v[p];
-                now->w[p] = pos.w[p] - ref.w[p];
+                    vecpos_set(pos->u, emb.u);
+                    vecpos_off(pos->u, lun.u, -1.0 / (1.0 + pl->cem));
+
+                    vecpos_set(pos->v, emb.v);
+                    vecpos_off(pos->v, lun.v, -1.0 / (1.0 + pl->cem));
+
+                    vecpos_set(pos->w, emb.w);
+                    vecpos_off(pos->w, lun.w, -1.0 / (1.0 + pl->cem));
+                }
+                break;
+            case 4: // LUN 
+                {
+                    struct mpos_s emb, lun;
+                    assist_jpl_work(&z[pl->off[2]], pl->ncm[2], pl->ncf[2], pl->niv[2], t, pl->inc, emb.u, emb.v, emb.w);
+                    assist_jpl_work(&z[pl->off[9]], pl->ncm[9], pl->ncf[9], pl->niv[9], t, pl->inc, lun.u, lun.v, lun.w);
+
+                    vecpos_set(pos->u, emb.u);
+                    vecpos_off(pos->u, lun.u, pl->cem / (1.0 + pl->cem));
+
+                    vecpos_set(pos->v, emb.v);
+                    vecpos_off(pos->v, lun.v, pl->cem / (1.0 + pl->cem));
+
+                    vecpos_set(pos->w, emb.w);
+                    vecpos_off(pos->w, lun.w, pl->cem / (1.0 + pl->cem));
+                }
+                break;
+            case 5: // MAR
+            case 6: // JUP
+            case 7: // SAT
+            case 8: // URA
+            case 9: // NEP
+            case 10: // PLU
+                assist_jpl_work(&z[pl->off[body-2]], pl->ncm[body-2], pl->ncf[body-2], pl->niv[body-2], t, pl->inc, pos->u, pos->v, pos->w);
+                break;
+            case 11: // BAR
+                     // Nothing needs to be done
+                break;
+            default:
+                return -1; // body not found
+                break;
         }
 
-        now->jde = jde + rel;
+        pos->jde = jd_ref + jd_rel;
         return 0;
 }
 
