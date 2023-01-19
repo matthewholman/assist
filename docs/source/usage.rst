@@ -15,7 +15,8 @@ To use Assist, first install it using pip:
 If installation fails, make sure that wheel is installed in your virtual environment:
 
 .. code-block:: console
-	pip install wheel
+
+   (.venv) $ pip install wheel
 
 C:
 
