@@ -110,6 +110,13 @@ void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist)
     assist->sim = sim;
     assist->particle_params = NULL;
     assist->jd_ref = 2451545.0; // default reference JD
+    assist->forces = ASSIST_FORCE_SUN // default forces
+                     | ASSIST_FORCE_PLANETS
+                     | ASSIST_FORCE_ASTEROIDS
+                     | ASSIST_FORCE_NON_GRAVITATIONAL
+                     | ASSIST_FORCE_EARTH_HARMONICS
+                     | ASSIST_FORCE_SUN_HARMONICS
+                     | ASSIST_FORCE_GR_EIH;
     
     sim->integrator = REB_INTEGRATOR_IAS15;
     sim->gravity = REB_GRAVITY_NONE;

@@ -146,19 +146,35 @@ void assist_additional_forces(struct reb_simulation* sim){
 	   outfile, eih_file);
     */
 
-    assist_additional_force_non_gravitational(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
-    assist_additional_force_earth_J2J4(sim, xo, yo, zo, outfile);
-    assist_additional_force_solar_J2(sim, xo, yo, zo, outfile);        
+    if (assist->forces & ASSIST_FORCE_NON_GRAVITATIONAL){
+        assist_additional_force_non_gravitational(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    }
+    if (assist->forces & ASSIST_FORCE_EARTH_HARMONICS){
+        assist_additional_force_earth_J2J4(sim, xo, yo, zo, outfile);
+    }
+    if (assist->forces & ASSIST_FORCE_SUN_HARMONICS){
+        assist_additional_force_solar_J2(sim, xo, yo, zo, outfile);
+    }
     
     FILE *eih_file = NULL;
     // Uncomment this line and recompile for testing.
     //eih_file = fopen("eih_acc.out", "w");
 
-    assist_additional_force_eih_GR(sim, eih_loop_limit,
-	   xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,	   
-	   outfile, eih_file);
+    if (assist->forces & ASSIST_FORCE_GR_EIH){
+        assist_additional_force_eih_GR(sim, eih_loop_limit,
+           xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,
+           outfile, eih_file);
+    }
 
-    assist_additional_force_direct(sim, xo, yo, zo, outfile);
+    if (assist->forces & ASSIST_FORCE_GR_POTENTIAL){
+        assist_additional_force_potential_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    }
+    if (assist->forces & ASSIST_FORCE_GR_SIMPLE){
+        assist_additional_force_simple_GR(sim, xo, yo, zo, vxo, vyo, vzo, outfile);
+    }
+    if (assist->forces & (ASSIST_FORCE_SUN | ASSIST_FORCE_PLANETS | ASSIST_FORCE_ASTEROIDS)){
+        assist_additional_force_direct(sim, xo, yo, zo, outfile);
+    }
     
     FILE *vfile = NULL;
     static int first=1;
@@ -427,7 +443,10 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
     // Direct forces from massives bodies
     //for (int i=0; i<N_tot; i++){
     for (int k=0; k<N_tot; k++){
-	int i = order[k];
+        int i = order[k];
+        if (i==0 && !(assist->forces & ASSIST_FORCE_SUN)) continue;
+        if (i>=1 && i<N_ephem && !(assist->forces & ASSIST_FORCE_PLANETS)) continue;
+        if (i>=N_ephem && !(assist->forces & ASSIST_FORCE_ASTEROIDS)) continue;
 
         // Get position and mass of massive body i.
 	// TOOD: make a version that returns the positions, velocities,
