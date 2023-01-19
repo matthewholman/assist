@@ -55,6 +55,21 @@ typedef struct {
     double A3;        
 } particle_params;
 
+
+// ENUM to enable/disable different forces
+enum ASSIST_FORCES { 
+    ASSIST_FORCE_NONE               = 0,
+    ASSIST_FORCE_SUN                = 0x01,
+    ASSIST_FORCE_PLANETS            = 0x02,
+    ASSIST_FORCE_ASTEROIDS          = 0x04,
+    ASSIST_FORCE_NON_GRAVITATIONAL  = 0x08, 
+    ASSIST_FORCE_EARTH_HARMONICS    = 0x10,
+    ASSIST_FORCE_SUN_HARMONICS      = 0x20,
+    ASSIST_FORCE_GR_EIH             = 0x40,
+    ASSIST_FORCE_GR_SIMPLE          = 0x80,
+    ASSIST_FORCE_GR_POTENTIAL       = 0x100,
+};
+
 struct assist_extras {
     struct reb_simulation* sim;
     int geocentric;
@@ -66,6 +81,8 @@ struct assist_extras {
     double* output_t; 
     double* output_state;
     int output_n_alloc;
+    int steps_done;
+    int forces;
     double jd_ref;
 };
 
