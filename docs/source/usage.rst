@@ -12,6 +12,23 @@ To use Assist, first install it using pip:
 
    (.venv) $ pip install assist
 
+(You may wish to install in a virtual environment:
+
+.. code-block:: console
+
+   $ mkdir test_dir
+   $ cd test_dir
+   $ python -m venv .
+   $ source bin/activate
+
+)
+
+Import assist in the usual way at the Python prompt:
+
+.. code-block:: console
+
+   >>> import assist
+
 If installation fails, make sure that wheel is installed in your virtual environment:
 
 .. code-block:: console
