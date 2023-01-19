@@ -29,7 +29,7 @@ librebound.so:
 	@-rm -f librebound.so
 	@ln -s $(REB_DIR)/src/librebound.so .
 
-libassist.so: librebound.so $(ASSIST_DIR)/src/*.h $(ASSIST_DIR)/src/*.c
+libassist.so: librebound.so $(ASSIST_DIR)/src/*.c  $(ASSIST_DIR)/src/*.h
 	@echo "Compiling shared library libassist.so ..."
 	$(MAKE) -C $(ASSIST_DIR)/src/
 	@-rm -f libassist.so

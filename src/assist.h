@@ -100,6 +100,9 @@ void assist_detach(struct reb_simulation* sim, struct assist_extras* assist);
 void assist_error(struct assist_extras* assist, const char* const msg);
 
 
+// Find particle position and velocity based on ephemeris data
+struct reb_particle assist_get_particle(struct assist_extras* assist, const int particle_id, const double t);
+
 // Functions called from python:
 void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist); // Initializes all pointers and values.
 void assist_free_pointers(struct assist_extras* assist);
