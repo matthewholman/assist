@@ -10,3 +10,5 @@ We provide two quickstart guides, one for C and one for Python:
    
    c_quickstart
    python_quickstart
+
+See: "Usage"
