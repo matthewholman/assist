@@ -457,13 +457,13 @@ static void assist_heartbeat(struct reb_simulation* sim){
 
     }else if(sim->steps_done > steps_done){
 
-        int time_offset = (step-1)*nsubsteps+1;
         double* hg = assist->hg;
 
         // Loop over substeps
         for(int n=1;n<(nsubsteps+1);n++) {	    
-            output_t[time_offset] = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
-            assist_interpolate(sim, hg[n], output_state +  ((step-1)*nsubsteps + n)*6*N ); 
+            int offset = (step-1)*nsubsteps;
+            output_t[offset+n] = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
+            assist_interpolate(sim, hg[n], output_state +  (offset + n)*6*N );
         }
     }
     steps_done = sim->steps_done;
