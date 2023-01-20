@@ -73,7 +73,10 @@ enum ASSIST_FORCES {
 struct assist_extras {
     struct reb_simulation* sim;
     int geocentric;
-    tstate* last_state;
+    double last_state_t;
+    double* last_state_x;
+    double* last_state_v;
+    double* last_state_a;
     int nsubsteps;
     double* hg;
     //particle_params* particle_params;

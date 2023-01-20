@@ -129,6 +129,9 @@ void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist)
 
 void assist_free_pointers(struct assist_extras* assist){
     assist_detach(assist->sim, assist);
+    free(assist->last_state_x);
+    free(assist->last_state_v);
+    free(assist->last_state_a);
     //assist->c = NULL;
     //assist->ts = NULL;
     //assist->last_state = NULL;
@@ -300,12 +303,13 @@ int assist_integrate(double jd_ref,
     }
 
     // Allocate memory.
-    tstate* last_state = (tstate*) malloc(sim->N*sizeof(tstate));
 
     assist->output_t = output_t;
     assist->output_state = output_state;
     assist->output_n_alloc = output_n_alloc;
-    assist->last_state = last_state;
+    assist->last_state_x = malloc(sim->N*3*sizeof(double));
+    assist->last_state_v = malloc(sim->N*3*sizeof(double));
+    assist->last_state_a = malloc(sim->N*3*sizeof(double));
 
     assist->nsubsteps = nsubsteps;
     assist->hg = hg;
@@ -327,10 +331,7 @@ int assist_integrate(double jd_ref,
 
     int status = sim->status;
 
-    // explicitly free all the memory allocated by ASSIST
-    free(last_state);
-
-    //assist_free(assist);    // this explicitly frees all the memory allocated by ASSIST
+    assist_free(assist);    // this explicitly frees all the memory allocated by ASSIST
     
     reb_free_simulation(sim);
 
@@ -355,18 +356,11 @@ int assist_integrate(double jd_ref,
 
 static void assist_heartbeat(struct reb_simulation* sim){
     int N = sim->N;
-    int N3 = 3*N;
-
-
-    double s[9]; // Summation coefficients
 
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
 
     int steps_done = assist->steps_done;
     int nsubsteps = assist->nsubsteps;
-    double* hg = assist->hg;
-
-    tstate* last_state = ((struct assist_extras*) sim->extras)->last_state;    
 
     double* output_t = assist->output_t;
     double* output_state = assist->output_state;
@@ -380,7 +374,6 @@ static void assist_heartbeat(struct reb_simulation* sim){
         output_t[time_offset++] = sim->t;
 
         for(int j=0; j<N; j++){
-            last_state[j].t = sim->t;	
             output_state[state_offset++] = sim->particles[j].x;
             output_state[state_offset++] = sim->particles[j].y;
             output_state[state_offset++] = sim->particles[j].z;
@@ -395,30 +388,12 @@ static void assist_heartbeat(struct reb_simulation* sim){
         // set of coefficients from the last completed step.
         const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
 
-        double* x0 = malloc(sizeof(double)*N3);
-        double* v0 = malloc(sizeof(double)*N3);
-        double* a0 = malloc(sizeof(double)*N3);
-
-        for(int j=0;j<N;j++) {
-
-            const int k0 = 3*j+0;
-            const int k1 = 3*j+1;
-            const int k2 = 3*j+2;
-
-            x0[k0] = last_state[j].x;
-            x0[k1] = last_state[j].y;
-            x0[k2] = last_state[j].z;
-
-            v0[k0] = last_state[j].vx;
-            v0[k1] = last_state[j].vy;
-            v0[k2] = last_state[j].vz;	
-
-            a0[k0] = last_state[j].ax;
-            a0[k1] = last_state[j].ay;
-            a0[k2] = last_state[j].az;
-
-        }
+        double* x0 = assist->last_state_x;
+        double* v0 = assist->last_state_v;
+        double* a0 = assist->last_state_a;
+        
         int time_offset = (step-1)*nsubsteps+1;
+        double* hg = assist->hg;
 
         // Loop over intervals using specified spacings      
         for(int n=1;n<(nsubsteps+1);n++) {	    
@@ -433,6 +408,8 @@ static void assist_heartbeat(struct reb_simulation* sim){
             // x0, v0, a0, and 7 coefficients for each component
             // This has the advantage of providing a complete state
             // plus the accelerations at intervals.
+    
+            double s[9]; // Summation coefficients
 
             s[0] = sim->dt_last_done * hg[n];
 
@@ -496,10 +473,6 @@ static void assist_heartbeat(struct reb_simulation* sim){
 
             }
         }
-
-        free(x0);
-        free(v0);
-        free(a0);
     }
     steps_done = sim->steps_done;
 
@@ -512,22 +485,21 @@ static void assist_heartbeat(struct reb_simulation* sim){
 
 static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     struct assist_extras* assist = sim->extras;
-    tstate* last_state = assist->last_state;
+    assist->last_state_t = sim->t;
 
     reb_update_acceleration(sim); // This will later be recalculated. Could be optimized.
 
-    int N = sim->N;    
-    for(int j=0; j<N; j++){ 
-        last_state[j].t = sim->t;	
-        last_state[j].x = sim->particles[j].x;
-        last_state[j].y = sim->particles[j].y;
-        last_state[j].z = sim->particles[j].z;
-        last_state[j].vx = sim->particles[j].vx;
-        last_state[j].vy = sim->particles[j].vy;
-        last_state[j].vz = sim->particles[j].vz;
-        last_state[j].ax = sim->particles[j].ax;
-        last_state[j].ay = sim->particles[j].ay;
-        last_state[j].az = sim->particles[j].az;
+    for(int j=0; j<sim->N; j++){ 
+        int offset = 3*j;
+        assist->last_state_x[offset+0] = sim->particles[j].x;
+        assist->last_state_x[offset+1] = sim->particles[j].y;
+        assist->last_state_x[offset+2] = sim->particles[j].z;
+        assist->last_state_v[offset+0] = sim->particles[j].vx;
+        assist->last_state_v[offset+1] = sim->particles[j].vy;
+        assist->last_state_v[offset+2] = sim->particles[j].vz;
+        assist->last_state_a[offset+0] = sim->particles[j].ax;
+        assist->last_state_a[offset+1] = sim->particles[j].ay;
+        assist->last_state_a[offset+2] = sim->particles[j].az;
     }
 }
 
