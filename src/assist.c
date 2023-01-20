@@ -344,7 +344,19 @@ void assist_interpolate(struct reb_simulation* sim, double h, double* output){
     // Convenience variable.  The 'br' field contains the
     // set of coefficients from the last completed step.
     const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
-    if (b.p0 == NULL) return; // arrays not allocated
+    if (b.p0 == NULL){
+       // arrays not allocated yet, just return current state
+        for(int j=0;j<N;j++) {
+            int offset = 6*j;
+            output[offset+0] = sim->particles[j].x;
+            output[offset+1] = sim->particles[j].y;
+            output[offset+2] = sim->particles[j].z;
+            output[offset+3] = sim->particles[j].vx;
+            output[offset+4] = sim->particles[j].vy;
+            output[offset+5] = sim->particles[j].vz;
+        }
+        return;
+    }
 
     double* x0 = assist->last_state_x;
     double* v0 = assist->last_state_v;

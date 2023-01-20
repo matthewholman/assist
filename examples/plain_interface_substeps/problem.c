@@ -18,6 +18,8 @@ int main(int argc, char* argv[]){
     // Initial time, relative to ax->jd_ref
     r->t = 7304.5;
 
+    r->exact_finish_time = 0; // Let IAS overshoot. Use interpolation to get outputs.
+
     // Add a particle to the REBOUND simulation.
     reb_add_fmt(r, "x y z vx vy vz",
         3.3388753502614090e+00,   // x in AU
@@ -37,10 +39,10 @@ int main(int argc, char* argv[]){
 
     // Integrate until we reach tend or an error occurs
     while (r->t < tend && r->status <= 0){
-        reb_step(r);
+        reb_integrate(r, next_output); // This might overshoot.
 
-        while (r->t >= next_output) {
-            printf("t = %.3f\n", next_output);
+        while (r->t >= next_output) { // do interpolation to get outputs
+            printf("t = %.3f     steps = %d\n", next_output,r->steps_done);
             double h = (next_output - (r->t - r->dt_last_done))/ r->dt_last_done;
             assist_interpolate(r, h, output_state);
             for(int i=0; i<r->N; i++){
