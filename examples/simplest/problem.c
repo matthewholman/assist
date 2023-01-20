@@ -99,7 +99,7 @@ int main(int argc, char* argv[]){
 
     printf("entering integration_function\n");
     int n_steps;
-    int status = integration_function(jd_ref,
+    int status = assist_integrate(jd_ref,
 				      tstart, tend, tstep, 0, 1e-9,
 				      n_particles, instate,
 				      part_paramst,
