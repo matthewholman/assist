@@ -338,6 +338,82 @@ int assist_integrate(double jd_ref,
     return(status);
 }
 
+// Fill array output with data using interpolation over the past timestep
+// h=0 beginning of timestep, h=1 end of timestep
+int assist_interpolate(struct reb_simulation* sim, double h, double* output){
+    struct assist_extras* assist = (struct assist_extras*) sim->extras;
+    int N = sim->N;
+
+    // Convenience variable.  The 'br' field contains the
+    // set of coefficients from the last completed step.
+    const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
+
+    double* x0 = assist->last_state_x;
+    double* v0 = assist->last_state_v;
+    double* a0 = assist->last_state_a;
+
+    double s[9]; // Summation coefficients
+
+    s[0] = sim->dt_last_done * h;
+
+    s[1] = s[0] * s[0] / 2.;
+    s[2] = s[1] * h / 3.;
+    s[3] = s[2] * h / 2.;
+    s[4] = 3. * s[3] * h / 5.;
+    s[5] = 2. * s[4] * h / 3.;
+    s[6] = 5. * s[5] * h / 7.;
+    s[7] = 3. * s[6] * h / 4.;
+    s[8] = 7. * s[7] * h / 9.;
+
+    // Predict positions at interval n using b values
+    // for all the particles
+    for(int j=0;j<N;j++) {
+        const int k0 = 3*j+0;
+        const int k1 = 3*j+1;
+        const int k2 = 3*j+2;
+
+        double xx0 = x0[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
+        double xy0 = x0[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
+        double xz0 = x0[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
+
+        // Store the results
+        int offset = 6*j;
+        output[offset+0] = xx0;
+        output[offset+1] = xy0;
+        output[offset+2] = xz0;
+    }
+
+    s[0] = sim->dt_last_done * h;
+    s[1] =      s[0] * h / 2.;
+    s[2] = 2. * s[1] * h / 3.;
+    s[3] = 3. * s[2] * h / 4.;
+    s[4] = 4. * s[3] * h / 5.;
+    s[5] = 5. * s[4] * h / 6.;
+    s[6] = 6. * s[5] * h / 7.;
+    s[7] = 7. * s[6] * h / 8.;
+
+    // Predict velocities at interval n using b values
+    // for all the particles
+    for(int j=0;j<N;j++) {
+
+        const int k0 = 3*j+0;
+        const int k1 = 3*j+1;
+        const int k2 = 3*j+2;
+
+        double vx0 = v0[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
+        double vy0 = v0[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
+        double vz0 = v0[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
+
+        // Store the results
+        int offset = 6*j;
+        output[offset+3] = vx0;
+        output[offset+4] = vy0;
+        output[offset+5] = vz0;
+
+    }
+    return 1;
+}
+
 // This function is doing two related things:
 // 1. Calculating the positions and velocities at the substeps
 // 2. Storing the times and positions/velocities in the arrays
@@ -352,8 +428,6 @@ int assist_integrate(double jd_ref,
 // state, rather than the previous computed state and
 // the values at the substeps.
 
-//static const double hg[11]   =   { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
-
 static void assist_heartbeat(struct reb_simulation* sim){
     int N = sim->N;
 
@@ -367,11 +441,10 @@ static void assist_heartbeat(struct reb_simulation* sim){
 
     int step = sim->steps_done;
 
-    if(step==0){
+    if(step==0){ // first output are just the initial conditions
         int state_offset = 0;
-        int time_offset = 0;
 
-        output_t[time_offset++] = sim->t;
+        output_t[0] = sim->t;
 
         for(int j=0; j<N; j++){
             output_state[state_offset++] = sim->particles[j].x;
@@ -384,94 +457,13 @@ static void assist_heartbeat(struct reb_simulation* sim){
 
     }else if(sim->steps_done > steps_done){
 
-        // Convenience variable.  The 'br' field contains the 
-        // set of coefficients from the last completed step.
-        const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
-
-        double* x0 = assist->last_state_x;
-        double* v0 = assist->last_state_v;
-        double* a0 = assist->last_state_a;
-        
         int time_offset = (step-1)*nsubsteps+1;
         double* hg = assist->hg;
 
-        // Loop over intervals using specified spacings      
+        // Loop over substeps
         for(int n=1;n<(nsubsteps+1);n++) {	    
-
-            // The hg[n] values here define the substeps used in the
-            // the integration, but they could be any values.
-            // A natural alternative would be the Chebyshev nodes.
-            // The degree would be altered, but the value would need
-            // to be included in the output.
-            // Another approach would be to output the ingredients for
-            // the evaluations below.
-            // x0, v0, a0, and 7 coefficients for each component
-            // This has the advantage of providing a complete state
-            // plus the accelerations at intervals.
-    
-            double s[9]; // Summation coefficients
-
-            s[0] = sim->dt_last_done * hg[n];
-
-            s[1] = s[0] * s[0] / 2.;
-            s[2] = s[1] * hg[n] / 3.;
-            s[3] = s[2] * hg[n] / 2.;
-            s[4] = 3. * s[3] * hg[n] / 5.;
-            s[5] = 2. * s[4] * hg[n] / 3.;
-            s[6] = 5. * s[5] * hg[n] / 7.;
-            s[7] = 3. * s[6] * hg[n] / 4.;
-            s[8] = 7. * s[7] * hg[n] / 9.;
-
-            double t = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
-
-            output_t[time_offset++] = t;
-
-            // Predict positions at interval n using b values
-            // for all the particles
-            for(int j=0;j<N;j++) {  
-                const int k0 = 3*j+0;
-                const int k1 = 3*j+1;
-                const int k2 = 3*j+2;
-
-                double xx0 = x0[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
-                double xy0 = x0[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
-                double xz0 = x0[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
-
-                // Store the results
-                int offset = ((step-1)*nsubsteps + n)*6*N + 6*j;
-                output_state[offset+0] = xx0;
-                output_state[offset+1] = xy0;	  	  
-                output_state[offset+2] = xz0;
-            }
-
-            s[0] = sim->dt_last_done * hg[n];
-            s[1] =      s[0] * hg[n] / 2.;
-            s[2] = 2. * s[1] * hg[n] / 3.;
-            s[3] = 3. * s[2] * hg[n] / 4.;
-            s[4] = 4. * s[3] * hg[n] / 5.;
-            s[5] = 5. * s[4] * hg[n] / 6.;
-            s[6] = 6. * s[5] * hg[n] / 7.;
-            s[7] = 7. * s[6] * hg[n] / 8.;
-
-            // Predict velocities at interval n using b values
-            // for all the particles
-            for(int j=0;j<N;j++) {
-
-                const int k0 = 3*j+0;
-                const int k1 = 3*j+1;
-                const int k2 = 3*j+2;
-
-                double vx0 = v0[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
-                double vy0 = v0[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
-                double vz0 = v0[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
-
-                // Store the results
-                int offset = ((step-1)*nsubsteps + n)*6*N + 6*j;				
-                output_state[offset+3] = vx0;
-                output_state[offset+4] = vy0;	  	  
-                output_state[offset+5] = vz0;
-
-            }
+            output_t[time_offset] = sim->t + sim->dt_last_done * (-1.0 + hg[n]);
+            assist_interpolate(sim, hg[n], output_state +  ((step-1)*nsubsteps + n)*6*N ); 
         }
     }
     steps_done = sim->steps_done;
