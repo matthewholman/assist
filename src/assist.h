@@ -41,15 +41,6 @@ extern const char* assist_version_str;    ///< Version string.
 extern const char* assist_githash_str;    ///< Current git hash.
 
 typedef struct {
-  double t, x, y, z, vx, vy, vz, ax, ay, az;
-} tstate;
-
-typedef struct {
-    double t;
-    tstate* tstates;
-} ephem_block;
-
-typedef struct {
     double A1;
     double A2;
     double A3;        
