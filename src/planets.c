@@ -117,12 +117,12 @@ struct _jpl_s * assist_jpl_init(void)
 	//printf("%lf %lf %lf %d\n", jpl->beg, jpl->end, jpl->inc, jpl->num);
 
         // number of coefficients for all components
-        for (p = 0; p < N_COMPONENTS_JPL; p++)
+        for (p = 0; p < JPL_N; p++)
                 jpl->ncm[p] = 3;
 
         // exceptions:
-        jpl->ncm[11] = 2; // nutations
-        jpl->ncm[14] = 1; // TT-TDB
+        jpl->ncm[JPL_NUT] = 2; // nutations
+        jpl->ncm[JPL_TDB] = 1; // TT-TDB
 
         for (p = 0; p < 12; p++) {
                 ret += read(fd, &jpl->off[p], sizeof(int32_t));
@@ -162,14 +162,14 @@ struct _jpl_s * assist_jpl_init(void)
         }
 
         // adjust for correct indexing (ie: zero based)
-        for (p = 0; p < N_COMPONENTS_JPL; p++)
+        for (p = 0; p < JPL_N; p++)
                 jpl->off[p] -= 1;
 
         // save file size, and determine 'kernel size'
         jpl->len = sb.st_size;
         jpl->rec = sizeof(double) * 2;
 
-        for (p = 0; p < N_COMPONENTS_JPL; p++)
+        for (p = 0; p < JPL_N; p++)
                 jpl->rec += sizeof(double) * jpl->ncf[p] * jpl->niv[p] * jpl->ncm[p];
 
         // memory map the file, which makes us thread-safe with kernel caching
@@ -253,16 +253,16 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
                 assist_jpl_work(&z[pl->off[10]], pl->ncm[10], pl->ncf[10], pl->niv[10], t, pl->inc, pos->u, pos->v, pos->w);
                 break;
             case 1: // MER
-                assist_jpl_work(&z[pl->off[0]], pl->ncm[0], pl->ncf[0], pl->niv[0], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_MER]], pl->ncm[JPL_MER], pl->ncf[JPL_MER], pl->niv[JPL_MER], t, pl->inc, pos->u, pos->v, pos->w);
                 break;
             case 2: // VEN
-                assist_jpl_work(&z[pl->off[1]], pl->ncm[1], pl->ncf[1], pl->niv[1], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_VEN]], pl->ncm[JPL_VEN], pl->ncf[JPL_VEN], pl->niv[JPL_VEN], t, pl->inc, pos->u, pos->v, pos->w);
                 break;
             case 3: // EAR
                 {
                     struct mpos_s emb, lun;
-                    assist_jpl_work(&z[pl->off[2]], pl->ncm[2], pl->ncf[2], pl->niv[2], t, pl->inc, emb.u, emb.v, emb.w); // earth moon barycenter
-                    assist_jpl_work(&z[pl->off[9]], pl->ncm[9], pl->ncf[9], pl->niv[9], t, pl->inc, lun.u, lun.v, lun.w);
+                    assist_jpl_work(&z[pl->off[JPL_EMB]], pl->ncm[JPL_EMB], pl->ncf[JPL_EMB], pl->niv[JPL_EMB], t, pl->inc, emb.u, emb.v, emb.w); // earth moon barycenter
+                    assist_jpl_work(&z[pl->off[JPL_LUN]], pl->ncm[JPL_LUN], pl->ncf[JPL_LUN], pl->niv[JPL_LUN], t, pl->inc, lun.u, lun.v, lun.w);
 
                     vecpos_set(pos->u, emb.u);
                     vecpos_off(pos->u, lun.u, -1.0 / (1.0 + pl->cem));
@@ -277,8 +277,8 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
             case 4: // LUN 
                 {
                     struct mpos_s emb, lun;
-                    assist_jpl_work(&z[pl->off[2]], pl->ncm[2], pl->ncf[2], pl->niv[2], t, pl->inc, emb.u, emb.v, emb.w);
-                    assist_jpl_work(&z[pl->off[9]], pl->ncm[9], pl->ncf[9], pl->niv[9], t, pl->inc, lun.u, lun.v, lun.w);
+                    assist_jpl_work(&z[pl->off[JPL_EMB]], pl->ncm[JPL_EMB], pl->ncf[JPL_EMB], pl->niv[JPL_EMB], t, pl->inc, emb.u, emb.v, emb.w);
+                    assist_jpl_work(&z[pl->off[JPL_LUN]], pl->ncm[JPL_LUN], pl->ncf[JPL_LUN], pl->niv[JPL_LUN], t, pl->inc, lun.u, lun.v, lun.w);
 
                     vecpos_set(pos->u, emb.u);
                     vecpos_off(pos->u, lun.u, pl->cem / (1.0 + pl->cem));
@@ -291,12 +291,22 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
                 }
                 break;
             case 5: // MAR
+                assist_jpl_work(&z[pl->off[JPL_MAR]], pl->ncm[JPL_MAR], pl->ncf[JPL_MAR], pl->niv[JPL_MAR], t, pl->inc, pos->u, pos->v, pos->w);
+                break;
             case 6: // JUP
+                assist_jpl_work(&z[pl->off[JPL_JUP]], pl->ncm[JPL_JUP], pl->ncf[JPL_JUP], pl->niv[JPL_JUP], t, pl->inc, pos->u, pos->v, pos->w);
+                break;
             case 7: // SAT
+                assist_jpl_work(&z[pl->off[JPL_SAT]], pl->ncm[JPL_SAT], pl->ncf[JPL_SAT], pl->niv[JPL_SAT], t, pl->inc, pos->u, pos->v, pos->w);
+                break;
             case 8: // URA
+                assist_jpl_work(&z[pl->off[JPL_URA]], pl->ncm[JPL_URA], pl->ncf[JPL_URA], pl->niv[JPL_URA], t, pl->inc, pos->u, pos->v, pos->w);
+                break;
             case 9: // NEP
+                assist_jpl_work(&z[pl->off[JPL_NEP]], pl->ncm[JPL_NEP], pl->ncf[JPL_NEP], pl->niv[JPL_NEP], t, pl->inc, pos->u, pos->v, pos->w);
+                break;
             case 10: // PLU
-                assist_jpl_work(&z[pl->off[body-2]], pl->ncm[body-2], pl->ncf[body-2], pl->niv[body-2], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_PLU]], pl->ncm[JPL_PLU], pl->ncf[JPL_PLU], pl->niv[JPL_PLU], t, pl->inc, pos->u, pos->v, pos->w);
                 break;
             case 11: // BAR
                      // Nothing needs to be done
