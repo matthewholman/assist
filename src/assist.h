@@ -118,6 +118,8 @@ struct reb_particle assist_get_particle(struct assist_extras* assist, const int 
 void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist); // Initializes all pointers and values.
 void assist_free_pointers(struct assist_extras* assist);
 
+void assist_interpolate(struct reb_simulation* sim, double h, double* output);
+
 int assist_integrate(double jd_ref,
 		     double tstart, double tend, double tstep,
 		     int geocentric,

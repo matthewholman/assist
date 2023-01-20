@@ -124,6 +124,7 @@ void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist)
     sim->extras = assist;
     sim->extras_cleanup = assist_extras_cleanup;
     sim->additional_forces = assist_additional_forces;
+    sim->pre_timestep_modifications = assist_pre_timestep_modifications;
     sim->force_is_velocity_dependent = 1;
 }
 
@@ -226,7 +227,6 @@ int assist_integrate(double jd_ref,
     sim->ri_ias15.epsilon = epsilon;  // to avoid convergence issue with geocentric orbits (default: 1e-9)
     
     sim->heartbeat = assist_heartbeat;
-    sim->pre_timestep_modifications = assist_pre_timestep_modifications;
     sim->save_messages = 1;
 
     // Attach an assist struct to the simulation
@@ -307,9 +307,6 @@ int assist_integrate(double jd_ref,
     assist->output_t = output_t;
     assist->output_state = output_state;
     assist->output_n_alloc = output_n_alloc;
-    assist->last_state_x = malloc(sim->N*3*sizeof(double));
-    assist->last_state_v = malloc(sim->N*3*sizeof(double));
-    assist->last_state_a = malloc(sim->N*3*sizeof(double));
 
     assist->nsubsteps = nsubsteps;
     assist->hg = hg;
@@ -340,13 +337,14 @@ int assist_integrate(double jd_ref,
 
 // Fill array output with data using interpolation over the past timestep
 // h=0 beginning of timestep, h=1 end of timestep
-int assist_interpolate(struct reb_simulation* sim, double h, double* output){
+void assist_interpolate(struct reb_simulation* sim, double h, double* output){
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
     int N = sim->N;
 
     // Convenience variable.  The 'br' field contains the
     // set of coefficients from the last completed step.
     const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
+    if (b.p0 == NULL) return; // arrays not allocated
 
     double* x0 = assist->last_state_x;
     double* v0 = assist->last_state_v;
@@ -411,7 +409,6 @@ int assist_interpolate(struct reb_simulation* sim, double h, double* output){
         output[offset+5] = vz0;
 
     }
-    return 1;
 }
 
 // This function is doing two related things:
@@ -480,6 +477,13 @@ static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     assist->last_state_t = sim->t;
 
     reb_update_acceleration(sim); // This will later be recalculated. Could be optimized.
+    
+    if (assist->last_state_x == NULL){ 
+        // Create arrays if this is the first time the function is called
+        assist->last_state_x = malloc(sim->N*3*sizeof(double));
+        assist->last_state_v = malloc(sim->N*3*sizeof(double));
+        assist->last_state_a = malloc(sim->N*3*sizeof(double));
+    }
 
     for(int j=0; j<sim->N; j++){ 
         int offset = 3*j;
