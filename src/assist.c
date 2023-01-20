@@ -60,6 +60,7 @@ const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets upda
 // Forward function declarations
 static void store_function(struct reb_simulation* sim);
 static void assist_heartbeat(struct reb_simulation* r);
+static void assist_pre_timestep_modifications(struct reb_simulation* r);
 
 /**
  * @brief Struct containing pointers to intermediate values
@@ -222,6 +223,7 @@ int assist_integrate(double jd_ref,
     sim->ri_ias15.epsilon = epsilon;  // to avoid convergence issue with geocentric orbits (default: 1e-9)
     
     sim->heartbeat = assist_heartbeat;
+    sim->pre_timestep_modifications = assist_pre_timestep_modifications;
     sim->save_messages = 1;
 
     // Attach an assist struct to the simulation
@@ -351,7 +353,7 @@ int assist_integrate(double jd_ref,
 
 //static const double hg[11]   =   { 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
 
-static void store_function(struct reb_simulation* sim){
+static void assist_heartbeat(struct reb_simulation* sim){
     int N = sim->N;
     int N3 = 3*N;
 
@@ -508,8 +510,11 @@ static void store_function(struct reb_simulation* sim){
 
 }
 
-static void store_last_state(struct reb_simulation* sim){
-    tstate* last_state = ((struct assist_extras*) sim->extras)->last_state;    
+static void assist_pre_timestep_modifications(struct reb_simulation* sim){
+    struct assist_extras* assist = sim->extras;
+    tstate* last_state = assist->last_state;
+
+    reb_update_acceleration(sim); // This will later be recalculated. Could be optimized.
 
     int N = sim->N;    
     for(int j=0; j<N; j++){ 
@@ -525,12 +530,4 @@ static void store_last_state(struct reb_simulation* sim){
         last_state[j].az = sim->particles[j].az;
     }
 }
-
-static void assist_heartbeat(struct reb_simulation* sim){
-    store_function(sim);
-    reb_update_acceleration(sim);
-    store_last_state(sim);
-}
-
-
 
