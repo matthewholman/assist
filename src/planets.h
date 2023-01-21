@@ -8,7 +8,27 @@ void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1,
 int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double jd_rel, int body);
 double assist_jpl_mass(struct _jpl_s *pl, int tar);
 
-#define N_COMPONENTS_JPL 15
+// Order of columns in JPL Ephemeris file
+enum {
+         JPL_MER,                        // Mercury
+         JPL_VEN,                        // Venus
+         JPL_EMB,                        // Earth
+         JPL_MAR,                        // Mars
+         JPL_JUP,                        // Jupiter
+         JPL_SAT,                        // Saturn
+         JPL_URA,                        // Uranus
+         JPL_NEP,                        // Neptune
+         JPL_PLU,                        // Pluto
+         JPL_LUN,                        // Moon (geocentric)
+         JPL_SUN,                        // the Sun
+         JPL_NUT,                        // nutations
+         JPL_LIB,                        // lunar librations
+         JPL_MAN,                        // lunar mantle
+         JPL_TDB,                        // TT-TDB (< 2 ms)
+
+         JPL_N,                          // Number of columns
+ };
+
 struct _jpl_s {
         double beg, end;                // begin and end times
         double inc;                     // time step size
@@ -16,10 +36,10 @@ struct _jpl_s {
         double cem;                     // Earth/Moon mass ratio
         int32_t num;                    // number of constants
         int32_t ver;                    // ephemeris version
-        int32_t off[N_COMPONENTS_JPL];                // indexing offset
-        int32_t ncf[N_COMPONENTS_JPL];                // number of chebyshev coefficients
-        int32_t niv[N_COMPONENTS_JPL];                // number of interpolation intervals
-        int32_t ncm[N_COMPONENTS_JPL];                // number of components / dimension
+        int32_t off[JPL_N];                // indexing offset
+        int32_t ncf[JPL_N];                // number of chebyshev coefficients
+        int32_t niv[JPL_N];                // number of interpolation intervals
+        int32_t ncm[JPL_N];                // number of components / dimension
 ///
         size_t len, rec;                // file and record sizes
         void *map;                      // memory mapped location
