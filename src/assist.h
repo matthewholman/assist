@@ -41,15 +41,6 @@ extern const char* assist_version_str;    ///< Version string.
 extern const char* assist_githash_str;    ///< Current git hash.
 
 typedef struct {
-  double t, x, y, z, vx, vy, vz, ax, ay, az;
-} tstate;
-
-typedef struct {
-    double t;
-    tstate* tstates;
-} ephem_block;
-
-typedef struct {
     double A1;
     double A2;
     double A3;        
@@ -73,7 +64,10 @@ enum ASSIST_FORCES {
 struct assist_extras {
     struct reb_simulation* sim;
     int geocentric;
-    tstate* last_state;
+    double last_state_t;
+    double* last_state_x;
+    double* last_state_v;
+    double* last_state_a;
     int nsubsteps;
     double* hg;
     //particle_params* particle_params;
