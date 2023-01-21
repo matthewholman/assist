@@ -1216,7 +1216,7 @@ static void assist_additional_force_potential_GR(struct reb_simulation* sim,
 
     double GM;
 
-    double xr, yr, zr, vxr, vyr, vzr, axr, ayr, azr;
+    double xr, yr, zr;
     
     // The Sun center is reference for these calculations.
     double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
@@ -1227,8 +1227,6 @@ static void assist_additional_force_potential_GR(struct reb_simulation* sim,
     //xs = ys = zs = 0.0;
 
     xr  = xs;  yr  = ys;  zr = zs;
-    vxr = vxs; vyr = vys; vzr = vzs;
-    axr = axs; ayr = ays; azr = azs;    
 
     for (int j=0; j<N_real; j++){
 
@@ -1325,7 +1323,7 @@ static void assist_additional_force_simple_GR(struct reb_simulation* sim,
 
     double GM;
 
-    double xr, yr, zr, vxr, vyr, vzr, axr, ayr, azr;
+    double xr, yr, zr, vxr, vyr, vzr;
     
     // The Sun center is reference for these calculations.
     double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
@@ -1337,7 +1335,6 @@ static void assist_additional_force_simple_GR(struct reb_simulation* sim,
 
     xr  = xs;  yr  = ys;  zr = zs;
     vxr = vxs; vyr = vys; vzr = vzs;
-    axr = axs; ayr = ays; azr = azs;    
 
     for (int j=0; j<N_real; j++){
 
@@ -1461,17 +1458,10 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
     struct reb_particle* const particles = sim->particles;
 
     double GM;
-    //double x, y, z, vx, vy, vz, ax, ay, az;
-
-    double xr, yr, zr, vxr, vyr, vzr, axr, ayr, azr;
     
     // The Sun center is reference for these calculations.
     double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
     assist_all_ephem(0, jd_ref, t, &GM, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
-
-    xr  = xs;  yr  = ys;  zr = zs;
-    vxr = vxs; vyr = vys; vzr = vzs;
-    axr = axs; ayr = ays; azr = azs;
 
     int N_ephem, N_ast;
 
