@@ -234,7 +234,8 @@ int assist_jpl_free(struct _jpl_s *jpl)
 int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double jd_rel, int body) {
         double t, *z;
         u_int32_t blk;
-        //int p;
+
+        int p;
 
         if (pl == NULL || pl->map == NULL || pos == NULL)
                 return -1;
@@ -326,7 +327,7 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
  */
 double assist_jpl_mass(struct _jpl_s *pl, int tar)
 {
-	char buf[8];
+	char buf[14];
 	int n;
 
 	if (pl == NULL)
