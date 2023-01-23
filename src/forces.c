@@ -269,7 +269,7 @@ static int ephem(const int i, const double jd_ref, const double t,
     }
 
     if(pl==NULL){
-	printf("planet ephemeris not initialized\n");
+	return(ERR_JPL_EPHEM);
     }
 
     /*
@@ -343,7 +343,7 @@ static int ast_ephem(const int i, const double jd_ref, const double t, double* c
     }
 
     if(spl==NULL){
-	printf("asteroid ephemeris not initialized\n");
+	return(ERR_JPL_EPHEM);	
     }
 
     /*
