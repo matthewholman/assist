@@ -36,9 +36,6 @@
 #include "spk.h"
 #include "planets.h"
 
-#define FNAMESIZE 256
-#define DEFAULT_JPL_SB_EPHEM "../../data/sb441-n16.bsp"
-
 enum {
     NO_ERR,        // no error
     ERR_JPL_EPHEM, // JPL ephemeris file not found
@@ -60,6 +57,9 @@ int assist_all_ephem(const int i, const double jd_ref, const double t, double* c
 		      double* const vx, double* const vy, double* const vz,
 		      double* const ax, double* const ay, double* const az
 		      );
+
+static struct _jpl_s *pl = NULL;
+static struct spk_s *spl = NULL;
 
 // TODO: this should be more general.  Perhaps
 // this information could come directly from
@@ -212,6 +212,22 @@ void assist_additional_forces(struct reb_simulation* sim){
 	}
     }
 }
+//"path/to/planet/ephem", "path/to/smallbody/ephem"
+int assist_ephem_init(char *planets_file_name, char *asteroids_file_name){
+
+    if ((pl = assist_jpl_init(planets_file_name)) == NULL) {
+	printf("Couldn't find planet ephemeris file: %s\n", planets_file_name);	  
+	return(ERR_JPL_EPHEM);	  
+    }
+
+    if ((spl = assist_spk_init(asteroids_file_name)) == NULL) {
+	printf("Couldn't find asteroid ephemeris file: %s\n", asteroids_file_name);
+	return(ERR_JPL_AST);
+    }
+
+    return(NO_ERR);
+
+}
 
 static int ephem(const int i, const double jd_ref, const double t,
 		 double* const GM,
@@ -219,9 +235,9 @@ static int ephem(const int i, const double jd_ref, const double t,
 		 double* const vx, double* const vy, double* const vz,
 		 double* const ax, double* const ay, double* const az){
 
-    static int initialized = 0;
+    //static int initialized = 0;
 
-    static struct _jpl_s *pl;
+    //static struct _jpl_s *pl;
     struct mpos_s now;
 
     // Calculate GM values for Earth and Moon
@@ -252,12 +268,20 @@ static int ephem(const int i, const double jd_ref, const double t,
 	return(ERR_NEPH);
     }
 
-    if (initialized == 0){
-      if ((pl = assist_jpl_init()) == NULL) {
-	  return(ERR_JPL_EPHEM);	  
-      }
-      initialized = 1;
+    if(pl==NULL){
+	printf("planet ephemeris not initialized\n");
     }
+
+    /*
+    if (initialized == 0){
+	char buf[] = "/Users/mholman/assist/data/linux_m13000p17000.441";
+	if ((pl = assist_jpl_init(buf)) == NULL) {
+	    printf("Couldn't find planet ephemeris file: %s\n", buf);	  
+	    return(ERR_JPL_EPHEM);	  
+	}
+	initialized = 1;
+    }
+    */
 
     // Get position, velocity, and mass of body i in barycentric coords.
 
@@ -286,9 +310,9 @@ static int ephem(const int i, const double jd_ref, const double t,
 
 static int ast_ephem(const int i, const double jd_ref, const double t, double* const GM, double* const x, double* const y, double* const z){
 
-    static int initialized = 0;
+    //static int initialized = 0;
 
-    static struct spk_s *spl;
+    //static struct spk_s *spl;
     struct mpos_s pos;
 
     // DE441
@@ -318,33 +342,22 @@ static int ast_ephem(const int i, const double jd_ref, const double t, double* c
 	return(ERR_NAST);
     }
 
+    if(spl==NULL){
+	printf("asteroid ephemeris not initialized\n");
+    }
 
+    /*
     if (initialized == 0){
-
-	char buf[FNAMESIZE];
-
-        /** use or environment-specified file, 
-	 * or the default filename, in that order
-         */
-        if (getenv("JPL_SB_EPHEM")!=NULL)
-	    strncpy(buf, getenv("JPL_SB_EPHEM"), FNAMESIZE-1);
-        else
-	    strncpy(buf, DEFAULT_JPL_SB_EPHEM, FNAMESIZE-1);
-
-	FILE *file;
-	file = fopen(buf, "r");
-	if(file == NULL){
-	    fprintf(stderr, "Couldn't open asteroid file: %s\n", buf);
-	}
-
+	char buf[] = "/Users/mholman/assist/data/sb441-n16.bsp";
 	if ((spl = assist_spk_init(buf)) == NULL) {
-	    printf("Could find asteroid ephemeris file: %s\n", buf);
+	    printf("Couldn't find asteroid ephemeris file: %s\n", buf);
 	    return(ERR_JPL_AST);
 	}
 
 	initialized = 1;
 
     }
+    */
     
     // TODO: again, the units might be handled more
     // generally

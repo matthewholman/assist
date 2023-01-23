@@ -26,7 +26,7 @@
 #define _ASSIST_FORCES_H
 
 // This is the force routine called by REBOUND. 
-// It conludes all forces, including gravity.
+// It includes all forces, including gravity.
 void assist_additional_forces(struct reb_simulation* sim);
 
 

@@ -2,7 +2,7 @@
 #ifndef _JPL_EPHEM_H
 #define _JPL_EPHEM_H
 
-struct _jpl_s * assist_jpl_init(void);
+struct _jpl_s * assist_jpl_init(char *str);
 int assist_jpl_free(struct _jpl_s *jpl);
 void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1, double *u, double *v, double *w);
 int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double jd_rel, int body);

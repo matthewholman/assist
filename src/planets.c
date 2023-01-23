@@ -75,11 +75,11 @@ void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1,
  *
  */
 
-struct _jpl_s * assist_jpl_init(void)
+struct _jpl_s * assist_jpl_init(char *str)
 {
         struct _jpl_s *jpl;
 	struct stat sb;
-	char *str;
+	//char *str;
 	ssize_t ret;
 	off_t off;
         int fd, p;
@@ -87,8 +87,8 @@ struct _jpl_s * assist_jpl_init(void)
         /** use or environment-specified file, 
 	 * or the default filename, in that order
          */
-	if ((str = getenv("JPL_PLANET_EPHEM")) == NULL)
-		str = JPL_EPHEM_FILE;
+	//if ((str = getenv("JPL_PLANET_EPHEM")) == NULL)
+	//str = JPL_EPHEM_FILE;
 
         if ((fd = open(str, O_RDONLY)) < 0)
                 return NULL;
@@ -234,7 +234,7 @@ int assist_jpl_free(struct _jpl_s *jpl)
 int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double jd_rel, int body) {
         double t, *z;
         u_int32_t blk;
-        int p;
+        //int p;
 
         if (pl == NULL || pl->map == NULL || pos == NULL)
                 return -1;

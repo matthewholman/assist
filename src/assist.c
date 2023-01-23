@@ -58,7 +58,6 @@ const char* assist_version_str = "1.0.1b7";         // **VERSIONLINE** This line
 const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets updated automatically. Do not edit manually.
     
 // Forward function declarations
-static void store_function(struct reb_simulation* sim);
 static void assist_heartbeat(struct reb_simulation* r);
 static void assist_pre_timestep_modifications(struct reb_simulation* r);
 
