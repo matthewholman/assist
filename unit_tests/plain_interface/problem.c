@@ -9,6 +9,9 @@
 #include "assist.h"
 
 int main(int argc, char* argv[]){
+
+    assist_ephem_init(NULL, NULL);
+    
     struct reb_simulation* r = reb_create_simulation();
     struct assist_extras* ax = assist_attach(r);
     ax->jd_ref = 2451545.0; // Reference JD. This line can be commented out as this is the default.

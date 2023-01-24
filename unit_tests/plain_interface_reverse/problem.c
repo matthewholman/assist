@@ -10,8 +10,7 @@
 
 int main(int argc, char* argv[]){
 
-    assist_ephem_init("/Users/mholman/assist/data/linux_m13000p17000.441",
-		      "/Users/mholman/assist/data/sb441-n16.bsp");
+    assist_ephem_init(NULL, NULL);
     
     struct reb_simulation* r = reb_create_simulation();
     struct assist_extras* ax = assist_attach(r);

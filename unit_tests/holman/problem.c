@@ -38,8 +38,8 @@ int main(int argc, char* argv[]){
     double* outstate = (double *) malloc((n_alloc)*6*sizeof(double));
     double* outtime  = (double *) malloc((n_alloc)*sizeof(double));
 
-    int ephem_res = assist_ephem_init("/Users/mholman/assist/data/linux_m13000p17000.441",
-				   "/Users/mholman/assist/data/sb441-n16.bsp");
+    int ephem_res = assist_ephem_init(NULL, NULL);
+
     if(ephem_res != 0){
 	exit(-1);
     }

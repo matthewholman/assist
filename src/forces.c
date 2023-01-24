@@ -36,6 +36,8 @@
 #include "spk.h"
 #include "planets.h"
 
+#define FNAMESIZE 256
+
 enum {
     NO_ERR,        // no error
     ERR_JPL_EPHEM, // JPL ephemeris file not found
@@ -213,15 +215,46 @@ void assist_additional_forces(struct reb_simulation* sim){
     }
 }
 //"path/to/planet/ephem", "path/to/smallbody/ephem"
-int assist_ephem_init(char *planets_file_name, char *asteroids_file_name){
+int assist_ephem_init(char *user_planets_path, char *user_asteroids_path){
 
-    if ((pl = assist_jpl_init(planets_file_name)) == NULL) {
-	printf("Couldn't find planet ephemeris file: %s\n", planets_file_name);	  
+    char default_planets_path[] = "/data/linux_m13000p17000.441";
+    char default_asteroids_path[] = "/data/sb441-n16.bsp";
+    char planets_path[FNAMESIZE];
+    char asteroids_path[FNAMESIZE];        
+    
+    /** Use user-defined file or the default filename, 
+     *  in that order.
+     */
+
+    if(user_planets_path == NULL && getenv("ASSIST_DIR")==NULL){
+	fprintf(stderr, "No user or default planet ephemeris file\n");
 	return(ERR_JPL_EPHEM);	  
     }
 
-    if ((spl = assist_spk_init(asteroids_file_name)) == NULL) {
-	printf("Couldn't find asteroid ephemeris file: %s\n", asteroids_file_name);
+    if(user_planets_path == NULL){
+	sprintf(planets_path, "%s%s", getenv("ASSIST_DIR"), default_planets_path);
+    }else{
+	strncpy(planets_path, user_planets_path, FNAMESIZE-1);	
+    }
+
+    if ((pl = assist_jpl_init(planets_path)) == NULL) {
+	printf("Couldn't find planet ephemeris file: %s\n", planets_path);	  
+	return(ERR_JPL_EPHEM);	  
+    }
+
+    if(user_asteroids_path == NULL && getenv("ASSIST_DIR")==NULL){
+	fprintf(stderr, "No user or asteroid ephemeris file\n");
+	return(ERR_JPL_AST);	  
+    }
+
+    if(user_asteroids_path == NULL){
+	sprintf(asteroids_path, "%s%s", getenv("ASSIST_DIR"), default_asteroids_path);
+    }else{
+	strncpy(asteroids_path, user_asteroids_path, FNAMESIZE-1);	
+    }
+
+    if ((spl = assist_spk_init(asteroids_path)) == NULL) {
+	printf("Couldn't find asteroid ephemeris file: %s\n", asteroids_path);
 	return(ERR_JPL_AST);
     }
 
