@@ -160,7 +160,7 @@ struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ep
     }
 
     // Initialization separate from memory allocation because python handles memory management
-    struct assist_extras* assist = malloc(sizeof(*assist));
+    struct assist_extras* assist = calloc(1, sizeof(*assist));
     assist_initialize(sim, assist, ephem); 
     assist->extras_should_free_ephem = extras_should_free_ephem;
     
