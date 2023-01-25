@@ -11,16 +11,23 @@
 int main(int argc, char* argv[]){
     // Create a REBOUND simulation
     struct reb_simulation* r = reb_create_simulation();
+
+
+    // Load the ephemeris data
+    struct assist_ephem* ephem = assist_ephem_init(
+            "../../data/linux_m13000p17000.441",
+            "../../data/sb441-n16.bsp");
+    
+    // One has the option to change other setting.
+    ephem->jd_ref = 2451545.0; // Reference JD. This line can be commented out as this is the default.
     
     // Attach the ASSIST framework
     // This will set the additional force routine in the REBOUND simulation,
     // the IAS15 integrator, the gravity module, etc.
-    struct assist_extras* ax = assist_attach(r);
+    struct assist_extras* ax = assist_attach(r, ephem);
 
-    // One has the option to change other setting.
-    ax->jd_ref = 2451545.0; // Reference JD. This line can be commented out as this is the default.
     
-    // Initial time, relative to ax->jd_ref
+    // Initial time, relative to ephem->jd_ref
     r->t = 7304.5;
 
     // Set any other integrator settings, for example a minimum timestep
@@ -39,7 +46,7 @@ int main(int argc, char* argv[]){
 
 
     // Query the position of the sun at current simulation time.
-    struct reb_particle sun = assist_get_particle(ax, 0, r->t); // 0 stans dfor sun
+    struct reb_particle sun = assist_get_particle(ephem, 0, r->t); // 0 stans dfor sun
     
     // Add another test particle using orbital parameters relative to the sun
     reb_add_fmt(r, "a e omega primary",
@@ -50,7 +57,7 @@ int main(int argc, char* argv[]){
     
     
     // Query the position of the earth at current simulation time.
-    struct reb_particle earth = assist_get_particle(ax, 3, r->t); // 3 stands for earth
+    struct reb_particle earth = assist_get_particle(ephem, 3, r->t); // 3 stands for earth
     printf("%f %f %f \n", earth.x, earth.y, earth.z);
     
     // Add another test particle in orbit around the Earth
@@ -59,7 +66,7 @@ int main(int argc, char* argv[]){
         earth);
 
 
-    // Final integration time (relative to ax->jd_ref)
+    // Final integration time (relative to ephem->jd_ref)
     double tend = 7404.5;  
 
     // Integrate until we reach tend or an error occurs
@@ -68,7 +75,7 @@ int main(int argc, char* argv[]){
        reb_integrate(r, r->t + 20.0);
 
        // Output test particle positions
-       printf("t = %.1f\n", r->t + ax->jd_ref);
+       printf("t = %.1f\n", r->t + ephem->jd_ref);
        for(int i=0; i<r->N; i++){
            struct reb_particle p = r->particles[i];
            printf("particles[%d]:  \tx = %.12f \ty = %.12f \tz = %.12f\n", i, p.x, p.y, p.z);

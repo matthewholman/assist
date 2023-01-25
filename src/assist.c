@@ -87,15 +87,82 @@ static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
     return dpc;
 }
 
-struct assist_extras* assist_attach(struct reb_simulation* sim){  
+//"path/to/planet/ephem", "path/to/smallbody/ephem"
+struct assist_ephem* assist_ephem_init(char *user_planets_path, char *user_asteroids_path){
+
+    char default_planets_path[] = "/data/linux_m13000p17000.441";
+    char default_asteroids_path[] = "/data/sb441-n16.bsp";
+
+    struct assist_ephem* ephem = calloc(1, sizeof(struct assist_ephem));
+    ephem->jd_ref = 2451545.0; // Default jd_ref
+    
+    const int FNAMESIZE = 1024;
+    char planets_path[FNAMESIZE];
+    char asteroids_path[FNAMESIZE];        
+
+    /** Use user-defined file or the default filename, 
+     *  in that order.
+     */
+
+    if(user_planets_path == NULL && getenv("ASSIST_DIR")==NULL){
+        fprintf(stderr, "No user or default planet ephemeris file\n");
+        return(NULL);	  
+    }
+
+    if(user_planets_path == NULL){
+        sprintf(planets_path, "%s%s", getenv("ASSIST_DIR"), default_planets_path);
+    }else{
+        strncpy(planets_path, user_planets_path, FNAMESIZE-1);	
+    }
+
+    if ((ephem->pl = assist_jpl_init(planets_path)) == NULL) {
+        printf("Couldn't find planet ephemeris file: %s\n", planets_path);	  
+        return(NULL);	  
+    }
+
+    if(user_asteroids_path == NULL && getenv("ASSIST_DIR")==NULL){
+        fprintf(stderr, "No user or asteroid ephemeris file\n");
+        return(NULL);	  
+    }
+
+    if(user_asteroids_path == NULL){
+        sprintf(asteroids_path, "%s%s", getenv("ASSIST_DIR"), default_asteroids_path);
+    }else{
+        strncpy(asteroids_path, user_asteroids_path, FNAMESIZE-1);	
+    }
+
+    if ((ephem->spl = assist_spk_init(asteroids_path)) == NULL) {
+        printf("Couldn't find asteroid ephemeris file: %s\n", asteroids_path);
+        return(NULL);
+    }
+
+    return(ephem);
+}
+
+void assist_ephem_free(struct assist_ephem* ephem){
+    // Not yet implemented. Memory leak!
+}
+
+struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ephem* ephem){  
     if (sim == NULL){
         fprintf(stderr, "ASSIST Error: Simulation pointer passed to assist_attach was NULL.\n");
         return NULL;
     }
+    int extras_should_free_ephem = 0;
+    if (ephem == NULL){
+        // Try default 
+        ephem = assist_ephem_init(NULL, NULL);
+        if (ephem == NULL){
+            fprintf(stderr, "ASSIST Error: Ephemeris pointer passed to assist_attach was NULL. Initialization with default path failed.\n");
+            return NULL;
+        }
+        extras_should_free_ephem = 1;
+    }
 
     // Initialization separate from memory allocation because python handles memory management
     struct assist_extras* assist = malloc(sizeof(*assist));
-    assist_initialize(sim, assist); 
+    assist_initialize(sim, assist, ephem); 
+    assist->extras_should_free_ephem = extras_should_free_ephem;
     
     return assist;
 }
@@ -106,10 +173,10 @@ void assist_extras_cleanup(struct reb_simulation* r){
     assist->sim = NULL;
 }
 
-void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist){
+void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem){
     assist->sim = sim;
+    assist->ephem = ephem;
     assist->particle_params = NULL;
-    assist->jd_ref = 2451545.0; // default reference JD
     assist->forces = ASSIST_FORCE_SUN // default forces
                      | ASSIST_FORCE_PLANETS
                      | ASSIST_FORCE_ASTEROIDS
@@ -131,6 +198,9 @@ void assist_free_pointers(struct assist_extras* assist){
     free(assist->last_state_x);
     free(assist->last_state_v);
     free(assist->last_state_a);
+    if (assist->extras_should_free_ephem){
+        assist_ephem_free(assist->ephem);
+    }
     //assist->c = NULL;
     //assist->ts = NULL;
     //assist->last_state = NULL;
@@ -156,14 +226,14 @@ void assist_error(struct assist_extras* assist, const char* const msg){
 }
 
 
-struct reb_particle assist_get_particle(struct assist_extras* assist, const int particle_id, const double t){
+struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t){
     struct reb_particle p = {0};
     double GM = 0;
-    int flag = assist_all_ephem(particle_id, assist->jd_ref, t, &GM, &p.x, &p.y, &p.z, &p.vx, &p.vy, &p.vz, &p.ax, &p.ay, &p.az);
+    int flag = assist_all_ephem(ephem, particle_id, t, &GM, &p.x, &p.y, &p.z, &p.vx, &p.vy, &p.vz, &p.ax, &p.ay, &p.az);
     if (flag != NO_ERR){
-        reb_error(assist->sim,"An error occured while trying to initialize particle from ephemeris data.");
+        fprintf(stderr, "An error occured while trying to initialize particle from ephemeris data.\n");
     }
-    p.m = GM/assist->sim->G;
+    p.m = GM; // Note this is GM, not M
     return p;
 }
 
@@ -191,7 +261,7 @@ struct reb_particle assist_get_particle(struct assist_extras* assist, const int 
 // output_t:      array of output times.
 // output_state:  array of output states.
 // min_dt:      minimum allowed time step.
-int assist_integrate(double jd_ref,
+int assist_integrate(struct assist_ephem* ephem,
 		      double tstart, double tend, double tstep,
 		      int geocentric,
 		      double epsilon,
@@ -230,9 +300,8 @@ int assist_integrate(double jd_ref,
 
     // Attach an assist struct to the simulation
     // and initialize some values.
-    struct assist_extras* assist = assist_attach(sim);
+    struct assist_extras* assist = assist_attach(sim, ephem);
     assist->geocentric = geocentric;
-    assist->jd_ref = jd_ref; // 2451545.0; 
 
     // Add and initialize particles    
     for(int i=0; i<n_particles; i++){

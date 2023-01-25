@@ -61,8 +61,17 @@ enum ASSIST_FORCES {
     ASSIST_FORCE_GR_POTENTIAL       = 0x100,
 };
 
+
+struct assist_ephem {
+    double jd_ref;
+    struct _jpl_s* pl;
+    struct spk_s* spl;
+};
+
 struct assist_extras {
     struct reb_simulation* sim;
+    struct assist_ephem* ephem;
+    int extras_should_free_ephem;   // Internal use only. Set to 1 if extras allocated memory for ephem.
     int geocentric;
     double last_state_t;
     double* last_state_x;
@@ -77,7 +86,6 @@ struct assist_extras {
     int output_n_alloc;
     int steps_done;
     int forces;
-    double jd_ref;
 };
 
 /**
@@ -85,7 +93,7 @@ struct assist_extras {
  * @param sim Pointer to the reb_simulation on which to add ASSIST functionality.
  * @return Pointer to an assist_extras structure.
  */
-struct assist_extras* assist_attach(struct reb_simulation* sim);
+struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ephem* ephem);
 
 /**
  * @brief Frees all memory allocated by ASSIST instance.
@@ -93,6 +101,8 @@ struct assist_extras* assist_attach(struct reb_simulation* sim);
  * @param assist The assist_extras pointer returned from the initial call to assist_attach.
  */
 void assist_free(struct assist_extras* assist);
+
+void assist_ephem_free(struct assist_ephem* ephem);
 
 /**
  * @brief Detaches ASSIST from simulation, resetting all the simulation's function pointers that ASSIST has set.
@@ -112,13 +122,13 @@ void assist_error(struct assist_extras* assist, const char* const msg);
 
 
 // Find particle position and velocity based on ephemeris data
-struct reb_particle assist_get_particle(struct assist_extras* assist, const int particle_id, const double t);
+struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t);
 
 // Functions called from python:
-void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist); // Initializes all pointers and values.
+void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem); // Initializes all pointers and values.
 void assist_free_pointers(struct assist_extras* assist);
 
-int assist_integrate(double jd_ref,
+int assist_integrate(struct assist_ephem* ephem,
 		     double tstart, double tend, double tstep,
 		     int geocentric,
 		     double epsilon,
@@ -144,6 +154,6 @@ void test_vary(struct reb_simulation* sim, FILE *vfile);
 
 void test_vary_2nd(struct reb_simulation* sim, FILE *vfile);
 
-int assist_ephem_init(char *planets_file_name, char *asteroids_file_name);
+struct assist_ephem* assist_ephem_init(char *planets_file_name, char *asteroids_file_name);
 
 #endif

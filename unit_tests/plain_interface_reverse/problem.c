@@ -9,11 +9,13 @@
 #include "assist.h"
 
 int main(int argc, char* argv[]){
-
-    assist_ephem_init(NULL, NULL);
+    struct assist_ephem* ephem = assist_ephem_init(
+            "../../data/linux_m13000p17000.441",
+            "../../data/sb441-n16.bsp");
+    ephem->jd_ref = 2451545.0;
     
     struct reb_simulation* r = reb_create_simulation();
-    struct assist_extras* ax = assist_attach(r);
+    struct assist_extras* ax = assist_attach(r, ephem);
     ax->jd_ref = 2451545.0; // Reference JD. This line can be commented out as this is the default.
     r->t = 8446.5;
 
@@ -45,5 +47,7 @@ int main(int argc, char* argv[]){
     double diff_vz = fabs(r->particles[0].vz-r->particles[1].vz)*au2meter;
     assert(diff_vz < 5e-3); // require that integration error is less than 5mm/day after 30 day integration
         
+    assist_free(ax);
+    assist_ephem_free(ephem);
 }
 
