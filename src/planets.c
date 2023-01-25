@@ -235,8 +235,6 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
         double t, *z;
         u_int32_t blk;
 
-        int p;
-
         if (pl == NULL || pl->map == NULL || pos == NULL)
                 return -1;
 
