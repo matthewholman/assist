@@ -168,11 +168,6 @@ struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ep
 }
 
 
-void assist_extras_cleanup(struct reb_simulation* r){
-    struct assist_extras* assist =  r->extras;
-    assist->sim = NULL;
-}
-
 void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem){
     assist->sim = sim;
     assist->ephem = ephem;
@@ -188,7 +183,6 @@ void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist,
     sim->integrator = REB_INTEGRATOR_IAS15;
     sim->gravity = REB_GRAVITY_NONE;
     sim->extras = assist;
-    sim->extras_cleanup = assist_extras_cleanup;
     sim->additional_forces = assist_additional_forces;
     sim->force_is_velocity_dependent = 1;
 }
