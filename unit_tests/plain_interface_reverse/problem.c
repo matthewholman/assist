@@ -52,5 +52,6 @@ int main(int argc, char* argv[]){
         
     assist_free(ax);
     assist_ephem_free(ephem);
+    reb_free_simulation(r);
 }
 
