@@ -55,15 +55,8 @@ static void assist_additional_force_potential_GR(struct reb_simulation* sim, dou
 static void assist_additional_force_simple_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
 static void assist_additional_force_eih_GR(struct reb_simulation* sim, int eih_loop_limit, double xo, double yo, double zo, double vxo, double vyo, double vzo, double axo, double ayo, double azo,	FILE *outfile, FILE *eih_file);
 
-// TODO: this should be more general.  Perhaps
-// this information could come directly from
-// the JPL ephemerides.
-static int number_bodies(int* N_ephem, int* N_ast){
-    *N_ephem = 11;
-    *N_ast = 16;
-
-    return(*N_ephem + *N_ast);
-}
+static const int N_ephem = 11;
+static const int N_ast = 16;
 
 void assist_additional_forces(struct reb_simulation* sim){
 
@@ -75,10 +68,6 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;    
-
-    int N_ephem, N_ast;
-
-    number_bodies(&N_ephem, &N_ast);    
 
     // The limit of the EIH GR limit should be a free
     // parameter
@@ -359,13 +348,7 @@ int assist_all_ephem(struct assist_ephem* ephem, const int i, const double t, do
 		      double* const ax, double* const ay, double* const az
 		      ){
 
-    static int N_ast = -1;
-    static int N_ephem = -1;
     const double jd_ref = ephem->jd_ref;
-
-    if(N_ast == -1 || N_ephem == -1){
-	number_bodies(&N_ephem, &N_ast);
-    }
 
     static double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
     static double GMs;
@@ -413,9 +396,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
     
     const double t = sim->t;    
 
-    int N_ephem, N_ast;
-
-    const int N_tot = number_bodies(&N_ephem, &N_ast);
+    const int N_tot = N_ephem + N_ast;
 
     struct reb_particle* const particles = sim->particles;
 
@@ -1461,10 +1442,6 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
     // The Sun center is reference for these calculations.
     double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
     assist_all_ephem(ephem, 0, t, &GM, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
-
-    int N_ephem, N_ast;
-
-    number_bodies(&N_ephem, &N_ast);
 
     double beta = 1.0;
     double gamma = 1.0;
