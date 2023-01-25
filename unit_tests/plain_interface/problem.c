@@ -11,8 +11,12 @@
 int main(int argc, char* argv[]){
 
     struct assist_ephem* ephem = assist_ephem_init(
-            "../../data/linux_m13000p17000.441",
+            "../../data/linux_p1550p2650.440",
             "../../data/sb441-n16.bsp");
+    if (ephem == NULL){
+        fprintf(stderr,"Error initializing assist_ephem.\n");
+        exit(1);
+    }
     
     struct reb_simulation* r = reb_create_simulation();
     struct assist_extras* ax = assist_attach(r, ephem);
