@@ -140,7 +140,9 @@ struct assist_ephem* assist_ephem_init(char *user_planets_path, char *user_aster
 }
 
 void assist_ephem_free(struct assist_ephem* ephem){
-    // Not yet implemented. Memory leak!
+    assist_jpl_free(ephem->pl);
+    assist_spk_free(ephem->spl);
+    free(ephem);
 }
 
 struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ephem* ephem){  
