@@ -68,9 +68,18 @@ struct assist_ephem {
     struct spk_s* spl;
 };
 
+struct assist_ephem_cache {
+    double sun_t;
+    double sun_GM;
+    double sun_x;
+    double sun_y;
+    double sun_z;
+};
+
 struct assist_extras {
     struct reb_simulation* sim;
     struct assist_ephem* ephem;
+    struct assist_ephem_cache* ephem_cache;
     int extras_should_free_ephem;   // Internal use only. Set to 1 if extras allocated memory for ephem.
     int geocentric;
     double last_state_t;
