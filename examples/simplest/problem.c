@@ -40,6 +40,11 @@ void read_inputs(char *filename, double* tepoch, double* tstart, double* tend, d
 */
 
 int main(int argc, char* argv[]){
+    // Load the ephemeris data
+    struct assist_ephem* ephem = assist_ephem_init(
+            "../../data/linux_m13000p17000.441",
+            "../../data/sb441-n16.bsp");
+    ephem->jd_ref = 2451545.0;
 
     // These variables are used to capture the results of read_inputs()
     double tepoch, tstart, tend, tstep;
@@ -51,7 +56,6 @@ int main(int argc, char* argv[]){
     int *invar_part; // This stores the particle index that goes with the variational particle
     double *invar;
     double* cov_mat;
-    double jd_ref = 2451545.0;
     
     //particle_params* part_paramst = NULL;
     //particle_params* invar_part_params = NULL;
@@ -99,7 +103,7 @@ int main(int argc, char* argv[]){
 
     printf("entering integration_function\n");
     int n_steps;
-    int status = assist_integrate(jd_ref,
+    int status = assist_integrate(ephem,
 				      tstart, tend, tstep, 0, 1e-9,
 				      n_particles, instate,
 				      part_paramst,

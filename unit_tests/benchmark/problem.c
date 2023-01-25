@@ -9,11 +9,12 @@
 #include "assist.h"
 
 double runtime(){
-
-    assist_ephem_init(NULL, NULL);
+    struct assist_ephem* ephem = assist_ephem_init(
+            "../../data/linux_m13000p17000.441",
+            "../../data/sb441-n16.bsp");
     
     struct reb_simulation* r = reb_create_simulation();
-    struct assist_extras* ax = assist_attach(r);
+    struct assist_extras* ax = assist_attach(r, ephem);
     r->t = 8416.5;
 
     // Asteroid Holman with slightly different initial conditions
@@ -33,6 +34,7 @@ double runtime(){
     gettimeofday(&time_end,NULL);
     
     assist_free(ax);
+    assist_ephem_free(ephem);
     reb_free_simulation(r);
 
     return time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
@@ -62,5 +64,6 @@ int main(int argc, char* argv[]){
     printf("%.6fs %.6fs %s %s %s\n", mean, std, assist_version_str, assist_build_str, assist_githash_str);
     fprintf(of, "%.6fs %.6fs %s %s %s\n", mean, std, assist_version_str, assist_build_str, assist_githash_str);
     fclose(of);
+    
 }
 

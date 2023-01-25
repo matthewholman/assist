@@ -9,6 +9,11 @@
 #include "assist.h"
 
 int main(int argc, char* argv[]){
+    struct assist_ephem* ephem = assist_ephem_init(
+            "../../data/linux_m13000p17000.441",
+            "../../data/sb441-n16.bsp");
+    ephem->jd_ref = 2451545.0;
+    
     // Initial conditions of asteroid Holman
     int n_particles = 1;    
     double* state = malloc(n_particles*6*sizeof(double));
@@ -20,7 +25,6 @@ int main(int argc, char* argv[]){
     state[4] = -1.027075301472321E-02 ;  // vy
     state[5] = -4.195690627695180E-03;  // vz
    
-    double jd_ref = 2451545.0;  // All times are emasured relative to this Julian date 
     double tstart = 8416.5;     // Initial time 
     double tend = 8446.5 ;       // Final time
     double tstep = 20;          // Integration step size. 
@@ -38,15 +42,9 @@ int main(int argc, char* argv[]){
     double* outstate = (double *) malloc((n_alloc)*6*sizeof(double));
     double* outtime  = (double *) malloc((n_alloc)*sizeof(double));
 
-    int ephem_res = assist_ephem_init(NULL, NULL);
-
-    if(ephem_res != 0){
-	exit(-1);
-    }
-
     int n_steps_done;
     int status = assist_integrate(
-            jd_ref,                 // I do not understand what this variable does
+            ephem, 
             tstart, tend, tstep,    // Time range of integration 
             0,                      // 1=geocentric, 0=barycentric
             1e-9,                   // epsilon

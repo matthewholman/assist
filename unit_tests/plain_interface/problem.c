@@ -10,11 +10,12 @@
 
 int main(int argc, char* argv[]){
 
-    assist_ephem_init(NULL, NULL);
+    struct assist_ephem* ephem = assist_ephem_init(
+            "../../data/linux_m13000p17000.441",
+            "../../data/sb441-n16.bsp");
     
     struct reb_simulation* r = reb_create_simulation();
-    struct assist_extras* ax = assist_attach(r);
-    ax->jd_ref = 2451545.0; // Reference JD. This line can be commented out as this is the default.
+    struct assist_extras* ax = assist_attach(r, ephem);
     r->t = 8416.5;
 
     // Initial conditions of asteroid Holman
@@ -45,5 +46,7 @@ int main(int argc, char* argv[]){
     double diff_vz = fabs(r->particles[0].vz-r->particles[1].vz)*au2meter;
     assert(diff_vz < 5e-3); // require that integration error is less than 5mm/day after 30 day integration
         
+    assist_free(ax);
+    assist_ephem_free(ephem);
 }
 
