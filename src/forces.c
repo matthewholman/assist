@@ -159,20 +159,9 @@ void assist_additional_forces(struct reb_simulation* sim){
         assist_additional_force_direct(sim, xo, yo, zo, outfile);
     }
     
-    FILE *vfile = NULL;
-    static int first=1;
-    if(first==1){
-	vfile = fopen("vary_acc.out", "w");
-    }
-
     // Uncomment one of these lines and recompile for testing.
     //test_vary(sim, vfile);
     //test_vary_2nd(sim, vfile);    
-
-    if(first==1){
-	fclose(vfile);
-	first=1;
-    }
 
     //fclose(eih_file);
     //fflush(outfile);
