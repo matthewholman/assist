@@ -173,16 +173,11 @@ struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ep
 void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem){
     assist->sim = sim;
     assist->ephem_cache = calloc(1, sizeof(struct assist_ephem_cache));
-    assist->ephem_cache->sun_t = NAN; 
     const int N_total = 16+11; // TODO
     assist->ephem_cache->items = calloc(N_total*7, sizeof(struct assist_cache_item));
-    assist->ephem_cache->index = malloc(N_total*sizeof(int));
     assist->ephem_cache->t = malloc(N_total*7*sizeof(double));
-    for (int i=0;i<N_total;i++){
-        assist->ephem_cache->index[i] = 6;
-    }
     for (int i=0;i<7*N_total;i++){
-        assist->ephem_cache->t[i] = NAN;
+        assist->ephem_cache->t[i] = -1e306;
     }
 
     assist->ephem = ephem;
@@ -207,6 +202,8 @@ void assist_free_pointers(struct assist_extras* assist){
     free(assist->last_state_x);
     free(assist->last_state_v);
     free(assist->last_state_a);
+    free(assist->ephem_cache->items);
+    free(assist->ephem_cache->t);
     free(assist->ephem_cache);
     if (assist->extras_should_free_ephem){
         assist_ephem_free(assist->ephem);

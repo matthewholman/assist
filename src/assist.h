@@ -83,11 +83,6 @@ struct assist_cache_item {
 
 
 struct assist_ephem_cache {
-    double sun_t;
-    double sun_GM;
-    double sun_x;
-    double sun_y;
-    double sun_z;
     double* t;
     int* index;
     struct assist_cache_item* items;

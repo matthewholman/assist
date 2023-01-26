@@ -337,24 +337,20 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
 		      double* const ax, double* const ay, double* const az
         ){
     if (ephem_cache){
-        struct assist_cache_item* items = ephem_cache->items;
         double* ct = ephem_cache->t+7*i;
-        // search cache
         for (int s=0; s<7; s+=1){
             if (t==ct[s]){
-                //printf("lookup match  i=%d   t = %.5f\n",i, t);
-                int loc = i*7+ s;
-                struct assist_cache_item it = items[loc];
-                *GM = it.GM;
-                *x = it.x;
-                *y = it.y;
-                *z = it.z;
-                *vx = it.vx;
-                *vy = it.vy;
-                *vz = it.vz;
-                *ax = it.ax;
-                *ay = it.ay;
-                *az = it.az;
+                struct assist_cache_item* items = ephem_cache->items+i*7+s;
+                *GM = items->GM;
+                *x  = items->x;
+                *y  = items->y;
+                *z  = items->z;
+                *vx = items->vx;
+                *vy = items->vy;
+                *vz = items->vz;
+                *ax = items->ax;
+                *ay = items->ay;
+                *az = items->az;
                 return NO_ERR;
             }
         }
@@ -373,24 +369,9 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
         if(flag != NO_ERR) return(flag);
 
         double GMs, xs, ys, zs;
-        if (ephem_cache && ephem_cache->sun_t == t){ // Note: short circuit evaluation
-                GMs = ephem_cache->sun_GM;
-                xs = ephem_cache->sun_x;
-                ys = ephem_cache->sun_y;
-                zs = ephem_cache->sun_z;
-        }else{
-            double vxs, vys, vzs, axs, ays, azs; // Not needed
-            flag = planet_ephem(ephem, 0, jd_ref, t, &GMs, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
-            if(flag != NO_ERR) return(flag);		    
-            if (ephem_cache){
-                ephem_cache->sun_t = t;
-                ephem_cache->sun_GM = GMs;
-                ephem_cache->sun_x = xs;
-                ephem_cache->sun_y = ys;
-                ephem_cache->sun_z = zs;
-            }
-        }
-
+        double vxs, vys, vzs, axs, ays, azs; // Not needed
+        flag = assist_all_ephem(ephem, ephem_cache, 0, t, &GMs, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
+        if(flag != NO_ERR) return(flag);		    
 
         // Translate massive asteroids from heliocentric to barycentric.
         *x += xs; *y += ys; *z += zs;
@@ -414,18 +395,17 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
         }
         // repolace oldest
         ct[os] = t;
-        struct assist_cache_item* items = ephem_cache->items;
-        int loc = i*7+ os;
-        items[loc].GM = *GM;
-        items[loc].x = *x;
-        items[loc].y = *y;
-        items[loc].z = *z;
-        items[loc].vx = *vx;
-        items[loc].vy = *vy;
-        items[loc].vz = *vz;
-        items[loc].ax = *ax;
-        items[loc].ay = *ay;
-        items[loc].az = *az;
+        struct assist_cache_item* items = ephem_cache->items + i*7 +os;
+        items->GM = *GM;
+        items->x = *x;
+        items->y = *y;
+        items->z = *z;
+        items->vx = *vx;
+        items->vy = *vy;
+        items->vz = *vz;
+        items->ax = *ax;
+        items->ay = *ay;
+        items->az = *az;
     }
     return(NO_ERR);
 }
