@@ -174,6 +174,17 @@ void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist,
     assist->sim = sim;
     assist->ephem_cache = calloc(1, sizeof(struct assist_ephem_cache));
     assist->ephem_cache->sun_t = NAN; 
+    const int N_total = 16+11; // TODO
+    assist->ephem_cache->items = calloc(N_total*7, sizeof(struct assist_cache_item));
+    assist->ephem_cache->index = malloc(N_total*sizeof(int));
+    assist->ephem_cache->t = malloc(N_total*7*sizeof(double));
+    for (int i=0;i<N_total;i++){
+        assist->ephem_cache->index[i] = 6;
+    }
+    for (int i=0;i<7*N_total;i++){
+        assist->ephem_cache->t[i] = NAN;
+    }
+
     assist->ephem = ephem;
     assist->particle_params = NULL;
     assist->forces = ASSIST_FORCE_SUN // default forces

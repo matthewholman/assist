@@ -336,15 +336,37 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
 		      double* const vx, double* const vy, double* const vz,
 		      double* const ax, double* const ay, double* const az
         ){
+    if (ephem_cache){
+        struct assist_cache_item* items = ephem_cache->items;
+        double* ct = ephem_cache->t+7*i;
+        // search cache
+        for (int s=0; s<7; s+=1){
+            if (t==ct[s]){
+                //printf("lookup match  i=%d   t = %.5f\n",i, t);
+                int loc = i*7+ s;
+                struct assist_cache_item it = items[loc];
+                *GM = it.GM;
+                *x = it.x;
+                *y = it.y;
+                *z = it.z;
+                *vx = it.vx;
+                *vy = it.vy;
+                *vz = it.vz;
+                *ax = it.ax;
+                *ay = it.ay;
+                *az = it.az;
+                return NO_ERR;
+            }
+        }
+        // No match
+    }
 
     const double jd_ref = ephem->jd_ref;
 
     // Get position and mass of massive body i.
     if(i < N_ephem){
-
         int flag = planet_ephem(ephem, i, jd_ref, t, GM, x, y, z, vx, vy, vz, ax, ay, az);
         if(flag != NO_ERR) return(flag);
-
     }else{
         // Get position and mass of asteroid i-N_ephem.
         int flag = ast_ephem(ephem, i-N_ephem, jd_ref, t, GM, x, y, z);
@@ -379,6 +401,32 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
 
     }
 
+    if (ephem_cache){
+        double* ct = ephem_cache->t+7*i;
+        // Find oldest
+        int os = 0;
+        double ot = ct[0];
+        for (int s=1; s<7; s+=1){
+            if (ct[s]<ot){
+                ot = ct[s];
+                os = s;
+            }
+        }
+        // repolace oldest
+        ct[os] = t;
+        struct assist_cache_item* items = ephem_cache->items;
+        int loc = i*7+ os;
+        items[loc].GM = *GM;
+        items[loc].x = *x;
+        items[loc].y = *y;
+        items[loc].z = *z;
+        items[loc].vx = *vx;
+        items[loc].vy = *vy;
+        items[loc].vz = *vz;
+        items[loc].ax = *ax;
+        items[loc].ay = *ay;
+        items[loc].az = *az;
+    }
     return(NO_ERR);
 }
 
