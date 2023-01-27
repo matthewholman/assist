@@ -104,7 +104,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     // or make this more flexible
     FILE *outfile = NULL;
     // Uncomment these lines and recompile for testing.    
-    outfile = fopen("acc.out", "a+");
+    //outfile = fopen("acc.out", "a+");
     //FILE *vfile = NULL;    
     //vfile = fopen("vary_acc.out", "a+");
 
@@ -1444,7 +1444,8 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 
     const double au = JPL_EPHEM_CAU;    
     const double c = (JPL_EPHEM_CLIGHT/au)*86400;
-    const double C2 = c*c;  // This could be stored as C2.
+    const double C2 = c*c;
+    const double over_C2 = 1./(c*c);
 
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
@@ -1494,7 +1495,7 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	    const double dzij = particles[i].z + (zo - zj);
 	    const double rij2 = dxij*dxij + dyij*dyij + dzij*dzij;
 	    const double _rij  = sqrt(rij2);
-	    const double prefacij = GMj/(_rij*_rij*_rij);
+	    const double prefacij = GMj/(rij2*_rij);
 
 	    // This is the place to do all the various i-j dot products
 	    
@@ -1502,18 +1503,18 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 		particles[i].vy*particles[i].vy +
 		particles[i].vz*particles[i].vz;
 
-	    const double term2 = gamma/C2*vi2;
+	    const double term2 = gamma*over_C2*vi2;
 
 	    const double vj2 = (vxj-vxo)*(vxj-vxo) + (vyj-vyo)*(vyj-vyo) + (vzj-vzo)*(vzj-vzo);
 
-	    const double term3 = (1+gamma)/C2*vj2;
+	    const double term3 = (1+gamma)*over_C2*vj2;
 	    // Variational equations do not depend on term3
 
 	    const double vidotvj = particles[i].vx*(vxj-vxo) +
 		particles[i].vy*(vyj-vyo) +
 		particles[i].vz*(vzj-vzo);
 
-	    const double term4 = -2*(1+gamma)/C2*vidotvj;
+	    const double term4 = -2*(1+gamma)*over_C2*vidotvj;
 
 	    const double rijdotvj = dxij*(vxj-vxo) + dyij*(vyj-vyo) + dzij*(vzj-vzo);
 
@@ -1522,16 +1523,17 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 		fprintf(eih_file, "%25.16lE ", rijdotvj/_rij);
 	    }
 
-	    const double term5 = -1.5/C2*(rijdotvj*rijdotvj)/(_rij*_rij);
+	    const double term5 = -1.5*over_C2*(rijdotvj*rijdotvj)/(_rij*_rij);
 
-	    double fx = (2+2*gamma)*particles[i].vx - (1+2*gamma)*(vxj-vxo);
-	    double fy = (2+2*gamma)*particles[i].vy - (1+2*gamma)*(vyj-vyo);
-	    double fz = (2+2*gamma)*particles[i].vz - (1+2*gamma)*(vzj-vzo);
-	    double f = dxij*fx + dyij*fy + dzij*fz;
+	    const double fx = (2+2*gamma)*particles[i].vx - (1+2*gamma)*(vxj-vxo);
+	    const double fy = (2+2*gamma)*particles[i].vy - (1+2*gamma)*(vyj-vyo);
+	    const double fz = (2+2*gamma)*particles[i].vz - (1+2*gamma)*(vzj-vzo);
+	    const double f = dxij*fx + dyij*fy + dzij*fz;
 
-	    double term7x = prefacij*f*(particles[i].vx-(vxj-vxo));
-	    double term7y = prefacij*f*(particles[i].vy-(vyj-vyo));
-	    double term7z = prefacij*f*(particles[i].vz-(vzj-vzo));
+	    const double prefacij_f = prefacij*f;
+	    const double term7x = prefacij_f*(particles[i].vx-(vxj-vxo));
+	    const double term7y = prefacij_f*(particles[i].vy-(vyj-vyo));
+	    const double term7z = prefacij_f*(particles[i].vz-(vzj-vzo));
 	    
 	    term7x_sum += term7x;
 	    term7y_sum += term7y;
@@ -1573,30 +1575,32 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 		    // keep track of GM/rjk sum
 		    term1 += GMk/_rjk;
 
-		    axj -= GMk*dxjk/(_rjk*_rjk*_rjk);
-		    ayj -= GMk*dyjk/(_rjk*_rjk*_rjk);
-		    azj -= GMk*dzjk/(_rjk*_rjk*_rjk);		    		    
+		    const double fac = GMk/(rjk2*_rjk);
+		    axj -= fac*dxjk;
+		    ayj -= fac*dyjk;
+		    azj -= fac*dzjk;
 
 		}
 
 	    }
 
-	    term0 *= -2*(beta+gamma)/C2;
+	    term0 *= -2*(beta+gamma)*over_C2;
 	    
-	    term1 *= -(2*beta-1)/C2;
+	    term1 *= -(2*beta-1)*over_C2;
 
 	    const double rijdotaj = dxij*(axj-axo) + dyij*(ayj-ayo) + dzij*(azj-azo);
-	    const double term6 = -0.5/C2*rijdotaj;
-	    
-	    double term8x = GMj*axj/_rij*(3+4*gamma)/2;
-	    double term8y = GMj*ayj/_rij*(3+4*gamma)/2;
-	    double term8z = GMj*azj/_rij*(3+4*gamma)/2;
+	    const double term6 = -0.5*over_C2*rijdotaj;
+
+	    const double term8_fac = GMj/_rij*(3+4*gamma)/2;
+	    const double term8x = term8_fac*axj;
+	    const double term8y = term8_fac*ayj;
+	    const double term8z = term8_fac*azj;
 
 	    term8x_sum += term8x;
 	    term8y_sum += term8y;
 	    term8z_sum += term8z;
 
-	    double factor = term0 + term1 + term2 + term3 + term4 + term5 + term6;
+	    const double factor = term0 + term1 + term2 + term3 + term4 + term5 + term6;
 
 	    if(eih_file){
 		fprintf(eih_file, "%24.16lE ", -factor*C2);
@@ -1629,9 +1633,9 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 
         }
 
-	grx += term7x_sum/C2 + term8x_sum/C2;
-	gry += term7y_sum/C2 + term8y_sum/C2;
-	grz += term7z_sum/C2 + term8z_sum/C2;
+	grx += term7x_sum*over_C2 + term8x_sum*over_C2;
+	gry += term7y_sum*over_C2 + term8y_sum*over_C2;
+	grz += term7z_sum*over_C2 + term8z_sum*over_C2;
 
 	if(outfile){
 	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", jd_ref+t,
@@ -1639,9 +1643,9 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	    fflush(outfile);
 	}
 
-	particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
-	particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
-	particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+	particles[i].ax += term7x_sum*over_C2 + term8x_sum*over_C2;
+	particles[i].ay += term7y_sum*over_C2 + term8y_sum*over_C2;
+	particles[i].az += term7z_sum*over_C2 + term8z_sum*over_C2;
 
     }
 
@@ -1745,24 +1749,24 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 		particles[i].vy*particles[i].vy +
 		particles[i].vz*particles[i].vz;
 
-	    const double term2 = gamma/C2*vi2;
-	    const double dterm2dvx = 2.0*gamma/C2*particles[i].vx;
-	    const double dterm2dvy = 2.0*gamma/C2*particles[i].vy;
-	    const double dterm2dvz = 2.0*gamma/C2*particles[i].vz;	    
+	    const double term2 = gamma*over_C2*vi2;
+	    const double dterm2dvx = 2.0*gamma*over_C2*particles[i].vx;
+	    const double dterm2dvy = 2.0*gamma*over_C2*particles[i].vy;
+	    const double dterm2dvz = 2.0*gamma*over_C2*particles[i].vz;	    
 
 	    const double vj2 = (vxj-vxo)*(vxj-vxo) + (vyj-vyo)*(vyj-vyo) + (vzj-vzo)*(vzj-vzo);
 
-	    const double term3 = (1+gamma)/C2*vj2;
+	    const double term3 = (1+gamma)*over_C2*vj2;
 	    // Variational equations do not depend on term3
 
 	    const double vidotvj = particles[i].vx*(vxj-vxo) +
 		particles[i].vy*(vyj-vyo) +
 		particles[i].vz*(vzj-vzo);
 
-	    const double term4 = -2*(1+gamma)/C2*vidotvj;
-	    const double dterm4dvx = -2*(1+gamma)/C2*(vxj-vxo);
-	    const double dterm4dvy = -2*(1+gamma)/C2*(vyj-vyo);
-	    const double dterm4dvz = -2*(1+gamma)/C2*(vzj-vzo);	    	    
+	    const double term4 = -2*(1+gamma)*over_C2*vidotvj;
+	    const double dterm4dvx = -2*(1+gamma)*over_C2*(vxj-vxo);
+	    const double dterm4dvy = -2*(1+gamma)*over_C2*(vyj-vyo);
+	    const double dterm4dvz = -2*(1+gamma)*over_C2*(vzj-vzo);	    	    
 	    
 
 	    const double rijdotvj = dxij*(vxj-vxo) + dyij*(vyj-vyo) + dzij*(vzj-vzo);
@@ -1772,10 +1776,11 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 		fprintf(eih_file, "%25.16lE ", rijdotvj/_rij);
 	    }
 
-	    const double term5 = -1.5/C2*(rijdotvj*rijdotvj)/(_rij*_rij);
-	    const double dterm5dx = -3.0/C2*rijdotvj/_rij*((vxj-vxo)/_rij - rijdotvj*dxij/(_rij*_rij*_rij));
-	    const double dterm5dy = -3.0/C2*rijdotvj/_rij*((vyj-vyo)/_rij - rijdotvj*dyij/(_rij*_rij*_rij));
-	    const double dterm5dz = -3.0/C2*rijdotvj/_rij*((vzj-vzo)/_rij - rijdotvj*dzij/(_rij*_rij*_rij));	    	    
+	    const double term5 = -1.5*over_C2*(rijdotvj*rijdotvj)/(_rij*_rij);
+	    const double term5_fac = 3.0*over_C2*rijdotvj/_rij;
+	    const double dterm5dx = -term5_fac*((vxj-vxo)/_rij - rijdotvj*dxij/(_rij*_rij*_rij));
+	    const double dterm5dy = -term5_fac*((vyj-vyo)/_rij - rijdotvj*dyij/(_rij*_rij*_rij));
+	    const double dterm5dz = -term5_fac*((vzj-vzo)/_rij - rijdotvj*dzij/(_rij*_rij*_rij));	    	    
 
 	    double fx = (2+2*gamma)*particles[i].vx - (1+2*gamma)*(vxj-vxo);
 	    double fy = (2+2*gamma)*particles[i].vy - (1+2*gamma)*(vyj-vyo);
@@ -1915,18 +1920,18 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 
 	    }
 
-	    term0 *= -2*(beta+gamma)/C2;
-	    dterm0dx *= -2*(beta+gamma)/C2;
-	    dterm0dy *= -2*(beta+gamma)/C2;
-	    dterm0dz *= -2*(beta+gamma)/C2;	    	    
+	    term0 *= -2*(beta+gamma)*over_C2;
+	    dterm0dx *= -2*(beta+gamma)*over_C2;
+	    dterm0dy *= -2*(beta+gamma)*over_C2;
+	    dterm0dz *= -2*(beta+gamma)*over_C2;	    	    
 	    
-	    term1 *= -(2*beta-1)/C2;
+	    term1 *= -(2*beta-1)*over_C2;
 
 	    const double rijdotaj = dxij*(axj-axo) + dyij*(ayj-ayo) + dzij*(azj-azo);
-	    const double term6 = -0.5/C2*rijdotaj;
-	    const double dterm6dx = -0.5/C2*(axj-axo);
-	    const double dterm6dy = -0.5/C2*(ayj-ayo);	    
-	    const double dterm6dz = -0.5/C2*(azj-azo);
+	    const double term6 = -0.5*over_C2*rijdotaj;
+	    const double dterm6dx = -0.5*over_C2*(axj-axo);
+	    const double dterm6dy = -0.5*over_C2*(ayj-ayo);	    
+	    const double dterm6dz = -0.5*over_C2*(azj-azo);
 	    
 	    double term8x = GMj*axj/_rij*(3+4*gamma)/2;
 	    double dterm8xdx = -GMj*axj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
@@ -2058,9 +2063,9 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 
         }
 
-	grx += term7x_sum/C2 + term8x_sum/C2;
-	gry += term7y_sum/C2 + term8y_sum/C2;
-	grz += term7z_sum/C2 + term8z_sum/C2;
+	grx += term7x_sum*over_C2 + term8x_sum*over_C2;
+	gry += term7y_sum*over_C2 + term8y_sum*over_C2;
+	grz += term7z_sum*over_C2 + term8z_sum*over_C2;
 
 	if(outfile){
 	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", jd_ref+t,
@@ -2068,26 +2073,26 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	    fflush(outfile);
 	}
 
-	dxdx += dterm7x_sumdx/C2 + dterm8x_sumdx/C2;
-	dxdy += dterm7x_sumdy/C2 + dterm8x_sumdy/C2;
-	dxdz += dterm7x_sumdz/C2 + dterm8x_sumdz/C2;	
-	dxdvx += dterm7x_sumdvx/C2;
-	dxdvy += dterm7x_sumdvy/C2;
-	dxdvz += dterm7x_sumdvz/C2;
+	dxdx += dterm7x_sumdx*over_C2 + dterm8x_sumdx*over_C2;
+	dxdy += dterm7x_sumdy*over_C2 + dterm8x_sumdy*over_C2;
+	dxdz += dterm7x_sumdz*over_C2 + dterm8x_sumdz*over_C2;	
+	dxdvx += dterm7x_sumdvx*over_C2;
+	dxdvy += dterm7x_sumdvy*over_C2;
+	dxdvz += dterm7x_sumdvz*over_C2;
 
-	dydx += dterm7y_sumdx/C2 + dterm8y_sumdx/C2;
-	dydy += dterm7y_sumdy/C2 + dterm8y_sumdy/C2;
-	dydz += dterm7y_sumdz/C2 + dterm8y_sumdz/C2;	
-	dydvx += dterm7y_sumdvx/C2;
-	dydvy += dterm7y_sumdvy/C2;
-	dydvz += dterm7y_sumdvz/C2;
+	dydx += dterm7y_sumdx*over_C2 + dterm8y_sumdx*over_C2;
+	dydy += dterm7y_sumdy*over_C2 + dterm8y_sumdy*over_C2;
+	dydz += dterm7y_sumdz*over_C2 + dterm8y_sumdz*over_C2;	
+	dydvx += dterm7y_sumdvx*over_C2;
+	dydvy += dterm7y_sumdvy*over_C2;
+	dydvz += dterm7y_sumdvz*over_C2;
 
-	dzdx += dterm7z_sumdx/C2 + dterm8z_sumdx/C2;
-	dzdy += dterm7z_sumdy/C2 + dterm8z_sumdy/C2;
-	dzdz += dterm7z_sumdz/C2 + dterm8z_sumdz/C2;	
-	dzdvx += dterm7z_sumdvx/C2;
-	dzdvy += dterm7z_sumdvy/C2;
-	dzdvz += dterm7z_sumdvz/C2;
+	dzdx += dterm7z_sumdx*over_C2 + dterm8z_sumdx*over_C2;
+	dzdy += dterm7z_sumdy*over_C2 + dterm8z_sumdy*over_C2;
+	dzdz += dterm7z_sumdz*over_C2 + dterm8z_sumdz*over_C2;	
+	dzdvx += dterm7z_sumdvx*over_C2;
+	dzdvy += dterm7z_sumdvy*over_C2;
+	dzdvz += dterm7z_sumdvz*over_C2;
 	
 	//particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
 	//particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
@@ -2145,6 +2150,7 @@ static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
     const double au = JPL_EPHEM_CAU;    
     const double c = (JPL_EPHEM_CLIGHT/au)*86400;
     const double C2 = c*c;  // This could be stored as C2.
+    const double over_C2 = 1./(c*c);    
 
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
@@ -2258,24 +2264,24 @@ static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
 		particles[i].vy*particles[i].vy +
 		particles[i].vz*particles[i].vz;
 
-	    const double term2 = gamma/C2*vi2;
-	    const double dterm2dvx = 2.0*gamma/C2*particles[i].vx;
-	    const double dterm2dvy = 2.0*gamma/C2*particles[i].vy;
-	    const double dterm2dvz = 2.0*gamma/C2*particles[i].vz;	    
+	    const double term2 = gamma*over_C2*vi2;
+	    const double dterm2dvx = 2.0*gamma*over_C2*particles[i].vx;
+	    const double dterm2dvy = 2.0*gamma*over_C2*particles[i].vy;
+	    const double dterm2dvz = 2.0*gamma*over_C2*particles[i].vz;	    
 
 	    const double vj2 = (vxj-vxo)*(vxj-vxo) + (vyj-vyo)*(vyj-vyo) + (vzj-vzo)*(vzj-vzo);
 
-	    const double term3 = (1+gamma)/C2*vj2;
+	    const double term3 = (1+gamma)*over_C2*vj2;
 	    // Variational equations do not depend on term3
 
 	    const double vidotvj = particles[i].vx*(vxj-vxo) +
 		particles[i].vy*(vyj-vyo) +
 		particles[i].vz*(vzj-vzo);
 
-	    const double term4 = -2*(1+gamma)/C2*vidotvj;
-	    const double dterm4dvx = -2*(1+gamma)/C2*(vxj-vxo);
-	    const double dterm4dvy = -2*(1+gamma)/C2*(vyj-vyo);
-	    const double dterm4dvz = -2*(1+gamma)/C2*(vzj-vzo);	    	    
+	    const double term4 = -2*(1+gamma)*over_C2*vidotvj;
+	    const double dterm4dvx = -2*(1+gamma)*over_C2*(vxj-vxo);
+	    const double dterm4dvy = -2*(1+gamma)*over_C2*(vyj-vyo);
+	    const double dterm4dvz = -2*(1+gamma)*over_C2*(vzj-vzo);	    	    
 	    
 
 	    const double rijdotvj = dxij*(vxj-vxo) + dyij*(vyj-vyo) + dzij*(vzj-vzo);
@@ -2285,10 +2291,10 @@ static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
 		fprintf(eih_file, "%25.16lE ", rijdotvj/_rij);
 	    }
 
-	    const double term5 = -1.5/C2*(rijdotvj*rijdotvj)/(_rij*_rij);
-	    const double dterm5dx = -3.0/C2*rijdotvj/_rij*((vxj-vxo)/_rij - rijdotvj*dxij/(_rij*_rij*_rij));
-	    const double dterm5dy = -3.0/C2*rijdotvj/_rij*((vyj-vyo)/_rij - rijdotvj*dyij/(_rij*_rij*_rij));
-	    const double dterm5dz = -3.0/C2*rijdotvj/_rij*((vzj-vzo)/_rij - rijdotvj*dzij/(_rij*_rij*_rij));	    	    
+	    const double term5 = -1.5*over_C2*(rijdotvj*rijdotvj)/(_rij*_rij);
+	    const double dterm5dx = -3.0*over_C2*rijdotvj/_rij*((vxj-vxo)/_rij - rijdotvj*dxij/(_rij*_rij*_rij));
+	    const double dterm5dy = -3.0*over_C2*rijdotvj/_rij*((vyj-vyo)/_rij - rijdotvj*dyij/(_rij*_rij*_rij));
+	    const double dterm5dz = -3.0*over_C2*rijdotvj/_rij*((vzj-vzo)/_rij - rijdotvj*dzij/(_rij*_rij*_rij));	    	    
 
 	    double fx = (2+2*gamma)*particles[i].vx - (1+2*gamma)*(vxj-vxo);
 	    double fy = (2+2*gamma)*particles[i].vy - (1+2*gamma)*(vyj-vyo);
@@ -2428,18 +2434,18 @@ static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
 
 	    }
 
-	    term0 *= -2*(beta+gamma)/C2;
-	    dterm0dx *= -2*(beta+gamma)/C2;
-	    dterm0dy *= -2*(beta+gamma)/C2;
-	    dterm0dz *= -2*(beta+gamma)/C2;	    	    
+	    term0 *= -2*(beta+gamma)*over_C2;
+	    dterm0dx *= -2*(beta+gamma)*over_C2;
+	    dterm0dy *= -2*(beta+gamma)*over_C2;
+	    dterm0dz *= -2*(beta+gamma)*over_C2;	    	    
 	    
-	    term1 *= -(2*beta-1)/C2;
+	    term1 *= -(2*beta-1)*over_C2;
 
 	    const double rijdotaj = dxij*(axj-axo) + dyij*(ayj-ayo) + dzij*(azj-azo);
-	    const double term6 = -0.5/C2*rijdotaj;
-	    const double dterm6dx = -0.5/C2*(axj-axo);
-	    const double dterm6dy = -0.5/C2*(ayj-ayo);	    
-	    const double dterm6dz = -0.5/C2*(azj-azo);
+	    const double term6 = -0.5*over_C2*rijdotaj;
+	    const double dterm6dx = -0.5*over_C2*(axj-axo);
+	    const double dterm6dy = -0.5*over_C2*(ayj-ayo);	    
+	    const double dterm6dz = -0.5*over_C2*(azj-azo);
 	    
 	    double term8x = GMj*axj/_rij*(3+4*gamma)/2;
 	    double dterm8xdx = -GMj*axj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
@@ -2571,9 +2577,9 @@ static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
 
         }
 
-	grx += term7x_sum/C2 + term8x_sum/C2;
-	gry += term7y_sum/C2 + term8y_sum/C2;
-	grz += term7z_sum/C2 + term8z_sum/C2;
+	grx += term7x_sum*over_C2 + term8x_sum*over_C2;
+	gry += term7y_sum*over_C2 + term8y_sum*over_C2;
+	grz += term7z_sum*over_C2 + term8z_sum*over_C2;
 
 	if(outfile){
 	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", jd_ref+t,
@@ -2581,30 +2587,30 @@ static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
 	    fflush(outfile);
 	}
 
-	dxdx += dterm7x_sumdx/C2 + dterm8x_sumdx/C2;
-	dxdy += dterm7x_sumdy/C2 + dterm8x_sumdy/C2;
-	dxdz += dterm7x_sumdz/C2 + dterm8x_sumdz/C2;	
-	dxdvx += dterm7x_sumdvx/C2;
-	dxdvy += dterm7x_sumdvy/C2;
-	dxdvz += dterm7x_sumdvz/C2;
+	dxdx += dterm7x_sumdx*over_C2 + dterm8x_sumdx*over_C2;
+	dxdy += dterm7x_sumdy*over_C2 + dterm8x_sumdy*over_C2;
+	dxdz += dterm7x_sumdz*over_C2 + dterm8x_sumdz*over_C2;	
+	dxdvx += dterm7x_sumdvx*over_C2;
+	dxdvy += dterm7x_sumdvy*over_C2;
+	dxdvz += dterm7x_sumdvz*over_C2;
 
-	dydx += dterm7y_sumdx/C2 + dterm8y_sumdx/C2;
-	dydy += dterm7y_sumdy/C2 + dterm8y_sumdy/C2;
-	dydz += dterm7y_sumdz/C2 + dterm8y_sumdz/C2;	
-	dydvx += dterm7y_sumdvx/C2;
-	dydvy += dterm7y_sumdvy/C2;
-	dydvz += dterm7y_sumdvz/C2;
+	dydx += dterm7y_sumdx*over_C2 + dterm8y_sumdx*over_C2;
+	dydy += dterm7y_sumdy*over_C2 + dterm8y_sumdy*over_C2;
+	dydz += dterm7y_sumdz*over_C2 + dterm8y_sumdz*over_C2;	
+	dydvx += dterm7y_sumdvx*over_C2;
+	dydvy += dterm7y_sumdvy*over_C2;
+	dydvz += dterm7y_sumdvz*over_C2;
 
-	dzdx += dterm7z_sumdx/C2 + dterm8z_sumdx/C2;
-	dzdy += dterm7z_sumdy/C2 + dterm8z_sumdy/C2;
-	dzdz += dterm7z_sumdz/C2 + dterm8z_sumdz/C2;	
-	dzdvx += dterm7z_sumdvx/C2;
-	dzdvy += dterm7z_sumdvy/C2;
-	dzdvz += dterm7z_sumdvz/C2;
+	dzdx += dterm7z_sumdx*over_C2 + dterm8z_sumdx*over_C2;
+	dzdy += dterm7z_sumdy*over_C2 + dterm8z_sumdy*over_C2;
+	dzdz += dterm7z_sumdz*over_C2 + dterm8z_sumdz*over_C2;	
+	dzdvx += dterm7z_sumdvx*over_C2;
+	dzdvy += dterm7z_sumdvy*over_C2;
+	dzdvz += dterm7z_sumdvz*over_C2;
 	
-	particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
-	particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
-	particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+	particles[i].ax += term7x_sum*over_C2 + term8x_sum*over_C2;
+	particles[i].ay += term7y_sum*over_C2 + term8y_sum*over_C2;
+	particles[i].az += term7z_sum*over_C2 + term8z_sum*over_C2;
 
 	// Variational equation terms go here.
 	for (int v=0; v < sim->var_config_N; v++){
