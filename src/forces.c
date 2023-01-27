@@ -103,8 +103,10 @@ void assist_additional_forces(struct reb_simulation* sim){
     // TODO: eliminate the output files after testing
     // or make this more flexible
     FILE *outfile = NULL;
-    // Uncomment this line and recompile for testing.    
-    outfile = fopen("acc.out", "w");
+    // Uncomment these lines and recompile for testing.    
+    //outfile = fopen("acc.out", "a+");
+    //FILE *vfile = NULL;    
+    //vfile = fopen("vary_acc.out", "a+");
 
     // These should be executed in order from smallest
     // to largest
@@ -164,8 +166,8 @@ void assist_additional_forces(struct reb_simulation* sim){
     //test_vary_2nd(sim, vfile);    
 
     //fclose(eih_file);
-    //fflush(outfile);
-    //fclose(outfile);
+    fflush(outfile);
+    fclose(outfile);
 
     if(geo == 1){
 	// geocentric
@@ -464,6 +466,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 
             if(outfile){
                 fprintf(outfile, "%3d %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le\n", i, jd_ref+t, GM, dx, dy, dz, -prefac*dx, -prefac*dy, -prefac*dz);
+		fflush(outfile);		
             }
 
             particles[j].ax -= prefac*dx;
