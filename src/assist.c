@@ -236,11 +236,21 @@ void assist_error(struct assist_extras* assist, const char* const msg){
 struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t){
     struct reb_particle p = {0};
     double GM = 0;
-    int flag = assist_all_ephem(ephem, NULL, particle_id, t, &GM, &p.x, &p.y, &p.z, &p.vx, &p.vy, &p.vz, &p.ax, &p.ay, &p.az);
+    struct assist_cache_item item;
+    int flag = assist_all_ephem(ephem, NULL, particle_id, t, &item);
     if (flag != NO_ERR){
         fprintf(stderr, "An error occured while trying to initialize particle from ephemeris data.\n");
     }
     p.m = GM; // Note this is GM, not M
+    p.x = item.x;
+    p.y = item.y;
+    p.z = item.z;
+    p.vx = item.vx;
+    p.vy = item.vy;
+    p.vz = item.vz;
+    p.ax = item.ax;
+    p.ay = item.ay;
+    p.az = item.az;
     return p;
 }
 
