@@ -172,6 +172,14 @@ struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ep
 
 void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem){
     assist->sim = sim;
+    assist->ephem_cache = calloc(1, sizeof(struct assist_ephem_cache));
+    const int N_total = 16+11; // TODO
+    assist->ephem_cache->items = calloc(N_total*7, sizeof(struct assist_cache_item));
+    assist->ephem_cache->t = malloc(N_total*7*sizeof(double));
+    for (int i=0;i<7*N_total;i++){
+        assist->ephem_cache->t[i] = -1e306;
+    }
+
     assist->ephem = ephem;
     assist->particle_params = NULL;
     assist->forces = ASSIST_FORCE_SUN // default forces
@@ -194,6 +202,9 @@ void assist_free_pointers(struct assist_extras* assist){
     free(assist->last_state_x);
     free(assist->last_state_v);
     free(assist->last_state_a);
+    free(assist->ephem_cache->items);
+    free(assist->ephem_cache->t);
+    free(assist->ephem_cache);
     if (assist->extras_should_free_ephem){
         assist_ephem_free(assist->ephem);
     }
@@ -225,7 +236,7 @@ void assist_error(struct assist_extras* assist, const char* const msg){
 struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t){
     struct reb_particle p = {0};
     double GM = 0;
-    int flag = assist_all_ephem(ephem, particle_id, t, &GM, &p.x, &p.y, &p.z, &p.vx, &p.vy, &p.vz, &p.ax, &p.ay, &p.az);
+    int flag = assist_all_ephem(ephem, NULL, particle_id, t, &GM, &p.x, &p.y, &p.z, &p.vx, &p.vy, &p.vz, &p.ax, &p.ay, &p.az);
     if (flag != NO_ERR){
         fprintf(stderr, "An error occured while trying to initialize particle from ephemeris data.\n");
     }
