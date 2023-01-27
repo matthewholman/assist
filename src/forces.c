@@ -104,7 +104,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     // or make this more flexible
     FILE *outfile = NULL;
     // Uncomment these lines and recompile for testing.    
-    //outfile = fopen("acc.out", "a+");
+    outfile = fopen("acc.out", "a+");
     //FILE *vfile = NULL;    
     //vfile = fopen("vary_acc.out", "a+");
 
@@ -1203,7 +1203,7 @@ static void assist_additional_force_potential_GR(struct reb_simulation* sim,
 
     const double au = JPL_EPHEM_CAU;    
     const double c = (JPL_EPHEM_CLIGHT/au)*86400;
-    const double C2 = c*c;  // This could be stored as C2.
+    const double C2 = c*c;  
     
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
@@ -1311,7 +1311,7 @@ static void assist_additional_force_simple_GR(struct reb_simulation* sim,
     const double au = JPL_EPHEM_CAU;    
     const double c = (JPL_EPHEM_CLIGHT/au)*86400;
 
-    const double C2 = c*c;  // This could be stored as C2.
+    const double C2 = c*c; 
     
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
@@ -1439,17 +1439,13 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
     const double jd_ref = ephem->jd_ref;
 
     // Einstein-Infeld-Hoffman PPN GR treatment
-    // This is one of two options for GR.
-    // This one version is only rarely needed.
+    // This is one of three options for GR.
+    // This version is only rarely needed.
 
     const double au = JPL_EPHEM_CAU;    
     const double c = (JPL_EPHEM_CLIGHT/au)*86400;
     const double C2 = c*c;  // This could be stored as C2.
 
-    // Doesn't need to be hard-coded.
-    //const double c = 173.14463267424031;
-    //const double C2 = c*c;  // This could be stored as C2.
-    
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
 
@@ -1466,6 +1462,193 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
     double beta = 1.0;
     double gamma = 1.0;
 
+    // First do the real particles
+    // Loop over test particles        
+    for (int i=0; i<N_real; i++){
+
+	double GMj, xj, yj, zj, vxj, vyj, vzj, axj, ayj, azj;    
+	double GMk, xk, yk, zk, vxk, vyk, vzk, axk, ayk, azk;
+
+	double term7x_sum = 0.0;
+	double term7y_sum = 0.0;
+	double term7z_sum = 0.0;
+	double term8x_sum = 0.0;
+	double term8y_sum = 0.0;
+	double term8z_sum = 0.0;
+
+	double grx = 0.0;
+	double gry = 0.0;
+	double grz = 0.0;		
+
+	for (int j=0; j<eih_loop_limit; j++){ // This is either 1 or N_ephem
+
+	    // Get position and mass of massive body j.
+	    assist_all_ephem(ephem, assist->ephem_cache, j, t, &GMj,
+		      &xj, &yj, &zj,
+		      &vxj, &vyj, &vzj,
+		      &axj, &ayj, &azj);
+
+	    // Compute position vector of test particle i relative to massive body j.
+	    const double dxij = particles[i].x + (xo - xj); 
+	    const double dyij = particles[i].y + (yo - yj);
+	    const double dzij = particles[i].z + (zo - zj);
+	    const double rij2 = dxij*dxij + dyij*dyij + dzij*dzij;
+	    const double _rij  = sqrt(rij2);
+	    const double prefacij = GMj/(_rij*_rij*_rij);
+
+	    // This is the place to do all the various i-j dot products
+	    
+	    const double vi2 = particles[i].vx*particles[i].vx +
+		particles[i].vy*particles[i].vy +
+		particles[i].vz*particles[i].vz;
+
+	    const double term2 = gamma/C2*vi2;
+
+	    const double vj2 = (vxj-vxo)*(vxj-vxo) + (vyj-vyo)*(vyj-vyo) + (vzj-vzo)*(vzj-vzo);
+
+	    const double term3 = (1+gamma)/C2*vj2;
+	    // Variational equations do not depend on term3
+
+	    const double vidotvj = particles[i].vx*(vxj-vxo) +
+		particles[i].vy*(vyj-vyo) +
+		particles[i].vz*(vzj-vzo);
+
+	    const double term4 = -2*(1+gamma)/C2*vidotvj;
+
+	    const double rijdotvj = dxij*(vxj-vxo) + dyij*(vyj-vyo) + dzij*(vzj-vzo);
+
+	    if(eih_file){
+		fprintf(eih_file, " EIH_J%12d\n", j);	    
+		fprintf(eih_file, "%25.16lE ", rijdotvj/_rij);
+	    }
+
+	    const double term5 = -1.5/C2*(rijdotvj*rijdotvj)/(_rij*_rij);
+
+	    double fx = (2+2*gamma)*particles[i].vx - (1+2*gamma)*(vxj-vxo);
+	    double fy = (2+2*gamma)*particles[i].vy - (1+2*gamma)*(vyj-vyo);
+	    double fz = (2+2*gamma)*particles[i].vz - (1+2*gamma)*(vzj-vzo);
+	    double f = dxij*fx + dyij*fy + dzij*fz;
+
+	    double term7x = prefacij*f*(particles[i].vx-(vxj-vxo));
+	    double term7y = prefacij*f*(particles[i].vy-(vyj-vyo));
+	    double term7z = prefacij*f*(particles[i].vz-(vzj-vzo));
+	    
+	    term7x_sum += term7x;
+	    term7y_sum += term7y;
+	    term7z_sum += term7z;
+
+	    double term0 = 0.0;
+	    double term1 = 0.0;
+
+	    axj = 0.0;
+	    ayj = 0.0;
+	    azj = 0.0;	    
+	    
+	    for (int k=0; k<N_ephem; k++){
+
+		// Get position and mass of massive body k.
+		assist_all_ephem(ephem, assist->ephem_cache, k, t, &GMk,
+			  &xk, &yk, &zk,
+			  &vxk, &vyk, &vzk,
+			  &axk, &ayk, &azk);
+
+		// Compute position vector of test particle i relative to massive body k.
+		const double dxik = particles[i].x + (xo - xk); 
+		const double dyik = particles[i].y + (yo - yk);
+		const double dzik = particles[i].z + (zo - zk);
+		const double rik2 = dxik*dxik + dyik*dyik + dzik*dzik;
+		const double _rik  = sqrt(rik2);
+
+		// keep track of GM/rik sum
+		term0 += GMk/_rik;
+
+		if(k != j){
+		    // Compute position vector of massive body j relative to massive body k.
+		    const double dxjk = xj - xk;
+		    const double dyjk = yj - yk;
+		    const double dzjk = zj - zk;
+		    const double rjk2 = dxjk*dxjk + dyjk*dyjk + dzjk*dzjk;
+		    const double _rjk  = sqrt(rjk2);
+
+		    // keep track of GM/rjk sum
+		    term1 += GMk/_rjk;
+
+		    axj -= GMk*dxjk/(_rjk*_rjk*_rjk);
+		    ayj -= GMk*dyjk/(_rjk*_rjk*_rjk);
+		    azj -= GMk*dzjk/(_rjk*_rjk*_rjk);		    		    
+
+		}
+
+	    }
+
+	    term0 *= -2*(beta+gamma)/C2;
+	    
+	    term1 *= -(2*beta-1)/C2;
+
+	    const double rijdotaj = dxij*(axj-axo) + dyij*(ayj-ayo) + dzij*(azj-azo);
+	    const double term6 = -0.5/C2*rijdotaj;
+	    
+	    double term8x = GMj*axj/_rij*(3+4*gamma)/2;
+	    double term8y = GMj*ayj/_rij*(3+4*gamma)/2;
+	    double term8z = GMj*azj/_rij*(3+4*gamma)/2;
+
+	    term8x_sum += term8x;
+	    term8y_sum += term8y;
+	    term8z_sum += term8z;
+
+	    double factor = term0 + term1 + term2 + term3 + term4 + term5 + term6;
+
+	    if(eih_file){
+		fprintf(eih_file, "%24.16lE ", -factor*C2);
+		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE %24.16lE ",
+			-factor*C2*prefacij*dxij,
+			-factor*C2*prefacij*dyij,
+			-factor*C2*prefacij*dzij,
+			f);	    
+		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE ",
+			prefacij*f*(particles[i].vx-(vxj-vxo)),
+			prefacij*f*(particles[i].vy-(vyj-vyo)),
+			prefacij*f*(particles[i].vz-(vzj-vzo)));	    
+		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE ",
+			term8x,
+			term8y,
+			term8z);
+		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE\n",
+			axj, ayj, azj);
+
+		fflush(eih_file);
+	    }
+
+	    grx += -prefacij*dxij*factor;
+	    gry += -prefacij*dyij*factor;
+	    grz += -prefacij*dzij*factor;
+	    
+	    particles[i].ax += -prefacij*dxij*factor;
+	    particles[i].ay += -prefacij*dyij*factor;
+	    particles[i].az += -prefacij*dzij*factor;
+
+        }
+
+	grx += term7x_sum/C2 + term8x_sum/C2;
+	gry += term7y_sum/C2 + term8y_sum/C2;
+	grz += term7z_sum/C2 + term8z_sum/C2;
+
+	if(outfile){
+	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", jd_ref+t,
+		    grx, gry, grz);
+	    fflush(outfile);
+	}
+
+	particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
+	particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
+	particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+
+    }
+
+    if(sim->var_config_N==0)
+	return;
+    
+    // Now do the variational particles
     // Loop over test particles        
     for (int i=0; i<N_real; i++){
 
@@ -1537,8 +1720,6 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	double grz = 0.0;		
 
 	for (int j=0; j<eih_loop_limit; j++){ // This is either 1 or N_ephem
-	//for (int j=0; j<1; j++){	
-	//for (int j=0; j<N_ephem; j++){
 
 	    // Get position and mass of massive body j.
 	    assist_all_ephem(ephem, assist->ephem_cache, j, t, &GMj,
@@ -1812,9 +1993,9 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	    gry += -prefacij*dyij*factor;
 	    grz += -prefacij*dzij*factor;
 	    
-	    particles[i].ax += -prefacij*dxij*factor;
-	    particles[i].ay += -prefacij*dyij*factor;
-	    particles[i].az += -prefacij*dzij*factor;
+	    //particles[i].ax += -prefacij*dxij*factor;
+	    //particles[i].ay += -prefacij*dyij*factor;
+	    //particles[i].az += -prefacij*dzij*factor;
 
 	    // Variational equation terms go here.
 
@@ -1908,9 +2089,9 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	dzdvy += dterm7z_sumdvy/C2;
 	dzdvz += dterm7z_sumdvz/C2;
 	
-	particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
-	particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
-	particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+	//particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
+	//particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
+	//particles[i].az += term7z_sum/C2 + term8z_sum/C2;
 
 	// Variational equation terms go here.
 	for (int v=0; v < sim->var_config_N; v++){
@@ -1945,7 +2126,7 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
     }
 }
 
-static void assist_additional_force_eih_GR_vary(struct reb_simulation* sim,
+static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
 	    int eih_loop_limit,
 	    double xo, double yo, double zo,
 	    double vxo, double vyo, double vzo,
@@ -1958,17 +2139,13 @@ static void assist_additional_force_eih_GR_vary(struct reb_simulation* sim,
     const double jd_ref = ephem->jd_ref;
 
     // Einstein-Infeld-Hoffman PPN GR treatment
-    // This is one of two options for GR.
-    // This one version is only rarely needed.
+    // This is one of three options for GR.
+    // This version is only rarely needed.
 
     const double au = JPL_EPHEM_CAU;    
     const double c = (JPL_EPHEM_CLIGHT/au)*86400;
     const double C2 = c*c;  // This could be stored as C2.
 
-    // Doesn't need to be hard-coded.
-    //const double c = 173.14463267424031;
-    //const double C2 = c*c;  // This could be stored as C2.
-    
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;
 
@@ -2056,8 +2233,6 @@ static void assist_additional_force_eih_GR_vary(struct reb_simulation* sim,
 	double grz = 0.0;		
 
 	for (int j=0; j<eih_loop_limit; j++){ // This is either 1 or N_ephem
-	//for (int j=0; j<1; j++){	
-	//for (int j=0; j<N_ephem; j++){
 
 	    // Get position and mass of massive body j.
 	    assist_all_ephem(ephem, assist->ephem_cache, j, t, &GMj,
@@ -2463,4 +2638,3 @@ static void assist_additional_force_eih_GR_vary(struct reb_simulation* sim,
 	}
     }
 }
-
