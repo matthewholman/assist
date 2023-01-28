@@ -1454,14 +1454,8 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 
     struct reb_particle* const particles = sim->particles;
 
-    double GM;
-    
-    // The Sun center is reference for these calculations.
-    double xs, ys, zs, vxs, vys, vzs, axs, ays, azs;
-    assist_all_ephem(ephem, assist->ephem_cache, 0, t, &GM, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
-
-    double beta = 1.0;
-    double gamma = 1.0;
+    const double beta = 1.0;
+    const double gamma = 1.0;
 
     // First do the real particles
     // Loop over test particles        
