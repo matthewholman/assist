@@ -1426,13 +1426,6 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 
     struct reb_particle* const particles = sim->particles;
 
-    double GM;
-    
-    // The Sun center is reference for these calculations.
-    struct assist_cache_item items;
-    assist_all_ephem(ephem, assist->ephem_cache, 0, t, &items); // TODO! This is not needed!!
-    GM = items.GM;
-
     double beta = 1.0;
     double gamma = 1.0;
 
@@ -1631,487 +1624,480 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 
     if(sim->var_config_N==0)
 	return;
-}
     
-//     // Now do the variational particles
-//     // Loop over test particles        
-//     for (int i=0; i<N_real; i++){
-// 
-// 	double GMj, xj, yj, zj, vxj, vyj, vzj, axj, ayj, azj;    
-// 	double GMk, xk, yk, zk, vxk, vyk, vzk, axk, ayk, azk;
-// 
-// 	// Declare and initialize variational terms
-// 	// Only do this if the variational terms are needed.
-// 	double dxdx = 0.0;
-// 	double dxdy = 0.0;
-// 	double dxdz = 0.0;    
-// 	double dxdvx = 0.0;
-// 	double dxdvy = 0.0;
-// 	double dxdvz = 0.0;    
-// 	double dydx = 0.0;
-// 	double dydy = 0.0;
-// 	double dydz = 0.0;    
-// 	double dydvx = 0.0;
-// 	double dydvy = 0.0;
-// 	double dydvz = 0.0;    
-// 	double dzdx = 0.0;
-// 	double dzdy = 0.0;
-// 	double dzdz = 0.0;    
-// 	double dzdvx = 0.0;
-// 	double dzdvy = 0.0;
-// 	double dzdvz = 0.0;    
-// 
-// 	double term7x_sum = 0.0;
-// 	double dterm7x_sumdx = 0.0;
-// 	double dterm7x_sumdy = 0.0;
-// 	double dterm7x_sumdz = 0.0;		
-// 	double dterm7x_sumdvx = 0.0;
-// 	double dterm7x_sumdvy = 0.0;
-// 	double dterm7x_sumdvz = 0.0;		
-// 
-// 	double term7y_sum = 0.0;
-// 	double dterm7y_sumdx = 0.0;
-// 	double dterm7y_sumdy = 0.0;
-// 	double dterm7y_sumdz = 0.0;		
-// 	double dterm7y_sumdvx = 0.0;
-// 	double dterm7y_sumdvy = 0.0;
-// 	double dterm7y_sumdvz = 0.0;		
-// 	
-// 	double term7z_sum = 0.0;
-// 	double dterm7z_sumdx = 0.0;
-// 	double dterm7z_sumdy = 0.0;
-// 	double dterm7z_sumdz = 0.0;		
-// 	double dterm7z_sumdvx = 0.0;
-// 	double dterm7z_sumdvy = 0.0;
-// 	double dterm7z_sumdvz = 0.0;		
-// 	
-// 	double term8x_sum = 0.0;
-// 	double dterm8x_sumdx = 0.0;
-// 	double dterm8x_sumdy = 0.0;
-// 	double dterm8x_sumdz = 0.0;		
-// 
-// 	double term8y_sum = 0.0;
-// 	double dterm8y_sumdx = 0.0;
-// 	double dterm8y_sumdy = 0.0;
-// 	double dterm8y_sumdz = 0.0;		
-// 	
-// 	double term8z_sum = 0.0;
-// 	double dterm8z_sumdx = 0.0;
-// 	double dterm8z_sumdy = 0.0;
-// 	double dterm8z_sumdz = 0.0;		
-// 
-// 	double grx = 0.0;
-// 	double gry = 0.0;
-// 	double grz = 0.0;		
-// 
-// 	for (int j=0; j<eih_loop_limit; j++){ // This is either 1 or N_ephem
-// 
-// 	    // Get position and mass of massive body j.
-// 	    assist_all_ephem(ephem, assist->ephem_cache, j, t, &GMj,
-// 		      &xj, &yj, &zj,
-// 		      &vxj, &vyj, &vzj,
-// 		      &axj, &ayj, &azj);
-// 
-// 	    // Compute position vector of test particle i relative to massive body j.
-// 	    const double dxij = particles[i].x + (xo - xj); 
-// 	    const double dyij = particles[i].y + (yo - yj);
-// 	    const double dzij = particles[i].z + (zo - zj);
-// 	    const double rij2 = dxij*dxij + dyij*dyij + dzij*dzij;
-// 	    const double _rij  = sqrt(rij2);
-// 	    const double prefacij = GMj/(_rij*_rij*_rij);
-// 
-// 	    const double dprefacijdx = -3.0*GMj/(_rij*_rij*_rij*_rij*_rij)*dxij;
-// 	    const double dprefacijdy = -3.0*GMj/(_rij*_rij*_rij*_rij*_rij)*dyij;
-// 	    const double dprefacijdz = -3.0*GMj/(_rij*_rij*_rij*_rij*_rij)*dzij;
-// 
-// 	    // This is the place to do all the various i-j dot products
-// 	    
-// 	    const double vi2 = particles[i].vx*particles[i].vx +
-// 		particles[i].vy*particles[i].vy +
-// 		particles[i].vz*particles[i].vz;
-// 
-// 	    const double term2 = gamma*over_C2*vi2;
-// 	    const double dterm2dvx = 2.0*gamma*over_C2*particles[i].vx;
-// 	    const double dterm2dvy = 2.0*gamma*over_C2*particles[i].vy;
-// 	    const double dterm2dvz = 2.0*gamma*over_C2*particles[i].vz;	    
-// 
-// 	    const double vj2 = (vxj-vxo)*(vxj-vxo) + (vyj-vyo)*(vyj-vyo) + (vzj-vzo)*(vzj-vzo);
-// 
-// 	    const double term3 = (1+gamma)*over_C2*vj2;
-// 	    // Variational equations do not depend on term3
-// 
-// 	    const double vidotvj = particles[i].vx*(vxj-vxo) +
-// 		particles[i].vy*(vyj-vyo) +
-// 		particles[i].vz*(vzj-vzo);
-// 
-// 	    const double term4 = -2*(1+gamma)*over_C2*vidotvj;
-// 	    const double dterm4dvx = -2*(1+gamma)*over_C2*(vxj-vxo);
-// 	    const double dterm4dvy = -2*(1+gamma)*over_C2*(vyj-vyo);
-// 	    const double dterm4dvz = -2*(1+gamma)*over_C2*(vzj-vzo);	    	    
-// 	    
-// 
-// 	    const double rijdotvj = dxij*(vxj-vxo) + dyij*(vyj-vyo) + dzij*(vzj-vzo);
-// 
-// 	    if(eih_file){
-// 		fprintf(eih_file, " EIH_J%12d\n", j);	    
-// 		fprintf(eih_file, "%25.16lE ", rijdotvj/_rij);
-// 	    }
-// 
-// 	    const double term5 = -1.5*over_C2*(rijdotvj*rijdotvj)/(_rij*_rij);
-// 	    const double term5_fac = 3.0*over_C2*rijdotvj/_rij;
-// 	    const double dterm5dx = -term5_fac*((vxj-vxo)/_rij - rijdotvj*dxij/(_rij*_rij*_rij));
-// 	    const double dterm5dy = -term5_fac*((vyj-vyo)/_rij - rijdotvj*dyij/(_rij*_rij*_rij));
-// 	    const double dterm5dz = -term5_fac*((vzj-vzo)/_rij - rijdotvj*dzij/(_rij*_rij*_rij));	    	    
-// 
-// 	    double fx = (2+2*gamma)*particles[i].vx - (1+2*gamma)*(vxj-vxo);
-// 	    double fy = (2+2*gamma)*particles[i].vy - (1+2*gamma)*(vyj-vyo);
-// 	    double fz = (2+2*gamma)*particles[i].vz - (1+2*gamma)*(vzj-vzo);
-// 	    double f = dxij*fx + dyij*fy + dzij*fz;
-// 
-// 	    double dfdx = fx;
-// 	    double dfdy = fy;
-// 	    double dfdz = fz;	    	    
-// 	    double dfdvx = dxij*(2+2*gamma);
-// 	    double dfdvy = dyij*(2+2*gamma);
-// 	    double dfdvz = dzij*(2+2*gamma);
-// 
-// 	    double term7x = prefacij*f*(particles[i].vx-(vxj-vxo));
-// 	    double term7y = prefacij*f*(particles[i].vy-(vyj-vyo));
-// 	    double term7z = prefacij*f*(particles[i].vz-(vzj-vzo));
-// 
-// 	    double dterm7xdx = dprefacijdx * f * (particles[i].vx-(vxj-vxo))
-// 		+ prefacij * dfdx * (particles[i].vx-(vxj-vxo));
-// 	    double dterm7xdy = dprefacijdy * f * (particles[i].vx-(vxj-vxo))
-// 		+ prefacij * dfdy * (particles[i].vx-(vxj-vxo));
-// 	    double dterm7xdz = dprefacijdz * f * (particles[i].vx-(vxj-vxo))
-// 		+ prefacij * dfdz * (particles[i].vx-(vxj-vxo));
-// 	    double dterm7xdvx = prefacij * dfdvx * (particles[i].vx-(vxj-vxo))
-// 		+ prefacij * f;
-// 	    double dterm7xdvy = prefacij * dfdvy * (particles[i].vx-(vxj-vxo));
-// 
-// 	    double dterm7xdvz = prefacij * dfdvz * (particles[i].vx-(vxj-vxo));	    
-// 
-// 	    double dterm7ydx = dprefacijdx * f * (particles[i].vy-(vyj-vyo))
-// 		+ prefacij * dfdx * (particles[i].vy-(vyj-vyo));
-// 	    double dterm7ydy = dprefacijdy * f * (particles[i].vy-(vyj-vyo))
-// 		+ prefacij * dfdy * (particles[i].vy-(vyj-vyo));
-// 	    double dterm7ydz = dprefacijdz * f * (particles[i].vy-(vyj-vyo))
-// 		+ prefacij * dfdz * (particles[i].vy-(vyj-vyo));
-// 	    double dterm7ydvx = prefacij * dfdvx * (particles[i].vy-(vyj-vyo));
-// 
-// 	    double dterm7ydvy = prefacij * dfdvy * (particles[i].vy-(vyj-vyo))
-// 		+ prefacij * f;		
-// 	    double dterm7ydvz = prefacij * dfdvz * (particles[i].vy-(vyj-vyo));	    
-// 
-// 	    double dterm7zdx = dprefacijdx * f * (particles[i].vz-(vzj-vzo))
-// 		+ prefacij * dfdx * (particles[i].vz-(vzj-vzo));
-// 	    double dterm7zdy = dprefacijdy * f * (particles[i].vz-(vzj-vzo))
-// 		+ prefacij * dfdy * (particles[i].vz-(vzj-vzo));
-// 	    double dterm7zdz = dprefacijdz * f * (particles[i].vz-(vzj-vzo))
-// 		+ prefacij * dfdz * (particles[i].vz-(vzj-vzo));
-// 
-// 	    double dterm7zdvx = prefacij * dfdvx * (particles[i].vz-(vzj-vzo));
-// 
-// 	    double dterm7zdvy = prefacij * dfdvy * (particles[i].vz-(vzj-vzo));
-// 
-// 	    double dterm7zdvz = prefacij * dfdvz * (particles[i].vz-(vzj-vzo))
-// 		+ prefacij * f;
-// 	    
-// 	    term7x_sum += term7x;
-// 	    term7y_sum += term7y;
-// 	    term7z_sum += term7z;
-// 
-// 	    dterm7x_sumdx += dterm7xdx;
-// 	    dterm7x_sumdy += dterm7xdy;
-// 	    dterm7x_sumdz += dterm7xdz;	    
-// 	    dterm7x_sumdvx += dterm7xdvx;
-// 	    dterm7x_sumdvy += dterm7xdvy;
-// 	    dterm7x_sumdvz += dterm7xdvz;	    
-// 
-// 	    dterm7y_sumdx += dterm7ydx;
-// 	    dterm7y_sumdy += dterm7ydy;
-// 	    dterm7y_sumdz += dterm7ydz;
-// 	    dterm7y_sumdvx += dterm7ydvx;
-// 	    dterm7y_sumdvy += dterm7ydvy;
-// 	    dterm7y_sumdvz += dterm7ydvz;
-// 
-// 	    dterm7z_sumdx += dterm7zdx;
-// 	    dterm7z_sumdy += dterm7zdy;
-// 	    dterm7z_sumdz += dterm7zdz;	    
-// 	    dterm7z_sumdvx += dterm7zdvx;
-// 	    dterm7z_sumdvy += dterm7zdvy;
-// 	    dterm7z_sumdvz += dterm7zdvz;	    
-// 	    
-// 
-// 	    double term0 = 0.0;
-// 	    double dterm0dx = 0.0;
-// 	    double dterm0dy = 0.0;
-// 	    double dterm0dz = 0.0;	    
-// 
-// 	    double term1 = 0.0;
-// 	    double dterm1dx = 0.0;
-// 	    double dterm1dy = 0.0;
-// 	    double dterm1dz = 0.0;	    
-// 	    double dterm1dvx = 0.0;
-// 	    double dterm1dvy = 0.0;
-// 	    double dterm1dvz = 0.0;	    
-// 
-// 	    axj = 0.0;
-// 	    ayj = 0.0;
-// 	    azj = 0.0;	    
-// 	    
-// 	    for (int k=0; k<N_ephem; k++){
-// 
-// 		// Get position and mass of massive body k.
-// 		assist_all_ephem(ephem, assist->ephem_cache, k, t, &GMk,
-// 			  &xk, &yk, &zk,
-// 			  &vxk, &vyk, &vzk,
-// 			  &axk, &ayk, &azk);
-// 
-// 		// Compute position vector of test particle i relative to massive body k.
-// 		const double dxik = particles[i].x + (xo - xk); 
-// 		const double dyik = particles[i].y + (yo - yk);
-// 		const double dzik = particles[i].z + (zo - zk);
-// 		const double rik2 = dxik*dxik + dyik*dyik + dzik*dzik;
-// 		const double _rik  = sqrt(rik2);
-// 
-// 		// keep track of GM/rik sum
-// 		term0 += GMk/_rik;
-// 
-// 		dterm0dx -= GMk/(_rik*_rik*_rik) * dxik;
-// 		dterm0dy -= GMk/(_rik*_rik*_rik) * dyik;
-// 		dterm0dz -= GMk/(_rik*_rik*_rik) * dzik;				
-// 
-// 		if(k != j){
-// 		    // Compute position vector of massive body j relative to massive body k.
-// 		    const double dxjk = xj - xk;
-// 		    const double dyjk = yj - yk;
-// 		    const double dzjk = zj - zk;
-// 		    const double rjk2 = dxjk*dxjk + dyjk*dyjk + dzjk*dzjk;
-// 		    const double _rjk  = sqrt(rjk2);
-// 
-// 		    // keep track of GM/rjk sum
-// 		    term1 += GMk/_rjk;
-// 
-// 		    axj -= GMk*dxjk/(_rjk*_rjk*_rjk);
-// 		    ayj -= GMk*dyjk/(_rjk*_rjk*_rjk);
-// 		    azj -= GMk*dzjk/(_rjk*_rjk*_rjk);		    		    
-// 
-// 		}
-// 
-// 	    }
-// 
-// 	    term0 *= -2*(beta+gamma)*over_C2;
-// 	    dterm0dx *= -2*(beta+gamma)*over_C2;
-// 	    dterm0dy *= -2*(beta+gamma)*over_C2;
-// 	    dterm0dz *= -2*(beta+gamma)*over_C2;	    	    
-// 	    
-// 	    term1 *= -(2*beta-1)*over_C2;
-// 
-// 	    const double rijdotaj = dxij*(axj-axo) + dyij*(ayj-ayo) + dzij*(azj-azo);
-// 	    const double term6 = -0.5*over_C2*rijdotaj;
-// 	    const double dterm6dx = -0.5*over_C2*(axj-axo);
-// 	    const double dterm6dy = -0.5*over_C2*(ayj-ayo);	    
-// 	    const double dterm6dz = -0.5*over_C2*(azj-azo);
-// 	    
-// 	    double term8x = GMj*axj/_rij*(3+4*gamma)/2;
-// 	    double dterm8xdx = -GMj*axj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
-// 	    double dterm8xdy = -GMj*axj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
-// 	    double dterm8xdz = -GMj*axj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
-// 
-// 	    double term8y = GMj*ayj/_rij*(3+4*gamma)/2;
-// 	    double dterm8ydx = -GMj*ayj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
-// 	    double dterm8ydy = -GMj*ayj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
-// 	    double dterm8ydz = -GMj*ayj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
-// 
-// 	    double term8z = GMj*azj/_rij*(3+4*gamma)/2;
-// 	    double dterm8zdx = -GMj*azj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
-// 	    double dterm8zdy = -GMj*azj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
-// 	    double dterm8zdz = -GMj*azj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
-// 
-// 	    term8x_sum += term8x;
-// 	    term8y_sum += term8y;
-// 	    term8z_sum += term8z;
-// 
-// 	    dterm8x_sumdx += dterm8xdx;
-// 	    dterm8x_sumdy += dterm8xdy;
-// 	    dterm8x_sumdz += dterm8xdz;	    
-// 
-// 	    dterm8y_sumdx += dterm8ydx;
-// 	    dterm8y_sumdy += dterm8ydy;
-// 	    dterm8y_sumdz += dterm8ydz;
-// 
-// 	    dterm8z_sumdx += dterm8zdx;
-// 	    dterm8z_sumdy += dterm8zdy;
-// 	    dterm8z_sumdz += dterm8zdz;	    
-// 	    
-// 	    double factor = term0 + term1 + term2 + term3 + term4 + term5 + term6;
-// 
-// 	    double dfactordx = dterm0dx + dterm1dx + dterm5dx + dterm6dx;
-// 	    double dfactordy = dterm0dy + dterm1dy + dterm5dy + dterm6dy;
-// 	    double dfactordz = dterm0dz + dterm1dz + dterm5dz + dterm6dz;	    
-// 	    double dfactordvx = dterm1dvx + dterm2dvx + dterm4dvx;
-// 	    double dfactordvy = dterm1dvy + dterm2dvy + dterm4dvy;
-// 	    double dfactordvz = dterm1dvz + dterm2dvz + dterm4dvz;
-// 
-// 	    if(eih_file){
-// 		fprintf(eih_file, "%24.16lE ", -factor*C2);
-// 		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE %24.16lE ",
-// 			-factor*C2*prefacij*dxij,
-// 			-factor*C2*prefacij*dyij,
-// 			-factor*C2*prefacij*dzij,
-// 			f);	    
-// 		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE ",
-// 			prefacij*f*(particles[i].vx-(vxj-vxo)),
-// 			prefacij*f*(particles[i].vy-(vyj-vyo)),
-// 			prefacij*f*(particles[i].vz-(vzj-vzo)));	    
-// 		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE ",
-// 			term8x,
-// 			term8y,
-// 			term8z);
-// 		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE\n",
-// 			axj, ayj, azj);
-// 
-// 		fflush(eih_file);
-// 	    }
-// 
-// 	    grx += -prefacij*dxij*factor;
-// 	    gry += -prefacij*dyij*factor;
-// 	    grz += -prefacij*dzij*factor;
-// 	    
-// 	    //particles[i].ax += -prefacij*dxij*factor;
-// 	    //particles[i].ay += -prefacij*dyij*factor;
-// 	    //particles[i].az += -prefacij*dzij*factor;
-// 
-// 	    // Variational equation terms go here.
-// 
-// 	    dxdx += -dprefacijdx*dxij*factor
-// 		-prefacij*factor
-// 		-prefacij*dxij*dfactordx;
-// 	    
-// 	    dxdy += -dprefacijdy*dxij*factor
-// 		-prefacij*dxij*dfactordy;
-// 	    
-// 	    dxdz += -dprefacijdz*dxij*factor
-// 		-prefacij*dxij*dfactordz;
-// 
-// 	    dxdvx += 
-// 		-prefacij*dxij*dfactordvx;
-// 
-// 	    dxdvy += 
-// 		-prefacij*dxij*dfactordvy;
-// 
-// 	    dxdvz += 
-// 		-prefacij*dxij*dfactordvz;
-// 
-// 	    dydx += -dprefacijdx*dyij*factor
-// 		-prefacij*dyij*dfactordx;
-// 	    
-// 	    dydy += -dprefacijdy*dyij*factor
-// 		-prefacij*factor
-// 		-prefacij*dyij*dfactordy;
-// 	    
-// 	    dydz += -dprefacijdz*dyij*factor
-// 		-prefacij*dyij*dfactordz;
-// 
-// 	    dydvx += 
-// 		-prefacij*dyij*dfactordvx;
-// 
-// 	    dydvy += 
-// 		-prefacij*dyij*dfactordvy;
-// 
-// 	    dydvz += 
-// 		-prefacij*dyij*dfactordvz;
-// 	    
-// 	    dzdx += -dprefacijdx*dzij*factor
-// 		-prefacij*dzij*dfactordx;
-// 
-// 	    dzdy += -dprefacijdy*dzij*factor
-// 		-prefacij*dzij*dfactordy;
-// 	    
-// 	    dzdz += -dprefacijdz*dzij*factor
-// 		-prefacij*factor
-// 		-prefacij*dzij*dfactordz;
-// 
-// 	    dzdvx += 
-// 		-prefacij*dzij*dfactordvx;
-// 
-// 	    dzdvy += 
-// 		-prefacij*dzij*dfactordvy;
-// 
-// 	    dzdvz += 
-// 		-prefacij*dzij*dfactordvz;
-// 
-//         }
-// 
-// 	grx += term7x_sum*over_C2 + term8x_sum*over_C2;
-// 	gry += term7y_sum*over_C2 + term8y_sum*over_C2;
-// 	grz += term7z_sum*over_C2 + term8z_sum*over_C2;
-// 
-// 	if(outfile){
-// 	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", jd_ref+t,
-// 		    grx, gry, grz);
-// 	    fflush(outfile);
-// 	}
-// 
-// 	dxdx += dterm7x_sumdx*over_C2 + dterm8x_sumdx*over_C2;
-// 	dxdy += dterm7x_sumdy*over_C2 + dterm8x_sumdy*over_C2;
-// 	dxdz += dterm7x_sumdz*over_C2 + dterm8x_sumdz*over_C2;	
-// 	dxdvx += dterm7x_sumdvx*over_C2;
-// 	dxdvy += dterm7x_sumdvy*over_C2;
-// 	dxdvz += dterm7x_sumdvz*over_C2;
-// 
-// 	dydx += dterm7y_sumdx*over_C2 + dterm8y_sumdx*over_C2;
-// 	dydy += dterm7y_sumdy*over_C2 + dterm8y_sumdy*over_C2;
-// 	dydz += dterm7y_sumdz*over_C2 + dterm8y_sumdz*over_C2;	
-// 	dydvx += dterm7y_sumdvx*over_C2;
-// 	dydvy += dterm7y_sumdvy*over_C2;
-// 	dydvz += dterm7y_sumdvz*over_C2;
-// 
-// 	dzdx += dterm7z_sumdx*over_C2 + dterm8z_sumdx*over_C2;
-// 	dzdy += dterm7z_sumdy*over_C2 + dterm8z_sumdy*over_C2;
-// 	dzdz += dterm7z_sumdz*over_C2 + dterm8z_sumdz*over_C2;	
-// 	dzdvx += dterm7z_sumdvx*over_C2;
-// 	dzdvy += dterm7z_sumdvy*over_C2;
-// 	dzdvz += dterm7z_sumdvz*over_C2;
-// 	
-// 	//particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
-// 	//particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
-// 	//particles[i].az += term7z_sum/C2 + term8z_sum/C2;
-// 
-// 	// Variational equation terms go here.
-// 	for (int v=0; v < sim->var_config_N; v++){
-// 	    struct reb_variational_configuration const vc = sim->var_config[v];
-// 	    int tp = vc.testparticle;
-// 	    struct reb_particle* const particles_var1 = particles + vc.index;		
-// 	    if(tp == i){
-// 	    
-// 		// variational particle coords
-// 		const double ddx = particles_var1[0].x;
-// 		const double ddy = particles_var1[0].y;
-// 		const double ddz = particles_var1[0].z;
-// 		const double ddvx = particles_var1[0].vx;
-// 		const double ddvy = particles_var1[0].vy;
-// 		const double ddvz = particles_var1[0].vz;
-// 
-// 		// Matrix multiplication
-// 		const double dax =   ddx  * dxdx  + ddy  * dxdy  + ddz  * dxdz
-// 		    +   ddvx * dxdvx + ddvy * dxdvy + ddvz * dxdvz;
-// 		const double day =   ddx  * dydx  + ddy  * dydy  + ddz  * dydz
-// 		    +   ddvx * dydvx + ddvy * dydvy + ddvz * dydvz;
-// 		const double daz =   ddx  * dzdx  + ddy  * dzdy  + ddz  * dzdz
-// 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
-// 
-// 		// Accumulate acceleration terms
-// 		particles_var1[0].ax += dax;
-// 		particles_var1[0].ay += day;
-// 		particles_var1[0].az += daz;
-// 		
-// 	    }
-// 	}
-//     }
-// }
-// 
+     // Now do the variational particles
+     // Loop over test particles        
+     for (int i=0; i<N_real; i++){
+ 
+ 	// Declare and initialize variational terms
+ 	// Only do this if the variational terms are needed.
+ 	double dxdx = 0.0;
+ 	double dxdy = 0.0;
+ 	double dxdz = 0.0;    
+ 	double dxdvx = 0.0;
+ 	double dxdvy = 0.0;
+ 	double dxdvz = 0.0;    
+ 	double dydx = 0.0;
+ 	double dydy = 0.0;
+ 	double dydz = 0.0;    
+ 	double dydvx = 0.0;
+ 	double dydvy = 0.0;
+ 	double dydvz = 0.0;    
+ 	double dzdx = 0.0;
+ 	double dzdy = 0.0;
+ 	double dzdz = 0.0;    
+ 	double dzdvx = 0.0;
+ 	double dzdvy = 0.0;
+ 	double dzdvz = 0.0;    
+ 
+ 	double term7x_sum = 0.0;
+ 	double dterm7x_sumdx = 0.0;
+ 	double dterm7x_sumdy = 0.0;
+ 	double dterm7x_sumdz = 0.0;		
+ 	double dterm7x_sumdvx = 0.0;
+ 	double dterm7x_sumdvy = 0.0;
+ 	double dterm7x_sumdvz = 0.0;		
+ 
+ 	double term7y_sum = 0.0;
+ 	double dterm7y_sumdx = 0.0;
+ 	double dterm7y_sumdy = 0.0;
+ 	double dterm7y_sumdz = 0.0;		
+ 	double dterm7y_sumdvx = 0.0;
+ 	double dterm7y_sumdvy = 0.0;
+ 	double dterm7y_sumdvz = 0.0;		
+ 	
+ 	double term7z_sum = 0.0;
+ 	double dterm7z_sumdx = 0.0;
+ 	double dterm7z_sumdy = 0.0;
+ 	double dterm7z_sumdz = 0.0;		
+ 	double dterm7z_sumdvx = 0.0;
+ 	double dterm7z_sumdvy = 0.0;
+ 	double dterm7z_sumdvz = 0.0;		
+ 	
+ 	double term8x_sum = 0.0;
+ 	double dterm8x_sumdx = 0.0;
+ 	double dterm8x_sumdy = 0.0;
+ 	double dterm8x_sumdz = 0.0;		
+ 
+ 	double term8y_sum = 0.0;
+ 	double dterm8y_sumdx = 0.0;
+ 	double dterm8y_sumdy = 0.0;
+ 	double dterm8y_sumdz = 0.0;		
+ 	
+ 	double term8z_sum = 0.0;
+ 	double dterm8z_sumdx = 0.0;
+ 	double dterm8z_sumdy = 0.0;
+ 	double dterm8z_sumdz = 0.0;		
+ 
+ 	double grx = 0.0;
+ 	double gry = 0.0;
+ 	double grz = 0.0;		
+ 
+ 	for (int j=0; j<eih_loop_limit; j++){ // This is either 1 or N_ephem
+ 
+ 	    // Get position and mass of massive body j.
+        struct assist_cache_item itemj;
+ 	    assist_all_ephem(ephem, assist->ephem_cache, j, t, &itemj);
+        double GMj = itemj.GM;
+ 
+ 	    // Compute position vector of test particle i relative to massive body j.
+ 	    const double dxij = particles[i].x + (xo - itemj.x); 
+ 	    const double dyij = particles[i].y + (yo - itemj.y);
+ 	    const double dzij = particles[i].z + (zo - itemj.z);
+ 	    const double rij2 = dxij*dxij + dyij*dyij + dzij*dzij;
+ 	    const double _rij  = sqrt(rij2);
+ 	    const double prefacij = GMj/(_rij*_rij*_rij);
+ 
+ 	    const double dprefacijdx = -3.0*GMj/(_rij*_rij*_rij*_rij*_rij)*dxij;
+ 	    const double dprefacijdy = -3.0*GMj/(_rij*_rij*_rij*_rij*_rij)*dyij;
+ 	    const double dprefacijdz = -3.0*GMj/(_rij*_rij*_rij*_rij*_rij)*dzij;
+ 
+ 	    // This is the place to do all the various i-j dot products
+ 	    
+ 	    const double vi2 = particles[i].vx*particles[i].vx +
+ 		particles[i].vy*particles[i].vy +
+ 		particles[i].vz*particles[i].vz;
+ 
+ 	    const double term2 = gamma*over_C2*vi2;
+ 	    const double dterm2dvx = 2.0*gamma*over_C2*particles[i].vx;
+ 	    const double dterm2dvy = 2.0*gamma*over_C2*particles[i].vy;
+ 	    const double dterm2dvz = 2.0*gamma*over_C2*particles[i].vz;	    
+ 
+ 	    const double vj2 = (itemj.vx-vxo)*(itemj.vx-vxo) + (itemj.vy-vyo)*(itemj.vy-vyo) + (itemj.vz-vzo)*(itemj.vz-vzo);
+ 
+ 	    const double term3 = (1+gamma)*over_C2*vj2;
+ 	    // Variational equations do not depend on term3
+ 
+ 	    const double vidotvj = particles[i].vx*(itemj.vx-vxo) +
+ 		particles[i].vy*(itemj.vy-vyo) +
+ 		particles[i].vz*(itemj.vz-vzo);
+ 
+ 	    const double term4 = -2*(1+gamma)*over_C2*vidotvj;
+ 	    const double dterm4dvx = -2*(1+gamma)*over_C2*(itemj.vx-vxo);
+ 	    const double dterm4dvy = -2*(1+gamma)*over_C2*(itemj.vy-vyo);
+ 	    const double dterm4dvz = -2*(1+gamma)*over_C2*(itemj.vz-vzo);	    	    
+ 	    
+ 
+ 	    const double rijdotvj = dxij*(itemj.vx-vxo) + dyij*(itemj.vy-vyo) + dzij*(itemj.vz-vzo);
+ 
+ 	    if(eih_file){
+ 		fprintf(eih_file, " EIH_J%12d\n", j);	    
+ 		fprintf(eih_file, "%25.16lE ", rijdotvj/_rij);
+ 	    }
+ 
+ 	    const double term5 = -1.5*over_C2*(rijdotvj*rijdotvj)/(_rij*_rij);
+ 	    const double term5_fac = 3.0*over_C2*rijdotvj/_rij;
+ 	    const double dterm5dx = -term5_fac*((itemj.vx-vxo)/_rij - rijdotvj*dxij/(_rij*_rij*_rij));
+ 	    const double dterm5dy = -term5_fac*((itemj.vy-vyo)/_rij - rijdotvj*dyij/(_rij*_rij*_rij));
+ 	    const double dterm5dz = -term5_fac*((itemj.vz-vzo)/_rij - rijdotvj*dzij/(_rij*_rij*_rij));	    	    
+ 
+ 	    double fx = (2+2*gamma)*particles[i].vx - (1+2*gamma)*(itemj.vx-vxo);
+ 	    double fy = (2+2*gamma)*particles[i].vy - (1+2*gamma)*(itemj.vy-vyo);
+ 	    double fz = (2+2*gamma)*particles[i].vz - (1+2*gamma)*(itemj.vz-vzo);
+ 	    double f = dxij*fx + dyij*fy + dzij*fz;
+ 
+ 	    double dfdx = fx;
+ 	    double dfdy = fy;
+ 	    double dfdz = fz;	    	    
+ 	    double dfdvx = dxij*(2+2*gamma);
+ 	    double dfdvy = dyij*(2+2*gamma);
+ 	    double dfdvz = dzij*(2+2*gamma);
+ 
+ 	    double term7x = prefacij*f*(particles[i].vx-(itemj.vx-vxo));
+ 	    double term7y = prefacij*f*(particles[i].vy-(itemj.vy-vyo));
+ 	    double term7z = prefacij*f*(particles[i].vz-(itemj.vz-vzo));
+ 
+ 	    double dterm7xdx = dprefacijdx * f * (particles[i].vx-(itemj.vx-vxo))
+ 		+ prefacij * dfdx * (particles[i].vx-(itemj.vx-vxo));
+ 	    double dterm7xdy = dprefacijdy * f * (particles[i].vx-(itemj.vx-vxo))
+ 		+ prefacij * dfdy * (particles[i].vx-(itemj.vx-vxo));
+ 	    double dterm7xdz = dprefacijdz * f * (particles[i].vx-(itemj.vx-vxo))
+ 		+ prefacij * dfdz * (particles[i].vx-(itemj.vx-vxo));
+ 	    double dterm7xdvx = prefacij * dfdvx * (particles[i].vx-(itemj.vx-vxo))
+ 		+ prefacij * f;
+ 	    double dterm7xdvy = prefacij * dfdvy * (particles[i].vx-(itemj.vx-vxo));
+ 
+ 	    double dterm7xdvz = prefacij * dfdvz * (particles[i].vx-(itemj.vx-vxo));	    
+ 
+ 	    double dterm7ydx = dprefacijdx * f * (particles[i].vy-(itemj.vy-vyo))
+ 		+ prefacij * dfdx * (particles[i].vy-(itemj.vy-vyo));
+ 	    double dterm7ydy = dprefacijdy * f * (particles[i].vy-(itemj.vy-vyo))
+ 		+ prefacij * dfdy * (particles[i].vy-(itemj.vy-vyo));
+ 	    double dterm7ydz = dprefacijdz * f * (particles[i].vy-(itemj.vy-vyo))
+ 		+ prefacij * dfdz * (particles[i].vy-(itemj.vy-vyo));
+ 	    double dterm7ydvx = prefacij * dfdvx * (particles[i].vy-(itemj.vy-vyo));
+ 
+ 	    double dterm7ydvy = prefacij * dfdvy * (particles[i].vy-(itemj.vy-vyo))
+ 		+ prefacij * f;		
+ 	    double dterm7ydvz = prefacij * dfdvz * (particles[i].vy-(itemj.vy-vyo));	    
+ 
+ 	    double dterm7zdx = dprefacijdx * f * (particles[i].vz-(itemj.vz-vzo))
+ 		+ prefacij * dfdx * (particles[i].vz-(itemj.vz-vzo));
+ 	    double dterm7zdy = dprefacijdy * f * (particles[i].vz-(itemj.vz-vzo))
+ 		+ prefacij * dfdy * (particles[i].vz-(itemj.vz-vzo));
+ 	    double dterm7zdz = dprefacijdz * f * (particles[i].vz-(itemj.vz-vzo))
+ 		+ prefacij * dfdz * (particles[i].vz-(itemj.vz-vzo));
+ 
+ 	    double dterm7zdvx = prefacij * dfdvx * (particles[i].vz-(itemj.vz-vzo));
+ 
+ 	    double dterm7zdvy = prefacij * dfdvy * (particles[i].vz-(itemj.vz-vzo));
+ 
+ 	    double dterm7zdvz = prefacij * dfdvz * (particles[i].vz-(itemj.vz-vzo))
+ 		+ prefacij * f;
+ 	    
+ 	    term7x_sum += term7x;
+ 	    term7y_sum += term7y;
+ 	    term7z_sum += term7z;
+ 
+ 	    dterm7x_sumdx += dterm7xdx;
+ 	    dterm7x_sumdy += dterm7xdy;
+ 	    dterm7x_sumdz += dterm7xdz;	    
+ 	    dterm7x_sumdvx += dterm7xdvx;
+ 	    dterm7x_sumdvy += dterm7xdvy;
+ 	    dterm7x_sumdvz += dterm7xdvz;	    
+ 
+ 	    dterm7y_sumdx += dterm7ydx;
+ 	    dterm7y_sumdy += dterm7ydy;
+ 	    dterm7y_sumdz += dterm7ydz;
+ 	    dterm7y_sumdvx += dterm7ydvx;
+ 	    dterm7y_sumdvy += dterm7ydvy;
+ 	    dterm7y_sumdvz += dterm7ydvz;
+ 
+ 	    dterm7z_sumdx += dterm7zdx;
+ 	    dterm7z_sumdy += dterm7zdy;
+ 	    dterm7z_sumdz += dterm7zdz;	    
+ 	    dterm7z_sumdvx += dterm7zdvx;
+ 	    dterm7z_sumdvy += dterm7zdvy;
+ 	    dterm7z_sumdvz += dterm7zdvz;	    
+ 	    
+ 
+ 	    double term0 = 0.0;
+ 	    double dterm0dx = 0.0;
+ 	    double dterm0dy = 0.0;
+ 	    double dterm0dz = 0.0;	    
+ 
+ 	    double term1 = 0.0;
+ 	    double dterm1dx = 0.0;
+ 	    double dterm1dy = 0.0;
+ 	    double dterm1dz = 0.0;	    
+ 	    double dterm1dvx = 0.0;
+ 	    double dterm1dvy = 0.0;
+ 	    double dterm1dvz = 0.0;	    
+ 
+ 	    double axj = 0.0;
+ 	    double ayj = 0.0;
+ 	    double azj = 0.0;	    
+ 	    
+ 	    for (int k=0; k<N_ephem; k++){
+ 
+ 		// Get position and mass of massive body k.
+        struct assist_cache_item itemk;
+ 	    assist_all_ephem(ephem, assist->ephem_cache, k, t, &itemk);
+ 
+ 		// Compute position vector of test particle i relative to massive body k.
+ 		const double dxik = particles[i].x + (xo - itemk.x); 
+ 		const double dyik = particles[i].y + (yo - itemk.y);
+ 		const double dzik = particles[i].z + (zo - itemk.z);
+ 		const double rik2 = dxik*dxik + dyik*dyik + dzik*dzik;
+ 		const double _rik  = sqrt(rik2);
+ 
+ 		// keep track of GM/rik sum
+ 		term0 += itemk.GM/_rik;
+ 
+ 		dterm0dx -= itemk.GM/(_rik*_rik*_rik) * dxik;
+ 		dterm0dy -= itemk.GM/(_rik*_rik*_rik) * dyik;
+ 		dterm0dz -= itemk.GM/(_rik*_rik*_rik) * dzik;				
+ 
+ 		if(k != j){
+ 		    // Compute position vector of massive body j relative to massive body k.
+ 		    const double dxjk = itemj.x - itemk.x;
+ 		    const double dyjk = itemj.y - itemk.y;
+ 		    const double dzjk = itemj.z - itemk.z;
+ 		    const double rjk2 = dxjk*dxjk + dyjk*dyjk + dzjk*dzjk;
+ 		    const double _rjk  = sqrt(rjk2);
+ 
+ 		    // keep track of GM/rjk sum
+ 		    term1 += itemk.GM/_rjk;
+ 
+ 		    axj -= itemk.GM*dxjk/(_rjk*_rjk*_rjk);
+ 		    ayj -= itemk.GM*dyjk/(_rjk*_rjk*_rjk);
+ 		    azj -= itemk.GM*dzjk/(_rjk*_rjk*_rjk);		    		    
+ 
+ 		}
+ 
+ 	    }
+ 
+ 	    term0 *= -2*(beta+gamma)*over_C2;
+ 	    dterm0dx *= -2*(beta+gamma)*over_C2;
+ 	    dterm0dy *= -2*(beta+gamma)*over_C2;
+ 	    dterm0dz *= -2*(beta+gamma)*over_C2;	    	    
+ 	    
+ 	    term1 *= -(2*beta-1)*over_C2;
+ 
+ 	    const double rijdotaj = dxij*(axj-axo) + dyij*(ayj-ayo) + dzij*(azj-azo);
+ 	    const double term6 = -0.5*over_C2*rijdotaj;
+ 	    const double dterm6dx = -0.5*over_C2*(axj-axo);
+ 	    const double dterm6dy = -0.5*over_C2*(ayj-ayo);	    
+ 	    const double dterm6dz = -0.5*over_C2*(azj-azo);
+ 	    
+ 	    double term8x = GMj*axj/_rij*(3+4*gamma)/2;
+ 	    double dterm8xdx = -GMj*axj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
+ 	    double dterm8xdy = -GMj*axj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
+ 	    double dterm8xdz = -GMj*axj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
+ 
+ 	    double term8y = GMj*ayj/_rij*(3+4*gamma)/2;
+ 	    double dterm8ydx = -GMj*ayj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
+ 	    double dterm8ydy = -GMj*ayj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
+ 	    double dterm8ydz = -GMj*ayj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
+ 
+ 	    double term8z = GMj*azj/_rij*(3+4*gamma)/2;
+ 	    double dterm8zdx = -GMj*azj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
+ 	    double dterm8zdy = -GMj*azj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
+ 	    double dterm8zdz = -GMj*azj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
+ 
+ 	    term8x_sum += term8x;
+ 	    term8y_sum += term8y;
+ 	    term8z_sum += term8z;
+ 
+ 	    dterm8x_sumdx += dterm8xdx;
+ 	    dterm8x_sumdy += dterm8xdy;
+ 	    dterm8x_sumdz += dterm8xdz;	    
+ 
+ 	    dterm8y_sumdx += dterm8ydx;
+ 	    dterm8y_sumdy += dterm8ydy;
+ 	    dterm8y_sumdz += dterm8ydz;
+ 
+ 	    dterm8z_sumdx += dterm8zdx;
+ 	    dterm8z_sumdy += dterm8zdy;
+ 	    dterm8z_sumdz += dterm8zdz;	    
+ 	    
+ 	    double factor = term0 + term1 + term2 + term3 + term4 + term5 + term6;
+ 
+ 	    double dfactordx = dterm0dx + dterm1dx + dterm5dx + dterm6dx;
+ 	    double dfactordy = dterm0dy + dterm1dy + dterm5dy + dterm6dy;
+ 	    double dfactordz = dterm0dz + dterm1dz + dterm5dz + dterm6dz;	    
+ 	    double dfactordvx = dterm1dvx + dterm2dvx + dterm4dvx;
+ 	    double dfactordvy = dterm1dvy + dterm2dvy + dterm4dvy;
+ 	    double dfactordvz = dterm1dvz + dterm2dvz + dterm4dvz;
+ 
+ 	    if(eih_file){
+ 		fprintf(eih_file, "%24.16lE ", -factor*C2);
+ 		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE %24.16lE ",
+ 			-factor*C2*prefacij*dxij,
+ 			-factor*C2*prefacij*dyij,
+ 			-factor*C2*prefacij*dzij,
+ 			f);	    
+ 		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE ",
+ 			prefacij*f*(particles[i].vx-(itemj.vx-vxo)),
+ 			prefacij*f*(particles[i].vy-(itemj.vy-vyo)),
+ 			prefacij*f*(particles[i].vz-(itemj.vz-vzo)));	    
+ 		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE ",
+ 			term8x,
+ 			term8y,
+ 			term8z);
+ 		fprintf(eih_file, "%24.16lE %24.16lE %24.16lE\n",
+ 			axj, ayj, azj);
+ 
+ 		fflush(eih_file);
+ 	    }
+ 
+ 	    grx += -prefacij*dxij*factor;
+ 	    gry += -prefacij*dyij*factor;
+ 	    grz += -prefacij*dzij*factor;
+ 	    
+ 	    //particles[i].ax += -prefacij*dxij*factor;
+ 	    //particles[i].ay += -prefacij*dyij*factor;
+ 	    //particles[i].az += -prefacij*dzij*factor;
+ 
+ 	    // Variational equation terms go here.
+ 
+ 	    dxdx += -dprefacijdx*dxij*factor
+ 		-prefacij*factor
+ 		-prefacij*dxij*dfactordx;
+ 	    
+ 	    dxdy += -dprefacijdy*dxij*factor
+ 		-prefacij*dxij*dfactordy;
+ 	    
+ 	    dxdz += -dprefacijdz*dxij*factor
+ 		-prefacij*dxij*dfactordz;
+ 
+ 	    dxdvx += 
+ 		-prefacij*dxij*dfactordvx;
+ 
+ 	    dxdvy += 
+ 		-prefacij*dxij*dfactordvy;
+ 
+ 	    dxdvz += 
+ 		-prefacij*dxij*dfactordvz;
+ 
+ 	    dydx += -dprefacijdx*dyij*factor
+ 		-prefacij*dyij*dfactordx;
+ 	    
+ 	    dydy += -dprefacijdy*dyij*factor
+ 		-prefacij*factor
+ 		-prefacij*dyij*dfactordy;
+ 	    
+ 	    dydz += -dprefacijdz*dyij*factor
+ 		-prefacij*dyij*dfactordz;
+ 
+ 	    dydvx += 
+ 		-prefacij*dyij*dfactordvx;
+ 
+ 	    dydvy += 
+ 		-prefacij*dyij*dfactordvy;
+ 
+ 	    dydvz += 
+ 		-prefacij*dyij*dfactordvz;
+ 	    
+ 	    dzdx += -dprefacijdx*dzij*factor
+ 		-prefacij*dzij*dfactordx;
+ 
+ 	    dzdy += -dprefacijdy*dzij*factor
+ 		-prefacij*dzij*dfactordy;
+ 	    
+ 	    dzdz += -dprefacijdz*dzij*factor
+ 		-prefacij*factor
+ 		-prefacij*dzij*dfactordz;
+ 
+ 	    dzdvx += 
+ 		-prefacij*dzij*dfactordvx;
+ 
+ 	    dzdvy += 
+ 		-prefacij*dzij*dfactordvy;
+ 
+ 	    dzdvz += 
+ 		-prefacij*dzij*dfactordvz;
+ 
+         }
+ 
+ 	grx += term7x_sum*over_C2 + term8x_sum*over_C2;
+ 	gry += term7y_sum*over_C2 + term8y_sum*over_C2;
+ 	grz += term7z_sum*over_C2 + term8z_sum*over_C2;
+ 
+ 	if(outfile){
+ 	    fprintf(outfile, "%3s %25.16le %25.16le %25.16le %25.16le\n", "GR", jd_ref+t,
+ 		    grx, gry, grz);
+ 	    fflush(outfile);
+ 	}
+ 
+ 	dxdx += dterm7x_sumdx*over_C2 + dterm8x_sumdx*over_C2;
+ 	dxdy += dterm7x_sumdy*over_C2 + dterm8x_sumdy*over_C2;
+ 	dxdz += dterm7x_sumdz*over_C2 + dterm8x_sumdz*over_C2;	
+ 	dxdvx += dterm7x_sumdvx*over_C2;
+ 	dxdvy += dterm7x_sumdvy*over_C2;
+ 	dxdvz += dterm7x_sumdvz*over_C2;
+ 
+ 	dydx += dterm7y_sumdx*over_C2 + dterm8y_sumdx*over_C2;
+ 	dydy += dterm7y_sumdy*over_C2 + dterm8y_sumdy*over_C2;
+ 	dydz += dterm7y_sumdz*over_C2 + dterm8y_sumdz*over_C2;	
+ 	dydvx += dterm7y_sumdvx*over_C2;
+ 	dydvy += dterm7y_sumdvy*over_C2;
+ 	dydvz += dterm7y_sumdvz*over_C2;
+ 
+ 	dzdx += dterm7z_sumdx*over_C2 + dterm8z_sumdx*over_C2;
+ 	dzdy += dterm7z_sumdy*over_C2 + dterm8z_sumdy*over_C2;
+ 	dzdz += dterm7z_sumdz*over_C2 + dterm8z_sumdz*over_C2;	
+ 	dzdvx += dterm7z_sumdvx*over_C2;
+ 	dzdvy += dterm7z_sumdvy*over_C2;
+ 	dzdvz += dterm7z_sumdvz*over_C2;
+ 	
+ 	//particles[i].ax += term7x_sum/C2 + term8x_sum/C2;
+ 	//particles[i].ay += term7y_sum/C2 + term8y_sum/C2;
+ 	//particles[i].az += term7z_sum/C2 + term8z_sum/C2;
+ 
+ 	// Variational equation terms go here.
+ 	for (int v=0; v < sim->var_config_N; v++){
+ 	    struct reb_variational_configuration const vc = sim->var_config[v];
+ 	    int tp = vc.testparticle;
+ 	    struct reb_particle* const particles_var1 = particles + vc.index;		
+ 	    if(tp == i){
+ 	    
+ 		// variational particle coords
+ 		const double ddx = particles_var1[0].x;
+ 		const double ddy = particles_var1[0].y;
+ 		const double ddz = particles_var1[0].z;
+ 		const double ddvx = particles_var1[0].vx;
+ 		const double ddvy = particles_var1[0].vy;
+ 		const double ddvz = particles_var1[0].vz;
+ 
+ 		// Matrix multiplication
+ 		const double dax =   ddx  * dxdx  + ddy  * dxdy  + ddz  * dxdz
+ 		    +   ddvx * dxdvx + ddvy * dxdvy + ddvz * dxdvz;
+ 		const double day =   ddx  * dydx  + ddy  * dydy  + ddz  * dydz
+ 		    +   ddvx * dydvx + ddvy * dydvy + ddvz * dydvz;
+ 		const double daz =   ddx  * dzdx  + ddy  * dzdy  + ddz  * dzdz
+ 		    +   ddvx * dzdvx + ddvy * dzdvy + ddvz * dzdvz;
+ 
+ 		// Accumulate acceleration terms
+ 		particles_var1[0].ax += dax;
+ 		particles_var1[0].ay += day;
+ 		particles_var1[0].az += daz;
+ 		
+ 	    }
+ 	}
+     }
+ }
+ 
 // static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
 // 	    int eih_loop_limit,
 // 	    double xo, double yo, double zo,
