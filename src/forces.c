@@ -139,9 +139,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     //eih_file = fopen("eih_acc.out", "w");
 
     if (assist->forces & ASSIST_FORCE_GR_EIH){
-        assist_additional_force_eih_GR(sim, eih_loop_limit,
-                center,
-           outfile, eih_file);
+        assist_additional_force_eih_GR(sim, eih_loop_limit, center, outfile, eih_file);
     }
 
     if (assist->forces & ASSIST_FORCE_GR_POTENTIAL){
