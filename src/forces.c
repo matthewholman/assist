@@ -52,7 +52,7 @@ static void assist_additional_force_solar_J2(struct reb_simulation* sim, double 
 static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
 static void assist_additional_force_non_gravitational(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
 static void assist_additional_force_potential_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
-static void assist_additional_force_simple_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
+static void assist_additional_force_simple_GR(struct reb_simulation* sim, struct assist_cache_item center, FILE *outfile);
 static void assist_additional_force_eih_GR(struct reb_simulation* sim, int eih_loop_limit, struct assist_cache_item p0, FILE *outfile, FILE *eih_file);
 
 static const int N_ephem = 11;
@@ -75,7 +75,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     const double t = sim->t;
 
-    struct assist_cache_item item0 = {0};
+    struct assist_cache_item center = {0};
 
     // Check which center is used.
     // The current options are the barycenter (default) and geocenter.
@@ -85,7 +85,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	// geocentric
 	// Get mass, position, velocity, and acceleration of the Earth for later use.
 	// The offset position is used to adjust the particle positions.
-	int flag = assist_all_ephem(ephem, assist->ephem_cache, 3, t, &item0);
+	int flag = assist_all_ephem(ephem, assist->ephem_cache, 3, t, &center);
 	if(flag != NO_ERR){
 	    char outstring[50];
 	    sprintf(outstring, "%s %d %d\n", "Ephemeris error a ", 3, flag);
@@ -125,13 +125,13 @@ void assist_additional_forces(struct reb_simulation* sim){
     */
 
     if (assist->forces & ASSIST_FORCE_NON_GRAVITATIONAL){
-        assist_additional_force_non_gravitational(sim, item0.x, item0.y, item0.z, item0.vx, item0.vy, item0.vz, outfile);
+        assist_additional_force_non_gravitational(sim, center.x, center.y, center.z, center.vx, center.vy, center.vz, outfile);
     }
     if (assist->forces & ASSIST_FORCE_EARTH_HARMONICS){
-        assist_additional_force_earth_J2J4(sim, item0.x, item0.y, item0.z, outfile);
+        assist_additional_force_earth_J2J4(sim, center.x, center.y, center.z, outfile);
     }
     if (assist->forces & ASSIST_FORCE_SUN_HARMONICS){
-        assist_additional_force_solar_J2(sim, item0.x, item0.y, item0.z, outfile);
+        assist_additional_force_solar_J2(sim, center.x, center.y, center.z, outfile);
     }
     
     FILE *eih_file = NULL;
@@ -140,24 +140,20 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     if (assist->forces & ASSIST_FORCE_GR_EIH){
         assist_additional_force_eih_GR(sim, eih_loop_limit,
-                item0,
+                center,
            outfile, eih_file);
     }
 
     if (assist->forces & ASSIST_FORCE_GR_POTENTIAL){
         assist_additional_force_potential_GR(sim,
-                item0.x, item0.y, item0.z, item0.vx, item0.vy, item0.vz,
+                center.x, center.y, center.z, center.vx, center.vy, center.vz,
                 outfile);
     }
     if (assist->forces & ASSIST_FORCE_GR_SIMPLE){
-        assist_additional_force_simple_GR(sim,
-                item0.x, item0.y, item0.z, item0.vx, item0.vy, item0.vz,
-                outfile);
+        assist_additional_force_simple_GR(sim, center, outfile);
     }
     if (assist->forces & (ASSIST_FORCE_SUN | ASSIST_FORCE_PLANETS | ASSIST_FORCE_ASTEROIDS)){
-        assist_additional_force_direct(sim,
-                item0,
-                outfile);
+        assist_additional_force_direct(sim, center, outfile);
     }
     
     // Uncomment one of these lines and recompile for testing.
@@ -172,16 +168,15 @@ void assist_additional_forces(struct reb_simulation* sim){
 	// geocentric
 	// TODO: This part will need work for the variational equations
 	// to work properly.
-	assist_all_ephem(ephem, assist->ephem_cache, 3, t,
-            &item0);
+	assist_all_ephem(ephem, assist->ephem_cache, 3, t, &center);
 
 	// This is the indirect term for geocentric equations
 	// of motion.
 	for (int j=0; j<N_real; j++){    
 
-	    sim->particles[j].ax -= item0.ax;
-	    sim->particles[j].ay -= item0.ay;
-	    sim->particles[j].az -= item0.az;
+	    sim->particles[j].ax -= center.ax;
+	    sim->particles[j].ay -= center.ay;
+	    sim->particles[j].az -= center.az;
 
 	}
     }
@@ -1224,10 +1219,7 @@ static void assist_additional_force_potential_GR(struct reb_simulation* sim,
     }
 }
 
-static void assist_additional_force_simple_GR(struct reb_simulation* sim,
-	       double xo, double yo, double zo,
-	       double vxo, double vyo, double vzo,	       
-	       FILE *outfile){
+static void assist_additional_force_simple_GR(struct reb_simulation* sim, struct assist_cache_item center, FILE *outfile){
     
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
     struct assist_ephem* ephem = assist->ephem;
@@ -1258,12 +1250,12 @@ static void assist_additional_force_simple_GR(struct reb_simulation* sim,
 
         struct reb_particle p = particles[j];
 
-	p.x += (xo - items.x);
-	p.y += (yo - items.y);
-	p.z += (zo - items.z);
-	p.vx += (vxo - items.vx);
-	p.vy += (vyo - items.vy);
-	p.vz += (vzo - items.vz);
+	p.x += (center.x - items.x);
+	p.y += (center.y - items.y);
+	p.z += (center.z - items.z);
+	p.vx += (center.vx - items.vx);
+	p.vy += (center.vy - items.vy);
+	p.vz += (center.vz - items.vz);
 	
         const double v2 = p.vx*p.vx + p.vy*p.vy + p.vz*p.vz;
         const double r = sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
