@@ -187,15 +187,8 @@ void assist_additional_forces(struct reb_simulation* sim){
     }
 }
 
-static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd_ref, const double t,
-		 double* const GM,
-		 double* const x, double* const y, double* const z,
-		 double* const vx, double* const vy, double* const vz,
-		 double* const ax, double* const ay, double* const az){
+static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd_ref, const double t, struct assist_cache_item* const result){
 
-    //static int initialized = 0;
-
-    //static struct _jpl_s *pl;
     struct mpos_s now;
 
     // Calculate GM values for Earth and Moon
@@ -222,28 +215,9 @@ static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd
 	    JPL_EPHEM_GM9, // 10 pluto
 	};
 
-    if(i<0 || i>10){
-	return(ERR_NEPH);
-    }
-
-    if(ephem->pl==NULL){
-	return(ERR_JPL_EPHEM);
-    }
-
-    /*
-    if (initialized == 0){
-	char buf[] = "/Users/mholman/assist/data/linux_m13000p17000.441";
-	if ((pl = assist_jpl_init(buf)) == NULL) {
-	    printf("Couldn't find planet ephemeris file: %s\n", buf);	  
-	    return(ERR_JPL_EPHEM);	  
-	}
-	initialized = 1;
-    }
-    */
-
     // Get position, velocity, and mass of body i in barycentric coords.
 
-    *GM = JPL_GM[i];
+    result->m = JPL_GM[i];
 
     assist_jpl_calc(ephem->pl, &now, jd_ref, t, i); 
 
@@ -252,21 +226,21 @@ static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd
     vecpos_div(now.v, ephem->pl->cau/86400.);
     vecpos_div(now.w, ephem->pl->cau/(86400.*86400.));
 
-    *x = now.u[0];
-    *y = now.u[1];
-    *z = now.u[2];
-    *vx = now.v[0];
-    *vy = now.v[1];
-    *vz = now.v[2];
-    *ax = now.w[0];
-    *ay = now.w[1];
-    *az = now.w[2];
+    result->x = now.u[0];
+    result->y = now.u[1];
+    result->z = now.u[2];
+    result->vx = now.v[0];
+    result->vy = now.v[1];
+    result->vz = now.v[2];
+    result->ax = now.w[0];
+    result->ay = now.w[1];
+    result->az = now.w[2];
 
     return(NO_ERR);
     
 }
 
-static int ast_ephem(struct assist_ephem* ephem, const int i, const double jd_ref, const double t, double* const GM, double* const x, double* const y, double* const z){
+static int ast_ephem(struct assist_ephem* ephem, const int i, const double jd_ref, const double t, struct assist_cache_item* const result){
 
     //static int initialized = 0;
 
@@ -320,13 +294,13 @@ static int ast_ephem(struct assist_ephem* ephem, const int i, const double jd_re
     // TODO: again, the units might be handled more
     // generally
 
-    *GM = JPL_GM[i];
+    result->m = JPL_GM[i];
 
     assist_spk_calc(ephem->spl, i, jd_ref, t, &pos);
 
-    *x = pos.u[0];
-    *y = pos.u[1];
-    *z = pos.u[2];
+    result->x = pos.u[0];
+    result->y = pos.u[1];
+    result->z = pos.u[2];
 
     return(NO_ERR);
 
@@ -346,24 +320,14 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
     }
 
     const double jd_ref = ephem->jd_ref;
-    double* GM = &result->m;
-    double* x = &result->x;
-    double* y = &result->y;
-    double* z = &result->z;
-    double* vx = &result->vx;
-    double* vy = &result->vy;
-    double* vz = &result->vz;
-    double* ax = &result->ax;
-    double* ay = &result->ay;
-    double* az = &result->az;
 
     // Get position and mass of massive body i.
     if(i < N_ephem){
-        int flag = planet_ephem(ephem, i, jd_ref, t, GM, x, y, z, vx, vy, vz, ax, ay, az);
+        int flag = planet_ephem(ephem, i, jd_ref, t, result);
         if(flag != NO_ERR) return(flag);
     }else{
         // Get position and mass of asteroid i-N_ephem.
-        int flag = ast_ephem(ephem, i-N_ephem, jd_ref, t, GM, x, y, z);
+        int flag = ast_ephem(ephem, i-N_ephem, jd_ref, t, result);
         if(flag != NO_ERR) return(flag);
 
         struct assist_cache_item item;
@@ -371,11 +335,11 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
         if(flag != NO_ERR) return(flag);		    
 
         // Translate massive asteroids from heliocentric to barycentric.
-        *x += item.x; *y += item.y; *z += item.z;
+        result->x += item.x; result->y += item.y; result->z += item.z;
         // velocities and accelerations are not needed for these
         // bodies
-        *vx = NAN; *vy = NAN; *vz = NAN;
-        *ax = NAN; *ay = NAN; *az = NAN;
+        //*vx = NAN; *vy = NAN; *vz = NAN;
+        //*ax = NAN; *ay = NAN; *az = NAN;
 
     }
 

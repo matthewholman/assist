@@ -69,8 +69,8 @@ struct assist_ephem {
 };
 
 //#define assist_cache_item reb_particle
+
 struct assist_cache_item {
-    double m;
     double x;
     double y;
     double z;
@@ -80,6 +80,7 @@ struct assist_cache_item {
     double ax;
     double ay;
     double az;
+    double m;
 };
 
 

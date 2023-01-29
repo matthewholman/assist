@@ -51,7 +51,6 @@ struct mpos_s {
 	double w[3];  
 	double jde;
 };
-
 struct spk_s {
 
 	int tar[_SPK_MAX];		// target code
