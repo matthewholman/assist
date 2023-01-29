@@ -200,9 +200,9 @@ static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd
 
     // Calculate GM values for Earth and Moon
     // from Earth-moon ratio and sum.
-    const static double em_r = JPL_EPHEM_EMRAT;
-    const static double GMe = em_r/(1.+em_r) * JPL_EPHEM_GMB;
-    const static double GMm = 1./(1.+em_r) * JPL_EPHEM_GMB;
+#define    em_r JPL_EPHEM_EMRAT
+#define    GMe (em_r/(1.+em_r) * JPL_EPHEM_GMB)
+#define    GMm (1./(1.+em_r) * JPL_EPHEM_GMB)
 
     // The values below are G*mass.
     // Units are solar masses, au, days.
