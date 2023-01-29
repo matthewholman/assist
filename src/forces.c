@@ -346,7 +346,7 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
     }
 
     const double jd_ref = ephem->jd_ref;
-    double* GM = &result->GM;
+    double* GM = &result->m;
     double* x = &result->x;
     double* y = &result->y;
     double* z = &result->z;
@@ -445,10 +445,10 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
             const double dz = particles[j].z + (zo - item.z);
             const double r2 = dx*dx + dy*dy + dz*dz;
             const double _r  = sqrt(r2);
-            const double prefac = item.GM/(_r*_r*_r);
+            const double prefac = item.m/(_r*_r*_r);
 
             if(outfile){
-                fprintf(outfile, "%3d %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le\n", i, jd_ref+t, item.GM, dx, dy, dz, -prefac*dx, -prefac*dy, -prefac*dz);
+                fprintf(outfile, "%3d %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le %25.16le\n", i, jd_ref+t, item.m, dx, dy, dz, -prefac*dx, -prefac*dy, -prefac*dz);
 		fflush(outfile);		
             }
 
@@ -531,9 +531,9 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 		    // No variational mass contributions for test particles!
 
 		    // Accumulate acceleration terms
-		    particles_var1[0].ax += item.GM * dax; 
-		    particles_var1[0].ay += item.GM * day; 
-		    particles_var1[0].az += item.GM * daz; 
+		    particles_var1[0].ax += item.m * dax; 
+		    particles_var1[0].ay += item.m * day; 
+		    particles_var1[0].az += item.m * daz; 
 
 		}
 	    }
@@ -620,25 +620,25 @@ static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, doubl
         const double J2e_prefac = 3.*J2e*Re_eq*Re_eq/r2/r2/r/2.;
         const double J2e_fac = 5.*costheta2-1.;
 
-	double resx = iteme.GM*J2e_prefac*J2e_fac*dx;
-	double resy = iteme.GM*J2e_prefac*J2e_fac*dy;
-	double resz = iteme.GM*J2e_prefac*(J2e_fac-2.)*dz;	
+	double resx = iteme.m*J2e_prefac*J2e_fac*dx;
+	double resy = iteme.m*J2e_prefac*J2e_fac*dy;
+	double resz = iteme.m*J2e_prefac*(J2e_fac-2.)*dz;	
 
 	// J3 terms
         const double J3e_prefac = 5.*J3e*Re_eq*Re_eq*Re_eq/r2/r2/r/2.;
         const double J3e_fac = 3.-7.*costheta2;
 	
-	resx += -iteme.GM*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
-    resy += -iteme.GM*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
-	resz += -iteme.GM*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
+	resx += -iteme.m*J3e_prefac*(1./r2)*J3e_fac*dx*dz;
+    resy += -iteme.m*J3e_prefac*(1./r2)*J3e_fac*dy*dz;
+	resz += -iteme.m*J3e_prefac*(6.*costheta2 - 7.*costheta2*costheta2-0.6);
 	
 	// J4 terms
         const double J4e_prefac = 5.*J4e*Re_eq*Re_eq*Re_eq*Re_eq/r2/r2/r2/r/8.;
         const double J4e_fac = 63.*costheta2*costheta2-42.*costheta2 + 3.;
 
-        resx += iteme.GM*J4e_prefac*J4e_fac*dx;
-        resy += iteme.GM*J4e_prefac*J4e_fac*dy;
-        resz += iteme.GM*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
+        resx += iteme.m*J4e_prefac*J4e_fac*dx;
+        resy += iteme.m*J4e_prefac*J4e_fac*dy;
+        resz += iteme.m*J4e_prefac*(J4e_fac+12.-28.*costheta2)*dz;
 
 	// Rotate back to original frame
 	double resxp = - resx*sina      - resy*cosa*sind + resz*cosa*cosd;
@@ -664,12 +664,12 @@ static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, doubl
         const double J2e_fac2 = 7.*costheta2-1.;
         const double J2e_fac3 = 35.*costheta2*costheta2-30.*costheta2+3.;
 
-	const double dxdx = iteme.GM*J2e_prefac*(J2e_fac-5.*J2e_fac2*dx*dx/r2);
-	const double dydy = iteme.GM*J2e_prefac*(J2e_fac-5.*J2e_fac2*dy*dy/r2);
-	const double dzdz = iteme.GM*J2e_prefac*(-1.)*J2e_fac3;
-	const double dxdy = iteme.GM*J2e_prefac*(-5.)*J2e_fac2*dx*dy/r2;
-	const double dydz = iteme.GM*J2e_prefac*(-5.)*(J2e_fac2-2.)*dy*dz/r2;
-	const double dxdz = iteme.GM*J2e_prefac*(-5.)*(J2e_fac2-2.)*dx*dz/r2;
+	const double dxdx = iteme.m*J2e_prefac*(J2e_fac-5.*J2e_fac2*dx*dx/r2);
+	const double dydy = iteme.m*J2e_prefac*(J2e_fac-5.*J2e_fac2*dy*dy/r2);
+	const double dzdz = iteme.m*J2e_prefac*(-1.)*J2e_fac3;
+	const double dxdy = iteme.m*J2e_prefac*(-5.)*J2e_fac2*dx*dy/r2;
+	const double dydz = iteme.m*J2e_prefac*(-5.)*(J2e_fac2-2.)*dy*dz/r2;
+	const double dxdz = iteme.m*J2e_prefac*(-5.)*(J2e_fac2-2.)*dx*dz/r2;
 
 	// J3 terms
         const double costheta = dz/r;
@@ -677,24 +677,24 @@ static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, doubl
         const double J3e_fac3 = 3*(-21.*costheta2*costheta2+14.*costheta2-1.)/r2;
         const double J3e_fac4 = (-63.*costheta2*costheta2+70.*costheta2-15.)*costheta/r;
 
-	const double dxdxJ3 = iteme.GM*J3e_prefac*costheta*(J3e_fac2*dx*dx-J3e_fac)/r;
-	const double dydyJ3 = iteme.GM*J3e_prefac*costheta*(J3e_fac2*dy*dy-J3e_fac)/r;
-	const double dzdzJ3 = iteme.GM*J3e_prefac*J3e_fac4;
-	const double dxdyJ3 = iteme.GM*J3e_prefac*J3e_fac2*costheta*dx*dy/r;
-	const double dydzJ3 = iteme.GM*J3e_prefac*J3e_fac3*dy;
-	const double dxdzJ3 = iteme.GM*J3e_prefac*J3e_fac3*dx;
+	const double dxdxJ3 = iteme.m*J3e_prefac*costheta*(J3e_fac2*dx*dx-J3e_fac)/r;
+	const double dydyJ3 = iteme.m*J3e_prefac*costheta*(J3e_fac2*dy*dy-J3e_fac)/r;
+	const double dzdzJ3 = iteme.m*J3e_prefac*J3e_fac4;
+	const double dxdyJ3 = iteme.m*J3e_prefac*J3e_fac2*costheta*dx*dy/r;
+	const double dydzJ3 = iteme.m*J3e_prefac*J3e_fac3*dy;
+	const double dxdzJ3 = iteme.m*J3e_prefac*J3e_fac3*dx;
 
 	// J4 terms
         const double J4e_fac2= 33.*costheta2*costheta2-18.*costheta2 + 1.;
         const double J4e_fac3= 33.*costheta2*costheta2-30.*costheta2 + 5.;
         const double J4e_fac4= 231.*costheta2*costheta2*costheta2-315.*costheta2*costheta2+105.*costheta2 - 5.;
 	
-	const double dxdxJ4 = iteme.GM*J4e_prefac*(J4e_fac-21.*J4e_fac2*dx*dx/r2);
-	const double dydyJ4 = iteme.GM*J4e_prefac*(J4e_fac-21.*J4e_fac2*dy*dy/r2);
-	const double dzdzJ4 = iteme.GM*J4e_prefac*(-3.)*J4e_fac4;
-	const double dxdyJ4 = iteme.GM*J4e_prefac*(-21.)*J4e_fac2*dx*dy/r2;
-	const double dydzJ4 = iteme.GM*J4e_prefac*(-21.)*J4e_fac3*dy*dz/r2;
-	const double dxdzJ4 = iteme.GM*J4e_prefac*(-21.)*J4e_fac3*dx*dz/r2;
+	const double dxdxJ4 = iteme.m*J4e_prefac*(J4e_fac-21.*J4e_fac2*dx*dx/r2);
+	const double dydyJ4 = iteme.m*J4e_prefac*(J4e_fac-21.*J4e_fac2*dy*dy/r2);
+	const double dzdzJ4 = iteme.m*J4e_prefac*(-3.)*J4e_fac4;
+	const double dxdyJ4 = iteme.m*J4e_prefac*(-21.)*J4e_fac2*dx*dy/r2;
+	const double dydzJ4 = iteme.m*J4e_prefac*(-21.)*J4e_fac3*dy*dz/r2;
+	const double dxdzJ4 = iteme.m*J4e_prefac*(-21.)*J4e_fac3*dx*dz/r2;
 
 	for (int v=0; v < sim->var_config_N; v++){
 	    struct reb_variational_configuration const vc = sim->var_config[v];
@@ -761,7 +761,7 @@ static void assist_additional_force_solar_J2(struct reb_simulation* sim, double 
     struct assist_cache_item itemr;
 
     assist_all_ephem(ephem, assist->ephem_cache, 0, t, &itemr); 
-    const double GMsun = itemr.GM;    
+    const double GMsun = itemr.m;    
 
     const double au = JPL_EPHEM_CAU;
     const double Rs_eq = JPL_EPHEM_ASUN/au;
@@ -1185,7 +1185,7 @@ static void assist_additional_force_potential_GR(struct reb_simulation* sim,
     // The Sun center is reference for these calculations.
     struct assist_cache_item items;
     assist_all_ephem(ephem, assist->ephem_cache, 0, t, &items);
-    const double GMsun = items.GM;
+    const double GMsun = items.m;
 
     //xs = ys = zs = 0.0;
 
@@ -1288,7 +1288,7 @@ static void assist_additional_force_simple_GR(struct reb_simulation* sim,
     // The Sun center is reference for these calculations.
     struct assist_cache_item items;
     assist_all_ephem(ephem, assist->ephem_cache, 0, t, &items);
-    const double GMsun = items.GM;
+    const double GMsun = items.m;
 
     for (int j=0; j<N_real; j++){
 
@@ -1439,7 +1439,7 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	    const double dzij = particles[i].z + (zo - itemj.z);
 	    const double rij2 = dxij*dxij + dyij*dyij + dzij*dzij;
 	    const double _rij  = sqrt(rij2);
-	    const double prefacij = itemj.GM/(rij2*_rij);
+	    const double prefacij = itemj.m/(rij2*_rij);
 
 	    // This is the place to do all the various i-j dot products
 	    
@@ -1504,7 +1504,7 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 		const double _rik  = sqrt(rik2);
 
 		// keep track of GM/rik sum
-		term0 += itemk.GM/_rik;
+		term0 += itemk.m/_rik;
 
 		if(k != j){
 		    // Compute position vector of massive body j relative to massive body k.
@@ -1515,9 +1515,9 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 		    const double _rjk  = sqrt(rjk2);
 
 		    // keep track of GM/rjk sum
-		    term1 += itemk.GM/_rjk;
+		    term1 += itemk.m/_rjk;
 
-		    const double fac = itemk.GM/(rjk2*_rjk);
+		    const double fac = itemk.m/(rjk2*_rjk);
 		    axj -= fac*dxjk;
 		    ayj -= fac*dyjk;
 		    azj -= fac*dzjk;
@@ -1533,7 +1533,7 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	    const double rijdotaj = dxij*(axj-axo) + dyij*(ayj-ayo) + dzij*(azj-azo);
 	    const double term6 = -0.5*over_C2*rijdotaj;
 
-	    const double term8_fac = itemj.GM/_rij*(3+4*gamma)/2;
+	    const double term8_fac = itemj.m/_rij*(3+4*gamma)/2;
 	    const double term8x = term8_fac*axj;
 	    const double term8y = term8_fac*ayj;
 	    const double term8z = term8_fac*azj;
@@ -1674,11 +1674,11 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
  	    const double dzij = particles[i].z + (zo - itemj.z);
  	    const double rij2 = dxij*dxij + dyij*dyij + dzij*dzij;
  	    const double _rij  = sqrt(rij2);
- 	    const double prefacij = itemj.GM/(_rij*_rij*_rij);
+ 	    const double prefacij = itemj.m/(_rij*_rij*_rij);
  
- 	    const double dprefacijdx = -3.0*itemj.GM/(_rij*_rij*_rij*_rij*_rij)*dxij;
- 	    const double dprefacijdy = -3.0*itemj.GM/(_rij*_rij*_rij*_rij*_rij)*dyij;
- 	    const double dprefacijdz = -3.0*itemj.GM/(_rij*_rij*_rij*_rij*_rij)*dzij;
+ 	    const double dprefacijdx = -3.0*itemj.m/(_rij*_rij*_rij*_rij*_rij)*dxij;
+ 	    const double dprefacijdy = -3.0*itemj.m/(_rij*_rij*_rij*_rij*_rij)*dyij;
+ 	    const double dprefacijdz = -3.0*itemj.m/(_rij*_rij*_rij*_rij*_rij)*dzij;
  
  	    // This is the place to do all the various i-j dot products
  	    
@@ -1830,11 +1830,11 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
  		const double _rik  = sqrt(rik2);
  
  		// keep track of GM/rik sum
- 		term0 += itemk.GM/_rik;
+ 		term0 += itemk.m/_rik;
  
- 		dterm0dx -= itemk.GM/(_rik*_rik*_rik) * dxik;
- 		dterm0dy -= itemk.GM/(_rik*_rik*_rik) * dyik;
- 		dterm0dz -= itemk.GM/(_rik*_rik*_rik) * dzik;				
+ 		dterm0dx -= itemk.m/(_rik*_rik*_rik) * dxik;
+ 		dterm0dy -= itemk.m/(_rik*_rik*_rik) * dyik;
+ 		dterm0dz -= itemk.m/(_rik*_rik*_rik) * dzik;				
  
  		if(k != j){
  		    // Compute position vector of massive body j relative to massive body k.
@@ -1845,11 +1845,11 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
  		    const double _rjk  = sqrt(rjk2);
  
  		    // keep track of GM/rjk sum
- 		    term1 += itemk.GM/_rjk;
+ 		    term1 += itemk.m/_rjk;
  
- 		    axj -= itemk.GM*dxjk/(_rjk*_rjk*_rjk);
- 		    ayj -= itemk.GM*dyjk/(_rjk*_rjk*_rjk);
- 		    azj -= itemk.GM*dzjk/(_rjk*_rjk*_rjk);		    		    
+ 		    axj -= itemk.m*dxjk/(_rjk*_rjk*_rjk);
+ 		    ayj -= itemk.m*dyjk/(_rjk*_rjk*_rjk);
+ 		    azj -= itemk.m*dzjk/(_rjk*_rjk*_rjk);		    		    
  
  		}
  
@@ -1868,20 +1868,20 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
  	    const double dterm6dy = -0.5*over_C2*(ayj-ayo);	    
  	    const double dterm6dz = -0.5*over_C2*(azj-azo);
  	    
- 	    double term8x = itemj.GM*axj/_rij*(3+4*gamma)/2;
- 	    double dterm8xdx = -itemj.GM*axj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
- 	    double dterm8xdy = -itemj.GM*axj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
- 	    double dterm8xdz = -itemj.GM*axj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
+ 	    double term8x = itemj.m*axj/_rij*(3+4*gamma)/2;
+ 	    double dterm8xdx = -itemj.m*axj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
+ 	    double dterm8xdy = -itemj.m*axj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
+ 	    double dterm8xdz = -itemj.m*axj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
  
- 	    double term8y = itemj.GM*ayj/_rij*(3+4*gamma)/2;
- 	    double dterm8ydx = -itemj.GM*ayj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
- 	    double dterm8ydy = -itemj.GM*ayj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
- 	    double dterm8ydz = -itemj.GM*ayj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
+ 	    double term8y = itemj.m*ayj/_rij*(3+4*gamma)/2;
+ 	    double dterm8ydx = -itemj.m*ayj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
+ 	    double dterm8ydy = -itemj.m*ayj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
+ 	    double dterm8ydz = -itemj.m*ayj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
  
- 	    double term8z = itemj.GM*azj/_rij*(3+4*gamma)/2;
- 	    double dterm8zdx = -itemj.GM*azj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
- 	    double dterm8zdy = -itemj.GM*azj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
- 	    double dterm8zdz = -itemj.GM*azj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
+ 	    double term8z = itemj.m*azj/_rij*(3+4*gamma)/2;
+ 	    double dterm8zdx = -itemj.m*azj/(_rij*_rij*_rij)*dxij*(3+4*gamma)/2;
+ 	    double dterm8zdy = -itemj.m*azj/(_rij*_rij*_rij)*dyij*(3+4*gamma)/2;
+ 	    double dterm8zdz = -itemj.m*azj/(_rij*_rij*_rij)*dzij*(3+4*gamma)/2;	    	    
  
  	    term8x_sum += term8x;
  	    term8y_sum += term8y;

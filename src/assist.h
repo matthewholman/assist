@@ -68,18 +68,19 @@ struct assist_ephem {
     struct spk_s* spl;
 };
 
-struct assist_cache_item {
-    double GM;
-    double x;
-    double y;
-    double z;
-    double vx;
-    double vy;
-    double vz;
-    double ax;
-    double ay;
-    double az;
-};
+#define assist_cache_item reb_particle
+//struct assist_cache_item {
+//    double GM;
+//    double x;
+//    double y;
+//    double z;
+//    double vx;
+//    double vy;
+//    double vz;
+//    double ax;
+//    double ay;
+//    double az;
+//};
 
 
 struct assist_ephem_cache {
