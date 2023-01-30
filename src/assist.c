@@ -199,9 +199,7 @@ void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist,
 
 void assist_free_pointers(struct assist_extras* assist){
     assist_detach(assist->sim, assist);
-    free(assist->last_state_x);
-    free(assist->last_state_v);
-    free(assist->last_state_a);
+    free(assist->last_state);
     free(assist->ephem_cache->items);
     free(assist->ephem_cache->t);
     free(assist->ephem_cache);
@@ -392,9 +390,7 @@ int assist_integrate(struct assist_ephem* ephem,
     assist->output_t = output_t;
     assist->output_state = output_state;
     assist->output_n_alloc = output_n_alloc;
-    assist->last_state_x = malloc(sim->N*3*sizeof(double));
-    assist->last_state_v = malloc(sim->N*3*sizeof(double));
-    assist->last_state_a = malloc(sim->N*3*sizeof(double));
+    assist->last_state = malloc(sim->N*sizeof(struct reb_particle));
 
     assist->nsubsteps = nsubsteps;
     assist->hg = hg;
@@ -433,9 +429,7 @@ int assist_interpolate(struct reb_simulation* sim, double h, double* output){
     // set of coefficients from the last completed step.
     const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
 
-    double* x0 = assist->last_state_x;
-    double* v0 = assist->last_state_v;
-    double* a0 = assist->last_state_a;
+    struct reb_particle* ls = assist->last_state;
 
     double s[9]; // Summation coefficients
 
@@ -457,9 +451,9 @@ int assist_interpolate(struct reb_simulation* sim, double h, double* output){
         const int k1 = 3*j+1;
         const int k2 = 3*j+2;
 
-        double xx0 = x0[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
-        double xy0 = x0[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
-        double xz0 = x0[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
+        double xx0 = ls[j].x + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*ls[j].ax + s[0]*ls[j].vx );
+        double xy0 = ls[j].y + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*ls[j].ay + s[0]*ls[j].vy );
+        double xz0 = ls[j].z + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*ls[j].az + s[0]*ls[j].vz );
 
         // Store the results
         int offset = 6*j;
@@ -485,9 +479,9 @@ int assist_interpolate(struct reb_simulation* sim, double h, double* output){
         const int k1 = 3*j+1;
         const int k2 = 3*j+2;
 
-        double vx0 = v0[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
-        double vy0 = v0[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
-        double vz0 = v0[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
+        double vx0 = ls[j].vx + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*ls[j].ax;
+        double vy0 = ls[j].vy + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*ls[j].ay;
+        double vz0 = ls[j].vz + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*ls[j].az;
 
         // Store the results
         int offset = 6*j;
@@ -567,16 +561,7 @@ static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     reb_update_acceleration(sim); // This will later be recalculated. Could be optimized.
 
     for(int j=0; j<sim->N; j++){ 
-        int offset = 3*j;
-        assist->last_state_x[offset+0] = sim->particles[j].x;
-        assist->last_state_x[offset+1] = sim->particles[j].y;
-        assist->last_state_x[offset+2] = sim->particles[j].z;
-        assist->last_state_v[offset+0] = sim->particles[j].vx;
-        assist->last_state_v[offset+1] = sim->particles[j].vy;
-        assist->last_state_v[offset+2] = sim->particles[j].vz;
-        assist->last_state_a[offset+0] = sim->particles[j].ax;
-        assist->last_state_a[offset+1] = sim->particles[j].ay;
-        assist->last_state_a[offset+2] = sim->particles[j].az;
+        assist->last_state[j] = sim->particles[j];
     }
 }
 

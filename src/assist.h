@@ -97,9 +97,7 @@ struct assist_extras {
     int extras_should_free_ephem;   // Internal use only. Set to 1 if extras allocated memory for ephem.
     int geocentric;
     double last_state_t;
-    double* last_state_x;
-    double* last_state_v;
-    double* last_state_a;
+    struct reb_particle* last_state;
     int nsubsteps;
     double* hg;
     //particle_params* particle_params;
