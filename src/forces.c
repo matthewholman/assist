@@ -182,9 +182,6 @@ static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd
 
     // Calculate GM values for Earth and Moon
     // from Earth-moon ratio and sum.
-#define    em_r JPL_EPHEM_EMRAT
-#define    GMe (em_r/(1.+em_r) * JPL_EPHEM_GMB)
-#define    GMm (1./(1.+em_r) * JPL_EPHEM_GMB)
 
     // The values below are G*mass.
     // Units are solar masses, au, days.
@@ -194,8 +191,8 @@ static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd
 	    JPL_EPHEM_GMS, // 0 sun
 	    JPL_EPHEM_GM1, // 1 mercury
 	    JPL_EPHEM_GM2, // 2 venus
-	    GMe,           // 3 earth
-	    GMm,           // 4 moon
+        (JPL_EPHEM_EMRAT/(1.+JPL_EPHEM_EMRAT) * JPL_EPHEM_GMB), // 3 earth
+        (1./(1.+JPL_EPHEM_EMRAT) * JPL_EPHEM_GMB),              // 4 moon
 	    JPL_EPHEM_GM4, // 5 mars
 	    JPL_EPHEM_GM5, // 6 jupiter
 	    JPL_EPHEM_GM6, // 7 saturn
@@ -260,13 +257,6 @@ static int ast_ephem(struct assist_ephem* ephem, const int i, const double jd_re
 	JPL_EPHEM_MA0004  // 4 vesta
     };
 
-    if(i<0 || i>15){
-	return(ERR_NAST);
-    }
-
-    if(ephem->spl==NULL){
-	return(ERR_JPL_EPHEM);	
-    }
 
     /*
     if (initialized == 0){
