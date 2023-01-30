@@ -56,8 +56,6 @@ static inline void vecpos_set(double *u, const double *v)
         { u[0] = v[0]; u[1] = v[1]; u[2] = v[2]; }
 static inline void vecpos_nul(double *u)
         { u[0] = u[1] = u[2] = 0.0; }
-static inline void vecpos_div(double *u, double v)
-        { u[0] /= v; u[1] /= v; u[2] /= v; }
 
 #endif // _JPL_EPHEM_H
 

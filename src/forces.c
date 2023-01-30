@@ -211,19 +211,20 @@ static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd
     assist_jpl_calc(ephem->pl, &now, jd_ref, t, i); 
 
     // Convert to au/day and au/day^2
-    vecpos_div(now.u, ephem->pl->cau);
-    vecpos_div(now.v, ephem->pl->cau/86400.);
-    vecpos_div(now.w, ephem->pl->cau/(86400.*86400.));
+    const double cau_over = 1./ephem->pl->cau;
+    const double cau86400_over = cau_over*86400.0;
+    const double cau8640086400_over = cau86400_over*86400.0;
 
-    result->x = now.u[0];
-    result->y = now.u[1];
-    result->z = now.u[2];
-    result->vx = now.v[0];
-    result->vy = now.v[1];
-    result->vz = now.v[2];
-    result->ax = now.w[0];
-    result->ay = now.w[1];
-    result->az = now.w[2];
+
+    result->x = now.u[0]*cau_over;
+    result->y = now.u[1]*cau_over;
+    result->z = now.u[2]*cau_over;
+    result->vx = now.v[0]*cau86400_over;
+    result->vy = now.v[1]*cau86400_over;
+    result->vz = now.v[2]*cau86400_over;
+    result->ax = now.w[0]*cau8640086400_over;
+    result->ay = now.w[1]*cau8640086400_over;
+    result->az = now.w[2]*cau8640086400_over;
 
     return(NO_ERR);
     
@@ -297,11 +298,12 @@ static int ast_ephem(struct assist_ephem* ephem, const int i, const double jd_re
 
 
 int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephem_cache, const int i, const double t, struct assist_cache_item* result){
+    const int i7 = 7*i;
     if (ephem_cache){
-        const double* const ct = ephem_cache->t+7*i;
+        const double* const ct = ephem_cache->t+i7;
         for (int s=0; s<7; s+=1){
             if (t==ct[s]){
-                *result = *(ephem_cache->items+i*7+s);
+                *result = *(ephem_cache->items+i7+s);
                 return NO_ERR;
             }
         }
@@ -333,7 +335,7 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
     }
 
     if (ephem_cache){
-        double* ct = ephem_cache->t+7*i;
+        double* ct = ephem_cache->t+i7;
         // Find oldest
         int os = 0;
         double ot = ct[0];
@@ -345,7 +347,7 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
         }
         // repolace oldest
         ct[os] = t;
-        *(ephem_cache->items + i*7 +os) = *result;
+        *(ephem_cache->items + i7 +os) = *result;
     }
     return(NO_ERR);
 }
