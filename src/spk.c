@@ -297,7 +297,7 @@ int assist_spk_calc(struct assist_ephem* ephem, const int m, const double jde, c
 		S[p] = 2.0 * z * S[p-1] + 2.0 * T[p-1] - S[p-2];
 	}
 
-    const double au_over = 149597870.7;
+    const double au_over = 1./149597870.7;
     const double auday_over = 86400.0 / (149597870.7 * val[1]);
 	for (n = 0; n < 3; n++) {
 		b = 2 + n * P;
