@@ -239,12 +239,27 @@ static inline void vecpos_off(double *t, const double* u, const double *v, const
  *  Caculate the position+velocity in _equatorial_ coordinates.
  *  Assumes pos is initially zero.
  */
-int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double jd_rel, int body) {
+int assist_jpl_calc(struct assist_ephem* ephem, const int body, const double jd_ref, const double jd_rel, struct assist_cache_item* const result){
+    
+    struct mpos_s pos;
+    struct _jpl_s *pl = ephem->pl;
+
+        const static double JPL_GM[11] =
+        {
+            JPL_EPHEM_GMS, // 0 sun
+            JPL_EPHEM_GM1, // 1 mercury
+            JPL_EPHEM_GM2, // 2 venus
+            (JPL_EPHEM_EMRAT/(1.+JPL_EPHEM_EMRAT) * JPL_EPHEM_GMB), // 3 earth
+            (1./(1.+JPL_EPHEM_EMRAT) * JPL_EPHEM_GMB),              // 4 moon
+            JPL_EPHEM_GM4, // 5 mars
+            JPL_EPHEM_GM5, // 6 jupiter
+            JPL_EPHEM_GM6, // 7 saturn
+            JPL_EPHEM_GM7, // 8 uranus
+            JPL_EPHEM_GM8, // 9 neptune
+            JPL_EPHEM_GM9, // 10 pluto
+        };
         double t, *z;
         u_int32_t blk;
-
-        if (pl == NULL || pl->map == NULL || pos == NULL)
-                return -1;
 
         // check if covered by this file
         if (jd_ref + jd_rel < pl->beg || jd_ref + jd_rel > pl->end)
@@ -257,13 +272,13 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
 
         switch (body) { // The indices in the pl-> arrays match the JPL component index for the body
             case 0: // SUN
-                assist_jpl_work(&z[pl->off[JPL_SUN]], pl->ncm[JPL_SUN], pl->ncf[JPL_SUN], pl->niv[JPL_SUN], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_SUN]], pl->ncm[JPL_SUN], pl->ncf[JPL_SUN], pl->niv[JPL_SUN], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
             case 1: // MER
-                assist_jpl_work(&z[pl->off[JPL_MER]], pl->ncm[JPL_MER], pl->ncf[JPL_MER], pl->niv[JPL_MER], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_MER]], pl->ncm[JPL_MER], pl->ncf[JPL_MER], pl->niv[JPL_MER], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
             case 2: // VEN
-                assist_jpl_work(&z[pl->off[JPL_VEN]], pl->ncm[JPL_VEN], pl->ncf[JPL_VEN], pl->niv[JPL_VEN], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_VEN]], pl->ncm[JPL_VEN], pl->ncf[JPL_VEN], pl->niv[JPL_VEN], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
             case 3: // EAR
                 {
@@ -271,9 +286,9 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
                     assist_jpl_work(&z[pl->off[JPL_EMB]], pl->ncm[JPL_EMB], pl->ncf[JPL_EMB], pl->niv[JPL_EMB], t, pl->inc, emb.u, emb.v, emb.w); // earth moon barycenter
                     assist_jpl_work(&z[pl->off[JPL_LUN]], pl->ncm[JPL_LUN], pl->ncf[JPL_LUN], pl->niv[JPL_LUN], t, pl->inc, lun.u, lun.v, lun.w);
 
-                    vecpos_off(pos->u, emb.u, lun.u, -1.0 / (1.0 + pl->cem));
-                    vecpos_off(pos->v, emb.v, lun.v, -1.0 / (1.0 + pl->cem));
-                    vecpos_off(pos->w, emb.w, lun.w, -1.0 / (1.0 + pl->cem));
+                    vecpos_off(pos.u, emb.u, lun.u, -1.0 / (1.0 + pl->cem));
+                    vecpos_off(pos.v, emb.v, lun.v, -1.0 / (1.0 + pl->cem));
+                    vecpos_off(pos.w, emb.w, lun.w, -1.0 / (1.0 + pl->cem));
                 }
                 break;
             case 4: // LUN 
@@ -282,28 +297,28 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
                     assist_jpl_work(&z[pl->off[JPL_EMB]], pl->ncm[JPL_EMB], pl->ncf[JPL_EMB], pl->niv[JPL_EMB], t, pl->inc, emb.u, emb.v, emb.w);
                     assist_jpl_work(&z[pl->off[JPL_LUN]], pl->ncm[JPL_LUN], pl->ncf[JPL_LUN], pl->niv[JPL_LUN], t, pl->inc, lun.u, lun.v, lun.w);
 
-                    vecpos_off(pos->u, emb.u, lun.u, pl->cem / (1.0 + pl->cem));
-                    vecpos_off(pos->v, emb.v, lun.v, pl->cem / (1.0 + pl->cem));
-                    vecpos_off(pos->w, emb.w, lun.w, pl->cem / (1.0 + pl->cem));
+                    vecpos_off(pos.u, emb.u, lun.u, pl->cem / (1.0 + pl->cem));
+                    vecpos_off(pos.v, emb.v, lun.v, pl->cem / (1.0 + pl->cem));
+                    vecpos_off(pos.w, emb.w, lun.w, pl->cem / (1.0 + pl->cem));
                 }
                 break;
             case 5: // MAR
-                assist_jpl_work(&z[pl->off[JPL_MAR]], pl->ncm[JPL_MAR], pl->ncf[JPL_MAR], pl->niv[JPL_MAR], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_MAR]], pl->ncm[JPL_MAR], pl->ncf[JPL_MAR], pl->niv[JPL_MAR], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
             case 6: // JUP
-                assist_jpl_work(&z[pl->off[JPL_JUP]], pl->ncm[JPL_JUP], pl->ncf[JPL_JUP], pl->niv[JPL_JUP], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_JUP]], pl->ncm[JPL_JUP], pl->ncf[JPL_JUP], pl->niv[JPL_JUP], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
             case 7: // SAT
-                assist_jpl_work(&z[pl->off[JPL_SAT]], pl->ncm[JPL_SAT], pl->ncf[JPL_SAT], pl->niv[JPL_SAT], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_SAT]], pl->ncm[JPL_SAT], pl->ncf[JPL_SAT], pl->niv[JPL_SAT], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
             case 8: // URA
-                assist_jpl_work(&z[pl->off[JPL_URA]], pl->ncm[JPL_URA], pl->ncf[JPL_URA], pl->niv[JPL_URA], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_URA]], pl->ncm[JPL_URA], pl->ncf[JPL_URA], pl->niv[JPL_URA], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
             case 9: // NEP
-                assist_jpl_work(&z[pl->off[JPL_NEP]], pl->ncm[JPL_NEP], pl->ncf[JPL_NEP], pl->niv[JPL_NEP], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_NEP]], pl->ncm[JPL_NEP], pl->ncf[JPL_NEP], pl->niv[JPL_NEP], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
             case 10: // PLU
-                assist_jpl_work(&z[pl->off[JPL_PLU]], pl->ncm[JPL_PLU], pl->ncf[JPL_PLU], pl->niv[JPL_PLU], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_PLU]], pl->ncm[JPL_PLU], pl->ncf[JPL_PLU], pl->niv[JPL_PLU], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
             case 11: // BAR
                      // Nothing needs to be done
@@ -313,7 +328,23 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
                 break;
         }
 
-        pos->jde = jd_ref + jd_rel;
+        // Convert to au/day and au/day^2
+        const double cau_over = ephem->pl->cau_over;
+        const double cau86400_over = cau_over*86400.0;
+        const double cau8640086400_over = cau86400_over*86400.0;
+
+
+        result->m = JPL_GM[body];
+        result->x = pos.u[0]*cau_over;
+        result->y = pos.u[1]*cau_over;
+        result->z = pos.u[2]*cau_over;
+        result->vx = pos.v[0]*cau86400_over;
+        result->vy = pos.v[1]*cau86400_over;
+        result->vz = pos.v[2]*cau86400_over;
+        result->ax = pos.w[0]*cau8640086400_over;
+        result->ay = pos.w[1]*cau8640086400_over;
+        result->az = pos.w[2]*cau8640086400_over;
+
         return 0;
 }
 

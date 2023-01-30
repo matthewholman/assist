@@ -176,57 +176,6 @@ void assist_additional_forces(struct reb_simulation* sim){
     }
 }
 
-static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd_ref, const double t, struct assist_cache_item* const result){
-
-    struct mpos_s now;
-
-    // Calculate GM values for Earth and Moon
-    // from Earth-moon ratio and sum.
-
-    // The values below are G*mass.
-    // Units are solar masses, au, days.
-    // DE440/441 units: au^3 day^-2.
-    const static double JPL_GM[11] =
-	{
-	    JPL_EPHEM_GMS, // 0 sun
-	    JPL_EPHEM_GM1, // 1 mercury
-	    JPL_EPHEM_GM2, // 2 venus
-        (JPL_EPHEM_EMRAT/(1.+JPL_EPHEM_EMRAT) * JPL_EPHEM_GMB), // 3 earth
-        (1./(1.+JPL_EPHEM_EMRAT) * JPL_EPHEM_GMB),              // 4 moon
-	    JPL_EPHEM_GM4, // 5 mars
-	    JPL_EPHEM_GM5, // 6 jupiter
-	    JPL_EPHEM_GM6, // 7 saturn
-	    JPL_EPHEM_GM7, // 8 uranus
-	    JPL_EPHEM_GM8, // 9 neptune
-	    JPL_EPHEM_GM9, // 10 pluto
-	};
-
-    // Get position, velocity, and mass of body i in barycentric coords.
-
-    result->m = JPL_GM[i];
-
-    assist_jpl_calc(ephem->pl, &now, jd_ref, t, i); 
-
-    // Convert to au/day and au/day^2
-    const double cau_over = ephem->pl->cau_over;
-    const double cau86400_over = cau_over*86400.0;
-    const double cau8640086400_over = cau86400_over*86400.0;
-
-
-    result->x = now.u[0]*cau_over;
-    result->y = now.u[1]*cau_over;
-    result->z = now.u[2]*cau_over;
-    result->vx = now.v[0]*cau86400_over;
-    result->vy = now.v[1]*cau86400_over;
-    result->vz = now.v[2]*cau86400_over;
-    result->ax = now.w[0]*cau8640086400_over;
-    result->ay = now.w[1]*cau8640086400_over;
-    result->az = now.w[2]*cau8640086400_over;
-
-    return(NO_ERR);
-    
-}
-
 int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephem_cache, const int i, const double t, struct assist_cache_item* result){
     const int i7 = 7*i;
     if (ephem_cache){
@@ -244,7 +193,7 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
 
     // Get position and mass of massive body i.
     if(i < N_ephem){
-        int flag = planet_ephem(ephem, i, jd_ref, t, result);
+        int flag = assist_jpl_calc(ephem, i, jd_ref, t, result);
         if(flag != NO_ERR) return(flag);
     }else{
         // Get position and mass of asteroid i-N_ephem.
