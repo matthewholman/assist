@@ -33,6 +33,7 @@ struct _jpl_s {
         double beg, end;                // begin and end times
         double inc;                     // time step size
         double cau;                     // definition of AU
+        double cau_over;                // inverse of cau
         double cem;                     // Earth/Moon mass ratio
         int32_t num;                    // number of constants
         int32_t ver;                    // ephemeris version

@@ -208,7 +208,7 @@ static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd
     assist_jpl_calc(ephem->pl, &now, jd_ref, t, i); 
 
     // Convert to au/day and au/day^2
-    const double cau_over = 1./ephem->pl->cau;
+    const double cau_over = ephem->pl->cau_over;
     const double cau86400_over = cau_over*86400.0;
     const double cau8640086400_over = cau86400_over*86400.0;
 

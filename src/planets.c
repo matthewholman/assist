@@ -112,6 +112,7 @@ struct _jpl_s * assist_jpl_init(char *str)
         ret += read(fd, &jpl->inc, sizeof(double));
         ret += read(fd, &jpl->num, sizeof(int32_t));
         ret += read(fd, &jpl->cau, sizeof(double));
+        jpl->cau_over = 1./jpl->cau; // precalculate
         ret += read(fd, &jpl->cem, sizeof(double));
 
 	//printf("%lf %lf %lf %d\n", jpl->beg, jpl->end, jpl->inc, jpl->num);
