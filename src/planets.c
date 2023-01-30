@@ -225,6 +225,15 @@ int assist_jpl_free(struct _jpl_s *jpl)
         return 0;
 }
 
+
+// From Weryk's code
+/////// private interface :
+
+static inline void vecpos_off(double *t, const double* u, const double *v, const double w)
+        { t[0] = u[0] + v[0] * w; t[1] = u[1] + v[1] * w; t[2] = u[2] + v[2] * w; }
+static inline void vecpos_set(double *u, const double *v)
+        { u[0] = v[0]; u[1] = v[1]; u[2] = v[2]; }
+
 /*
  *  jpl_calc
  *
@@ -263,14 +272,11 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
                     assist_jpl_work(&z[pl->off[JPL_EMB]], pl->ncm[JPL_EMB], pl->ncf[JPL_EMB], pl->niv[JPL_EMB], t, pl->inc, emb.u, emb.v, emb.w); // earth moon barycenter
                     assist_jpl_work(&z[pl->off[JPL_LUN]], pl->ncm[JPL_LUN], pl->ncf[JPL_LUN], pl->niv[JPL_LUN], t, pl->inc, lun.u, lun.v, lun.w);
 
-                    vecpos_set(pos->u, emb.u);
-                    vecpos_off(pos->u, lun.u, -1.0 / (1.0 + pl->cem));
+                    vecpos_off(pos->u, emb.u, lun.u, -1.0 / (1.0 + pl->cem));
 
-                    vecpos_set(pos->v, emb.v);
-                    vecpos_off(pos->v, lun.v, -1.0 / (1.0 + pl->cem));
+                    vecpos_off(pos->v, emb.v, lun.v, -1.0 / (1.0 + pl->cem));
 
-                    vecpos_set(pos->w, emb.w);
-                    vecpos_off(pos->w, lun.w, -1.0 / (1.0 + pl->cem));
+                    vecpos_off(pos->w, emb.w, lun.w, -1.0 / (1.0 + pl->cem));
                 }
                 break;
             case 4: // LUN 
@@ -279,14 +285,11 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
                     assist_jpl_work(&z[pl->off[JPL_EMB]], pl->ncm[JPL_EMB], pl->ncf[JPL_EMB], pl->niv[JPL_EMB], t, pl->inc, emb.u, emb.v, emb.w);
                     assist_jpl_work(&z[pl->off[JPL_LUN]], pl->ncm[JPL_LUN], pl->ncf[JPL_LUN], pl->niv[JPL_LUN], t, pl->inc, lun.u, lun.v, lun.w);
 
-                    vecpos_set(pos->u, emb.u);
-                    vecpos_off(pos->u, lun.u, pl->cem / (1.0 + pl->cem));
+                    vecpos_off(pos->u, emb.u, lun.u, pl->cem / (1.0 + pl->cem));
 
-                    vecpos_set(pos->v, emb.v);
-                    vecpos_off(pos->v, lun.v, pl->cem / (1.0 + pl->cem));
+                    vecpos_off(pos->v, emb.v, lun.v, pl->cem / (1.0 + pl->cem));
 
-                    vecpos_set(pos->w, emb.w);
-                    vecpos_off(pos->w, lun.w, pl->cem / (1.0 + pl->cem));
+                    vecpos_off(pos->w, emb.w, lun.w, pl->cem / (1.0 + pl->cem));
                 }
                 break;
             case 5: // MAR
