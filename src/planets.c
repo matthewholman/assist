@@ -256,7 +256,7 @@ int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double
 
         switch (body) { // The indices in the pl-> arrays match the JPL component index for the body
             case 0: // SUN
-                assist_jpl_work(&z[pl->off[10]], pl->ncm[10], pl->ncf[10], pl->niv[10], t, pl->inc, pos->u, pos->v, pos->w);
+                assist_jpl_work(&z[pl->off[JPL_SUN]], pl->ncm[JPL_SUN], pl->ncf[JPL_SUN], pl->niv[JPL_SUN], t, pl->inc, pos->u, pos->v, pos->w);
                 break;
             case 1: // MER
                 assist_jpl_work(&z[pl->off[JPL_MER]], pl->ncm[JPL_MER], pl->ncf[JPL_MER], pl->niv[JPL_MER], t, pl->inc, pos->u, pos->v, pos->w);
