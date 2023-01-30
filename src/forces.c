@@ -227,66 +227,6 @@ static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd
     
 }
 
-static int ast_ephem(struct assist_ephem* ephem, const int i, const double jd_ref, const double t, struct assist_cache_item* const result){
-
-    //static int initialized = 0;
-
-    //static struct spk_s *spl;
-    struct mpos_s pos;
-
-    // DE441
-    // The values below are G*mass.
-    // Units are solar masses, au, days.
-    const static double JPL_GM[16] =    
-    {
-	JPL_EPHEM_MA0107, // 107 camilla
-	JPL_EPHEM_MA0001, // 1 Ceres
-	JPL_EPHEM_MA0065, // 65 cybele
-	JPL_EPHEM_MA0511, // 511 davida
-	JPL_EPHEM_MA0015, // 15 eunomia
-	JPL_EPHEM_MA0031, // 31 euphrosyne	    
-	JPL_EPHEM_MA0052, // 52 europa
-	JPL_EPHEM_MA0010, // 10 hygiea
-	JPL_EPHEM_MA0704, // 704 interamnia
-	JPL_EPHEM_MA0007, // 7 iris
-	JPL_EPHEM_MA0003, // 3 juno
-	JPL_EPHEM_MA0002, // 2 pallas
-	JPL_EPHEM_MA0016, // 16 psyche
-	JPL_EPHEM_MA0087, // 87 sylvia
-	JPL_EPHEM_MA0088, // 88 thisbe
-	JPL_EPHEM_MA0004  // 4 vesta
-    };
-
-
-    /*
-    if (initialized == 0){
-	char buf[] = "/Users/mholman/assist/data/sb441-n16.bsp";
-	if ((spl = assist_spk_init(buf)) == NULL) {
-	    printf("Couldn't find asteroid ephemeris file: %s\n", buf);
-	    return(ERR_JPL_AST);
-	}
-
-	initialized = 1;
-
-    }
-    */
-    
-    // TODO: again, the units might be handled more
-    // generally
-
-    result->m = JPL_GM[i];
-
-    assist_spk_calc(ephem->spl, i, jd_ref, t, &pos);
-
-    result->x = pos.u[0];
-    result->y = pos.u[1];
-    result->z = pos.u[2];
-
-    return(NO_ERR);
-
-}
-
-
 int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephem_cache, const int i, const double t, struct assist_cache_item* result){
     const int i7 = 7*i;
     if (ephem_cache){
@@ -308,7 +248,7 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
         if(flag != NO_ERR) return(flag);
     }else{
         // Get position and mass of asteroid i-N_ephem.
-        int flag = ast_ephem(ephem, i-N_ephem, jd_ref, t, result);
+        int flag = assist_spk_calc(ephem, i-N_ephem, jd_ref, t, result);
         if(flag != NO_ERR) return(flag);
 
         struct assist_cache_item sun = {0};

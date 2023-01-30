@@ -17,6 +17,8 @@
 #include <unistd.h>
 #include <time.h>
 #include "spk.h"
+#include "const.h"
+#include "assist.h"
 
 
 struct sum_s {
@@ -227,22 +229,47 @@ int assist_spk_find(struct spk_s *pl, int tar)
  *
  */
 
-int assist_spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos)
-{
+//int assist_spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos)
+int assist_spk_calc(struct assist_ephem* ephem, const int m, const double jde, const double rel, struct assist_cache_item* const result){
+    
+    // DE441
+    // The values below are G*mass.
+    // Units are solar masses, au, days.
+    const static double JPL_GM[16] =    
+    {
+	JPL_EPHEM_MA0107, // 107 camilla
+	JPL_EPHEM_MA0001, // 1 Ceres
+	JPL_EPHEM_MA0065, // 65 cybele
+	JPL_EPHEM_MA0511, // 511 davida
+	JPL_EPHEM_MA0015, // 15 eunomia
+	JPL_EPHEM_MA0031, // 31 euphrosyne	    
+	JPL_EPHEM_MA0052, // 52 europa
+	JPL_EPHEM_MA0010, // 10 hygiea
+	JPL_EPHEM_MA0704, // 704 interamnia
+	JPL_EPHEM_MA0007, // 7 iris
+	JPL_EPHEM_MA0003, // 3 juno
+	JPL_EPHEM_MA0002, // 2 pallas
+	JPL_EPHEM_MA0016, // 16 psyche
+	JPL_EPHEM_MA0087, // 87 sylvia
+	JPL_EPHEM_MA0088, // 88 thisbe
+	JPL_EPHEM_MA0004  // 4 vesta
+    };
+    result->m = JPL_GM[m];
 
+    struct spk_s* pl = ephem->spl;
+
+    struct mpos_s pos;
 	int n, b, p, P, R;
 	double T[32], S[32];
 	double *val, z;
 
-	if (pl == NULL || pos == NULL)
-		return -1;
 	if (m < 0 || m >= pl->num)
 		return -1;
 
-	pos->jde = jde + rel;
+	pos.jde = jde + rel;
 
 	for (n = 0; n < 3; n++)
-		pos->u[n] = pos->v[n] = 0.0;
+		pos.u[n] = pos.v[n] = 0.0;
 
 	// find location of 'directory' describing the data records
 	n = (int)((jde + rel - pl->beg[m]) / pl->res[m]);
@@ -276,19 +303,22 @@ int assist_spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos
 
 		// sum interpolation stuff
 		for (p = 0; p < P; p++) {
-		    pos->u[n] += val[b + p] * T[p];
-		    pos->v[n] += val[b + p] * S[p];
+		    pos.u[n] += val[b + p] * T[p];
+		    pos.v[n] += val[b + p] * S[p];
 			
 		}
 
 		// restore units to [AU] and [AU/day]
-		pos->u[n] /= 149597870.7;
-		pos->v[n] /= 149597870.7 / 86400.0;
-		pos->v[n] /= val[1];
-		fflush(stdout);
+		pos.u[n] /= 149597870.7;
+		pos.v[n] /= 149597870.7 / 86400.0;
+		pos.v[n] /= val[1];
 			
 		
 	}
+    
+    result->x = pos.u[0];
+    result->y = pos.u[1];
+    result->z = pos.u[2];
 
 	return 0;
 }
