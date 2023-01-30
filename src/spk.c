@@ -229,7 +229,6 @@ int assist_spk_find(struct spk_s *pl, int tar)
  *
  */
 
-//int assist_spk_calc(struct spk_s *pl, int m, double jde, double rel, struct mpos_s *pos)
 int assist_spk_calc(struct assist_ephem* ephem, const int m, const double jde, const double rel, struct assist_cache_item* const result){
     
     // DE441
@@ -298,6 +297,8 @@ int assist_spk_calc(struct assist_ephem* ephem, const int m, const double jde, c
 		S[p] = 2.0 * z * S[p-1] + 2.0 * T[p-1] - S[p-2];
 	}
 
+    const double au_over = 149597870.7;
+    const double auday_over = 86400.0 / (149597870.7 * val[1]);
 	for (n = 0; n < 3; n++) {
 		b = 2 + n * P;
 
@@ -309,11 +310,9 @@ int assist_spk_calc(struct assist_ephem* ephem, const int m, const double jde, c
 		}
 
 		// restore units to [AU] and [AU/day]
-		pos.u[n] /= 149597870.7;
-		pos.v[n] /= 149597870.7 / 86400.0;
-		pos.v[n] /= val[1];
+		pos.u[n] *= au_over; 
+		pos.v[n] *= auday_over; 
 			
-		
 	}
     
     result->x = pos.u[0];

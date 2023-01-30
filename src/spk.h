@@ -71,7 +71,6 @@ struct spk_s {
 int assist_spk_free(struct spk_s *pl);
 struct spk_s * assist_spk_init(const char *path);
 int assist_spk_find(struct spk_s *pl, int m);
-//int assist_spk_calc(struct spk_s *pl, int tar, double jde, double rel, struct mpos_s *pos);
 int assist_spk_calc(struct assist_ephem* ephem, const int i, const double jde, const double rel, struct assist_cache_item* const result);
 
 #endif // _SPK_H
