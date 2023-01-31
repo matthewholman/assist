@@ -46,6 +46,11 @@ jobs:
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Reproduce Ceres-5303 encounter 
+        working-directory: ./unit_tests/5303_Ceres/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Run benchmark
         working-directory: ./unit_tests/benchmark
         run: |
