@@ -24,10 +24,19 @@ double roundtrip(struct assist_ephem* ephem, double trange){
         x0, y0, z0,
         2.8056633153049852e-03,  7.5504086883996860e-03,  2.9800282074358684e-03);
    
-    reb_integrate(r,  t0 + trange);
-    assert(r->t == t0+trange);
-    r->dt = 0.01; 
+    //reb_integrate(r,  t0 + trange);
+    //assert(r->t == t0+trange);
+    while (r->t < t0 + trange){
+        reb_step(r);
+    }
+    r->dt *= -1; 
+//    while (r->t > t0){
+//        reb_step(r);
+//    }
+    printf("tt= %f\n", r->t-t0);
     reb_integrate(r,  t0);
+    printf("dt= %f\n", r->dt_last_done);
+    printf("dt= %f\n", r->dt);
     assert(r->t == t0);
 
     double dx = r->particles[0].x - x0;
