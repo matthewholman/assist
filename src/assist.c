@@ -199,12 +199,24 @@ void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist,
 
 void assist_free_pointers(struct assist_extras* assist){
     assist_detach(assist->sim, assist);
-    free(assist->last_state_x);
-    free(assist->last_state_v);
-    free(assist->last_state_a);
-    free(assist->ephem_cache->items);
-    free(assist->ephem_cache->t);
-    free(assist->ephem_cache);
+    if (assist->last_state_x){
+        free(assist->last_state_x);
+    }
+    if (assist->last_state_v){
+        free(assist->last_state_v);
+    }
+    if(assist->last_state_a){
+        free(assist->last_state_a);
+    }
+    if (assist->ephem_cache){
+        if (assist->ephem_cache->items){
+            free(assist->ephem_cache->items);
+        }
+        if (assist->ephem_cache->t){
+            free(assist->ephem_cache->t);
+        }
+        free(assist->ephem_cache);
+    }
     if (assist->extras_should_free_ephem){
         assist_ephem_free(assist->ephem);
     }
