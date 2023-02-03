@@ -532,6 +532,78 @@ int assist_interpolate(struct reb_simulation* sim, double h, double* output){
     return 1;
 }
 
+int assist_interpolate_to_particles(struct reb_simulation* sim, double h, struct reb_particle* output){
+    struct assist_extras* assist = (struct assist_extras*) sim->extras;
+    int N = sim->N;
+
+    // Convenience variable.  The 'br' field contains the
+    // set of coefficients from the last completed step.
+    const struct reb_dpconst7 b  = dpcast(sim->ri_ias15.br);
+
+    double* x0 = assist->last_state_x;
+    double* v0 = assist->last_state_v;
+    double* a0 = assist->last_state_a;
+
+    double s[9]; // Summation coefficients
+
+    s[0] = sim->dt_last_done * h;
+
+    s[1] = s[0] * s[0] / 2.;
+    s[2] = s[1] * h / 3.;
+    s[3] = s[2] * h / 2.;
+    s[4] = 3. * s[3] * h / 5.;
+    s[5] = 2. * s[4] * h / 3.;
+    s[6] = 5. * s[5] * h / 7.;
+    s[7] = 3. * s[6] * h / 4.;
+    s[8] = 7. * s[7] * h / 9.;
+
+    // Predict positions at interval n using b values
+    // for all the particles
+    for(int j=0;j<N;j++) {
+        const int k0 = 3*j+0;
+        const int k1 = 3*j+1;
+        const int k2 = 3*j+2;
+
+        double xx0 = x0[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
+        double xy0 = x0[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
+        double xz0 = x0[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
+
+        // Store the results
+        output[j].x = xx0;
+        output[j].y = xy0;
+        output[j].z = xz0;
+    }
+
+    s[0] = sim->dt_last_done * h;
+    s[1] =      s[0] * h / 2.;
+    s[2] = 2. * s[1] * h / 3.;
+    s[3] = 3. * s[2] * h / 4.;
+    s[4] = 4. * s[3] * h / 5.;
+    s[5] = 5. * s[4] * h / 6.;
+    s[6] = 6. * s[5] * h / 7.;
+    s[7] = 7. * s[6] * h / 8.;
+
+    // Predict velocities at interval n using b values
+    // for all the particles
+    for(int j=0;j<N;j++) {
+
+        const int k0 = 3*j+0;
+        const int k1 = 3*j+1;
+        const int k2 = 3*j+2;
+
+        double vx0 = v0[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
+        double vy0 = v0[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
+        double vz0 = v0[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
+
+        // Store the results
+        output[j].vx = vx0;
+        output[j].vy = vy0;
+        output[j].vz = vz0;
+
+    }
+    return 1;
+}
+
 struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulationarchive* sa, double t){
     if (sa==NULL) return NULL;
 
@@ -566,6 +638,38 @@ struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulati
     assist_interpolate_simulation(r2, r3, h);
     reb_free_simulation(r3);
     return r2;
+}
+
+void assist_swap_particles(struct reb_simulation* sim){
+    struct assist_extras* ax = sim->extras;
+    struct reb_particle* p = sim->particles;
+    sim->particles = ax->current_state;
+    ax->current_state = p; 
+}
+
+void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
+    struct reb_simulation* sim = ax->sim;
+    
+    if (ax->current_state==NULL){
+        ax->current_state = malloc(sizeof(struct reb_particle)*6*sim->N);
+        sim->pre_timestep_modifications = assist_pre_timestep_modifications;
+        ax->last_state_x = malloc(sim->N*3*sizeof(double));
+        ax->last_state_v = malloc(sim->N*3*sizeof(double));
+        ax->last_state_a = malloc(sim->N*3*sizeof(double));
+    }else{
+        assist_swap_particles(sim);
+    }
+
+    if (t > sim->t){
+        sim->exact_finish_time = 0;
+        reb_integrate(sim, t);
+    }
+    double h = 1.0-(sim->t -t) / sim->dt_last_done; 
+    assist_interpolate_to_particles(sim, h, ax->current_state);
+    assist_swap_particles(sim);
+
+
+
 }
 
 int assist_interpolate_simulation(struct reb_simulation* sim1, struct reb_simulation* sim2, double h){
@@ -705,7 +809,7 @@ static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     struct assist_extras* assist = sim->extras;
     assist->last_state_t = sim->t;
 
-    //reb_update_acceleration(sim); // This will later be recalculated. Could be optimized.
+    reb_update_acceleration(sim); // This will later be recalculated. Could be optimized.
 
     for(int j=0; j<sim->N; j++){ 
         int offset = 3*j;
