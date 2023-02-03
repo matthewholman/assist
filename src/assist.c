@@ -180,14 +180,14 @@ struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ep
 
     // Initialization separate from memory allocation because python handles memory management
     struct assist_extras* assist = calloc(1, sizeof(*assist));
-    assist_initialize(sim, assist, ephem); 
+    assist_init(sim, assist, ephem); 
     assist->extras_should_free_ephem = extras_should_free_ephem;
     
     return assist;
 }
 
 
-void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem){
+void assist_init(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem){
     assist->sim = sim;
     assist->ephem_cache = calloc(1, sizeof(struct assist_ephem_cache));
     const int N_total = 16+11; // TODO

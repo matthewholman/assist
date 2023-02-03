@@ -146,7 +146,7 @@ void assist_error(struct assist_extras* assist, const char* const msg);
 struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t);
 
 // Functions called from python:
-void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem); // Initializes all pointers and values.
+void assist_init(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem); // Initializes all pointers and values.
 void assist_free_pointers(struct assist_extras* assist);
 
 int assist_integrate(struct assist_ephem* ephem,
