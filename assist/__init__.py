@@ -32,7 +32,8 @@ except:
     pass    # this check fails in python 3. Problem with setuptools
 
 from .extras import Extras
+from .ephem import Ephem
 
 from .assist import all_ephem, integration_function, production_integration_function_wrapper
 
-__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Extras", "all_ephem", "integration_function", "production_integration_function_wrapper"]
+__all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Extras", "all_ephem", "integration_function", "production_integration_function_wrapper", "Ephem"]
