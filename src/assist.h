@@ -142,6 +142,9 @@ void assist_detach(struct reb_simulation* sim, struct assist_extras* assist);
 void assist_error(struct assist_extras* assist, const char* const msg);
 
 
+int assist_interpolate_simulation(struct reb_simulation* sim1, struct reb_simulation* sim2, double h);
+struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulationarchive* sa, double t);
+
 // Find particle position and velocity based on ephemeris data
 struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t);
 

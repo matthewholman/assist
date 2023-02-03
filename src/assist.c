@@ -259,6 +259,11 @@ void assist_free(struct assist_extras* assist){
 }
 
 void assist_detach(struct reb_simulation* sim, struct assist_extras* assist){
+    if (assist->sim){
+        sim->extras = NULL;
+        sim->extras_cleanup = NULL;
+        sim->additional_forces = NULL;
+    }
     assist->sim = NULL;
 }
 
@@ -527,6 +532,114 @@ int assist_interpolate(struct reb_simulation* sim, double h, double* output){
     return 1;
 }
 
+struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulationarchive* sa, double t){
+    if (sa==NULL) return NULL;
+
+    // Find blob just after time t
+    if (t <= sa->t[1]){ // Note cannot use first blob because accelerations are missing!
+        printf("Requested time outside range of SimulationArchive.\n");
+        return NULL;
+    }
+    if (t >= sa->t[sa->nblobs-1]){
+        printf("Requested time outside range of SimulationArchive.\n");
+        return NULL;
+    }
+    long blob = 0;
+    for (long i=1; i<sa->nblobs; i++){
+        if (sa->t[i] >= t){
+            blob = i;
+            break;
+        }
+    }
+    
+    //Very hackish solutions. Should be improved!
+    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
+    struct reb_simulation* r2 = reb_create_simulation();
+    reb_create_simulation_from_simulationarchive_with_messages(r2, sa, blob-1, &warnings);
+    // r2 = reb_input_process_warnings(r2, warnings); Ignoring warnings for now
+    
+    struct reb_simulation* r3 = reb_create_simulation();
+    reb_create_simulation_from_simulationarchive_with_messages(r3, sa, blob, &warnings);
+    // r3 = reb_input_process_warnings(r3, warnings);
+    
+    double h = (t - r2->t)/(r3->dt_last_done);
+    assist_interpolate_simulation(r2, r3, h);
+    reb_free_simulation(r3);
+    return r2;
+}
+
+int assist_interpolate_simulation(struct reb_simulation* sim1, struct reb_simulation* sim2, double h){
+    int N = sim1->N;
+
+    // Convenience variable.  The 'br' field contains the
+    // set of coefficients from the last completed step.
+    const struct reb_dpconst7 b  = dpcast(sim2->ri_ias15.br);
+
+    double* x0 = sim1->ri_ias15.x0;
+    double* v0 = sim1->ri_ias15.v0;
+    double* a0 = sim2->ri_ias15.a0; // Note: sim2 !
+
+    double s[9]; // Summation coefficients
+
+    s[0] = sim2->dt_last_done * h;
+
+    s[1] = s[0] * s[0] / 2.;
+    s[2] = s[1] * h / 3.;
+    s[3] = s[2] * h / 2.;
+    s[4] = 3. * s[3] * h / 5.;
+    s[5] = 2. * s[4] * h / 3.;
+    s[6] = 5. * s[5] * h / 7.;
+    s[7] = 3. * s[6] * h / 4.;
+    s[8] = 7. * s[7] * h / 9.;
+
+    // Predict positions at interval n using b values
+    // for all the particles
+    for(int j=0;j<N;j++) {
+        const int k0 = 3*j+0;
+        const int k1 = 3*j+1;
+        const int k2 = 3*j+2;
+
+        double xx0 = x0[k0] + (s[8]*b.p6[k0] + s[7]*b.p5[k0] + s[6]*b.p4[k0] + s[5]*b.p3[k0] + s[4]*b.p2[k0] + s[3]*b.p1[k0] + s[2]*b.p0[k0] + s[1]*a0[k0] + s[0]*v0[k0] );
+        double xy0 = x0[k1] + (s[8]*b.p6[k1] + s[7]*b.p5[k1] + s[6]*b.p4[k1] + s[5]*b.p3[k1] + s[4]*b.p2[k1] + s[3]*b.p1[k1] + s[2]*b.p0[k1] + s[1]*a0[k1] + s[0]*v0[k1] );
+        double xz0 = x0[k2] + (s[8]*b.p6[k2] + s[7]*b.p5[k2] + s[6]*b.p4[k2] + s[5]*b.p3[k2] + s[4]*b.p2[k2] + s[3]*b.p1[k2] + s[2]*b.p0[k2] + s[1]*a0[k2] + s[0]*v0[k2] );
+
+        // Store the results
+        sim1->particles[j].x = xx0;
+        sim1->particles[j].y = xy0;
+        sim1->particles[j].z = xz0;
+    }
+
+    s[0] = sim2->dt_last_done * h;
+    s[1] =      s[0] * h / 2.;
+    s[2] = 2. * s[1] * h / 3.;
+    s[3] = 3. * s[2] * h / 4.;
+    s[4] = 4. * s[3] * h / 5.;
+    s[5] = 5. * s[4] * h / 6.;
+    s[6] = 6. * s[5] * h / 7.;
+    s[7] = 7. * s[6] * h / 8.;
+
+    // Predict velocities at interval n using b values
+    // for all the particles
+    for(int j=0;j<N;j++) {
+
+        const int k0 = 3*j+0;
+        const int k1 = 3*j+1;
+        const int k2 = 3*j+2;
+
+        double vx0 = v0[k0] + s[7]*b.p6[k0] + s[6]*b.p5[k0] + s[5]*b.p4[k0] + s[4]*b.p3[k0] + s[3]*b.p2[k0] + s[2]*b.p1[k0] + s[1]*b.p0[k0] + s[0]*a0[k0];
+        double vy0 = v0[k1] + s[7]*b.p6[k1] + s[6]*b.p5[k1] + s[5]*b.p4[k1] + s[4]*b.p3[k1] + s[3]*b.p2[k1] + s[2]*b.p1[k1] + s[1]*b.p0[k1] + s[0]*a0[k1];
+        double vz0 = v0[k2] + s[7]*b.p6[k2] + s[6]*b.p5[k2] + s[5]*b.p4[k2] + s[4]*b.p3[k2] + s[3]*b.p2[k2] + s[2]*b.p1[k2] + s[1]*b.p0[k2] + s[0]*a0[k2];
+
+        // Store the results
+        sim1->particles[j].vx = vx0;
+        sim1->particles[j].vy = vy0;
+        sim1->particles[j].vz = vz0;
+
+    }
+    sim1->t += s[0];
+    return 1;
+}
+
 // This function is doing two related things:
 // 1. Calculating the positions and velocities at the substeps
 // 2. Storing the times and positions/velocities in the arrays
@@ -592,7 +705,7 @@ static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     struct assist_extras* assist = sim->extras;
     assist->last_state_t = sim->t;
 
-    reb_update_acceleration(sim); // This will later be recalculated. Could be optimized.
+    //reb_update_acceleration(sim); // This will later be recalculated. Could be optimized.
 
     for(int j=0; j<sim->N; j++){ 
         int offset = 3*j;

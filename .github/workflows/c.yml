@@ -51,6 +51,11 @@ jobs:
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test interpolation 
+        working-directory: ./unit_tests/interpolation/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Test ephem_cache 
         working-directory: ./unit_tests/ephem_cache/
         run: |
