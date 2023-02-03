@@ -110,7 +110,7 @@ setup(name='assist',
     cmdclass={'build_ext':build_ext},
     setup_requires=['rebound>=3.10.0', 'numpy'],
     install_requires=['rebound>=3.10.0', 'numpy'],
-    tests_require=["numpy","matplotlib"],
+    tests_require=["numpy","matplotlib","rebound"],
     test_suite="assist.test",
     ext_modules = [libassistmodule],
     zip_safe=False)

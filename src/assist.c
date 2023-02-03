@@ -88,12 +88,12 @@ static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
 }
 
 //"path/to/planet/ephem", "path/to/smallbody/ephem"
-struct assist_ephem* assist_ephem_init(char *user_planets_path, char *user_asteroids_path){
+
+int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char *user_asteroids_path){
 
     char default_planets_path[] = "/data/linux_m13000p17000.441";
     char default_asteroids_path[] = "/data/sb441-n16.bsp";
 
-    struct assist_ephem* ephem = calloc(1, sizeof(struct assist_ephem));
     ephem->jd_ref = 2451545.0; // Default jd_ref
     
     const int FNAMESIZE = 1024;
@@ -106,7 +106,7 @@ struct assist_ephem* assist_ephem_init(char *user_planets_path, char *user_aster
 
     if(user_planets_path == NULL && getenv("ASSIST_DIR")==NULL){
         fprintf(stderr, "No user or default planet ephemeris file\n");
-        return(NULL);	  
+        return ERR_JPL_EPHEM;	  
     }
 
     if(user_planets_path == NULL){
@@ -117,12 +117,12 @@ struct assist_ephem* assist_ephem_init(char *user_planets_path, char *user_aster
 
     if ((ephem->pl = assist_jpl_init(planets_path)) == NULL) {
         printf("Couldn't find planet ephemeris file: %s\n", planets_path);	  
-        return(NULL);	  
+        return ERR_JPL_EPHEM;	  
     }
 
     if(user_asteroids_path == NULL && getenv("ASSIST_DIR")==NULL){
         fprintf(stderr, "No user or asteroid ephemeris file\n");
-        return(NULL);	  
+        return ERR_JPL_AST;	  
     }
 
     if(user_asteroids_path == NULL){
@@ -133,15 +133,30 @@ struct assist_ephem* assist_ephem_init(char *user_planets_path, char *user_aster
 
     if ((ephem->spl = assist_spk_init(asteroids_path)) == NULL) {
         printf("Couldn't find asteroid ephemeris file: %s\n", asteroids_path);
-        return(NULL);
+        return ERR_JPL_AST;	  
     }
 
-    return(ephem);
+    return NO_ERR;
 }
 
+struct assist_ephem* assist_ephem_create(char *user_planets_path, char *user_asteroids_path){
+    struct assist_ephem* ephem = calloc(1, sizeof(struct assist_ephem));
+    int ret = assist_ephem_init(ephem, user_planets_path, user_asteroids_path);
+    if (ret != NO_ERR){
+        assist_ephem_free(ephem);
+        return NULL;
+    }
+    return ephem;
+}
+
+
 void assist_ephem_free(struct assist_ephem* ephem){
-    assist_jpl_free(ephem->pl);
-    assist_spk_free(ephem->spl);
+    if (ephem->pl){
+        assist_jpl_free(ephem->pl);
+    }
+    if (ephem->spl){
+        assist_spk_free(ephem->spl);
+    }
     free(ephem);
 }
 
@@ -153,7 +168,7 @@ struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ep
     int extras_should_free_ephem = 0;
     if (ephem == NULL){
         // Try default 
-        ephem = assist_ephem_init(NULL, NULL);
+        ephem = assist_ephem_create(NULL, NULL);
         if (ephem == NULL){
             fprintf(stderr, "ASSIST Error: Ephemeris pointer passed to assist_attach was NULL. Initialization with default path failed.\n");
             return NULL;

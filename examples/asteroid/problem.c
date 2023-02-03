@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
     double* outstate = (double *) malloc((n_alloc)*6*sizeof(double));
     double* outtime  = (double *) malloc((n_alloc+1)*sizeof(double));
 
-    struct assist_ephem* ephem = assist_ephem_init("../../data/linux_m13000p17000.441",
+    struct assist_ephem* ephem = assist_ephem_create("../../data/linux_m13000p17000.441",
 		      "../../data/sb441-n16.bsp");
 
     int n_steps_done;

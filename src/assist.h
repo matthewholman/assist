@@ -175,6 +175,6 @@ void test_vary(struct reb_simulation* sim, FILE *vfile);
 
 void test_vary_2nd(struct reb_simulation* sim, FILE *vfile);
 
-struct assist_ephem* assist_ephem_init(char *planets_file_name, char *asteroids_file_name);
+struct assist_ephem* assist_ephem_create(char *planets_file_name, char *asteroids_file_name);
 
 #endif
