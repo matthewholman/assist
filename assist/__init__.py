@@ -31,8 +31,8 @@ try:
 except:
     pass    # this check fails in python 3. Problem with setuptools
 
-from .extras import Extras
 from .ephem import Ephem
+from .extras import Extras
 
 from .assist import all_ephem, integration_function, production_integration_function_wrapper
 

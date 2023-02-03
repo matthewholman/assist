@@ -180,14 +180,18 @@ struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ep
 
     // Initialization separate from memory allocation because python handles memory management
     struct assist_extras* assist = calloc(1, sizeof(*assist));
-    assist_init(sim, assist, ephem); 
+    assist_init(assist, sim, ephem); 
     assist->extras_should_free_ephem = extras_should_free_ephem;
     
     return assist;
 }
 
+void assist_extras_cleanup(struct reb_simulation* sim){
+    struct assist_extras* assist = sim->extras;
+    assist->sim = NULL;
+}
 
-void assist_init(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem){
+void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struct assist_ephem* ephem){
     assist->sim = sim;
     assist->ephem_cache = calloc(1, sizeof(struct assist_ephem_cache));
     const int N_total = 16+11; // TODO
@@ -206,16 +210,21 @@ void assist_init(struct reb_simulation* sim, struct assist_extras* assist, struc
                      | ASSIST_FORCE_EARTH_HARMONICS
                      | ASSIST_FORCE_SUN_HARMONICS
                      | ASSIST_FORCE_GR_EIH;
-    
+    assist->last_state_x = NULL; 
+    assist->last_state_v = NULL; 
+    assist->last_state_a = NULL; 
     sim->integrator = REB_INTEGRATOR_IAS15;
     sim->gravity = REB_GRAVITY_NONE;
     sim->extras = assist;
+    sim->extras_cleanup = assist_extras_cleanup;
     sim->additional_forces = assist_additional_forces;
     sim->force_is_velocity_dependent = 1;
 }
 
 void assist_free_pointers(struct assist_extras* assist){
-    assist_detach(assist->sim, assist);
+    if (assist->sim){
+        assist_detach(assist->sim, assist);
+    }
     if (assist->last_state_x){
         free(assist->last_state_x);
     }

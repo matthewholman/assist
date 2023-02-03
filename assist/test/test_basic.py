@@ -21,7 +21,12 @@ class TestRebx(unittest.TestCase):
         self.assertEqual(p.x, -2.62956381075119)
         del ephem
 
+    def test_holman(self):
+        ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
+        ephem.jd_ref = 2451545.0
 
+        sim = rebound.Simulation()
+        extras = assist.Extras(sim, ephem)
 
 if __name__ == '__main__':
     unittest.main()
