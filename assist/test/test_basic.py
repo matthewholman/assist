@@ -29,6 +29,8 @@ class TestRebx(unittest.TestCase):
         extras = assist.Extras(sim, ephem)
 
         sim.t = 8416.5
+        
+        # Initial conditions
         sim.add(x= -2.724183384883979E+00, 
                 y= -3.523994546329214E-02, 
                 z= 9.036596202793466E-02,
@@ -38,14 +40,16 @@ class TestRebx(unittest.TestCase):
 
         sim.integrate(8446.5)
 
-        sim.add(x= -2.710320457933958E+00, 
+        # Final result from Horizons
+        pf = rebound.Particle(x= -2.710320457933958E+00, 
                 y= -3.424507930535848E-01, 
                 z= -3.582442972611413E-02,
                 vx= 1.059255302926290E-03, 
                 vy= -1.018748422976772E-02, 
                 vz= -4.207712906489264E-03)
     
-        d = sim.particles[0] -sim.particles[1] 
+        # difference
+        d = sim.particles[0] - pf 
         
         
         au2meter = 149597870700
