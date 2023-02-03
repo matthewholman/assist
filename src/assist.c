@@ -149,14 +149,16 @@ struct assist_ephem* assist_ephem_create(char *user_planets_path, char *user_ast
     return ephem;
 }
 
-
-void assist_ephem_free(struct assist_ephem* ephem){
+void assist_ephem_free_pointers(struct assist_ephem* ephem){
     if (ephem->pl){
         assist_jpl_free(ephem->pl);
     }
     if (ephem->spl){
         assist_spk_free(ephem->spl);
     }
+}
+void assist_ephem_free(struct assist_ephem* ephem){
+    assist_ephem_free_pointers(ephem);
     free(ephem);
 }
 
