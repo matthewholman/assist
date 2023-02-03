@@ -1,7 +1,3 @@
-/**
- * A unit test integrating the asteroid Holman for 30 days, then comparing the 
- * position and coordinates to JPL Horizon data.
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -9,9 +5,6 @@
 #include "assist.h"
 
 int main(int argc, char* argv[]){
-    // Cleanup previous file
-    remove("out.bin"); 
-
     struct assist_ephem* ephem = assist_ephem_create(
             "../../data/linux_p1550p2650.440",
             "../../data/sb441-n16.bsp");
@@ -46,10 +39,10 @@ int main(int argc, char* argv[]){
     double* x_direct = malloc(sizeof(double)*Noutput);
     for (int i=0; i<Noutput; i++){
         reb_integrate(r1, ts[i]);
-        x_direct[i] = r1->particles[0].x;  
+        x_direct[i] = r1->particles[0].x; // store output 
     }   
     
-    // Integrate or interpolate  to each time directly.
+    // Integrate or interpolate to each time.
     double* x_interpolate = malloc(sizeof(double)*Noutput);
     for (int i=0; i<Noutput; i++){
         assist_integrate_or_interpolate(ax2, ts[i]);
