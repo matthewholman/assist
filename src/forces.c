@@ -361,6 +361,9 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 	    reb_error(sim, outstring);
 	}
 
+    // Skip remainder of calculation if variational particles are not used
+    if (sim->var_config_N == 0) return;
+
 	// Loop over test particles
     for (int j=0; j<N_real; j++){
 
