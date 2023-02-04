@@ -17,6 +17,7 @@ class Extras(Structure):
 
     def __del__(self):
         clibassist.assist_free_pointers(byref(self))
+        pass
 
     def detach(self, sim):
         sim._extras_ref = None # remove reference to assist so it can be garbage collected 
@@ -27,19 +28,11 @@ class Extras(Structure):
                  ("_ephem_cache", c_void_p),
                  ("extras_should_free_ephem", c_int),
                  ("geocentric", c_int),
-                 ("last_state_t", c_double),
-                 ("last_state_x", c_void_p),
-                 ("last_state_v", c_void_p),
-                 ("last_state_a", c_void_p),
-                 ("nsubsteps", c_int),
-                 ("hg", c_void_p),
+                 ("last_state", POINTER(rebound.Particle)),
+                 ("current_state", POINTER(rebound.Particle)),
                  ("particle_params", c_void_p),
-                 ("output_t", c_void_p),
-                 ("output_state", c_void_p),
-                 ("output_n_allocated", c_int),
                  ("steps_done", c_int),
                  ("forces", c_int),
-                 # not complete....
         ]
 
 # avoid circular imports

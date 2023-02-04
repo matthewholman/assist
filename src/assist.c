@@ -210,6 +210,7 @@ void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struc
                      | ASSIST_FORCE_SUN_HARMONICS
                      | ASSIST_FORCE_GR_EIH;
     assist->last_state = NULL; 
+    assist->current_state = NULL; 
     sim->integrator = REB_INTEGRATOR_IAS15;
     sim->gravity = REB_GRAVITY_NONE;
     sim->extras = assist;
@@ -221,9 +222,15 @@ void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struc
 void assist_free_pointers(struct assist_extras* assist){
     if (assist->sim){
         assist_detach(assist->sim, assist);
+        assist->sim = NULL;
     }
     if (assist->last_state){
         free(assist->last_state);
+        assist->last_state = NULL;
+    }
+    if (assist->current_state){
+        free(assist->current_state);
+        assist->current_state = NULL;
     }
     if (assist->ephem_cache){
         if (assist->ephem_cache->items){
@@ -233,14 +240,12 @@ void assist_free_pointers(struct assist_extras* assist){
             free(assist->ephem_cache->t);
         }
         free(assist->ephem_cache);
+        assist->ephem_cache = NULL;
     }
-    if (assist->extras_should_free_ephem){
+    if (assist->extras_should_free_ephem && assist->ephem){
         assist_ephem_free(assist->ephem);
+        assist->ephem = NULL;
     }
-    //assist->c = NULL;
-    //assist->ts = NULL;
-    //assist->last_state = NULL;
-    //assist->hg = NULL;                
 }
 
 void assist_free(struct assist_extras* assist){
@@ -254,6 +259,7 @@ void assist_detach(struct reb_simulation* sim, struct assist_extras* assist){
         sim->extras = NULL;
         sim->extras_cleanup = NULL;
         sim->additional_forces = NULL;
+        sim->pre_timestep_modifications = NULL;
     }
     assist->sim = NULL;
 }
