@@ -266,19 +266,43 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
     
     const double t = sim->t;    
 
-    const int N_tot = ASSIST_BODY_NPLANETS + ASSIST_BODY_NASTEROIDS;
-
     struct reb_particle* const particles = sim->particles;
 
     double GM;
     double x, y, z, vx, vy, vz, ax, ay, az;
 
-    static const int order[] = {13, 16, 20, 25, 11, 23, 21, 15,
-				24, 17, 19, 14, 18, 22, 26, 12,
-				10,  4,  5,  1,  9,  8,  3,  2,  7, 6, 0};
+    static const int order[ASSIST_BODY_NPLANETS + ASSIST_BODY_NASTEROIDS] = { 
+        ASSIST_BODY_CYBELE,
+        ASSIST_BODY_EUPHROSYNE,
+        ASSIST_BODY_IRIS,
+        ASSIST_BODY_THISBE,
+        ASSIST_BODY_CAMILLA,
+        ASSIST_BODY_PSYCHE,
+        ASSIST_BODY_JUNO,
+        ASSIST_BODY_EUNOMIA,
+        ASSIST_BODY_SYLVIA,
+        ASSIST_BODY_EUROPA,
+        ASSIST_BODY_INTERAMNIA,
+        ASSIST_BODY_DAVIDA,
+        ASSIST_BODY_HYGIEA,
+        ASSIST_BODY_PALLAS,
+        ASSIST_BODY_VESTA,
+        ASSIST_BODY_CERES,
+        ASSIST_BODY_PLUTO,
+        ASSIST_BODY_MOON,
+        ASSIST_BODY_MARS,
+        ASSIST_BODY_MERCURY,
+        ASSIST_BODY_NEPTUNE,
+        ASSIST_BODY_URANUS,
+        ASSIST_BODY_EARTH,
+        ASSIST_BODY_VENUS,
+        ASSIST_BODY_SATURN,
+        ASSIST_BODY_JUPITER,
+        ASSIST_BODY_SUN
+    };
 
     // Direct forces from massives bodies
-    for (int k=0; k<N_tot; k++){
+    for (int k=0; k < ASSIST_BODY_NPLANETS + ASSIST_BODY_NASTEROIDS; k++){
         int i = order[k];
         if (i==ASSIST_BODY_SUN && !(assist->forces & ASSIST_FORCE_SUN)) continue;
         if (i>ASSIST_BODY_SUN && i<ASSIST_BODY_NPLANETS && !(assist->forces & ASSIST_FORCE_PLANETS)) continue;
@@ -324,8 +348,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
     // We should put a check at the top to see if there are any variational
     // particles.
 
-    for (int k=0; k<N_tot; k++){
-	//for (int i=0; i<N_tot; i++){
+    for (int k=0; k < ASSIST_BODY_NPLANETS + ASSIST_BODY_NASTEROIDS; k++){
 	int i = order[k];
 	//int i = k;
 
