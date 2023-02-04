@@ -59,6 +59,17 @@ class Extras(Structure):
                 v = v | ASSIST_FORCES[k]
         self._forces = c_int(v)
 
+    @property
+    def particle_params(self):
+        raise AttributeError("Cannot get particle_params. Only setting is supported.")
+
+    @particle_params.setter
+    def particle_params(self, value):
+        value_p = value.ctypes.data_as(POINTER(c_double))
+        self._particle_params = value_p
+
+
+
     _fields_ =  [("_sim", POINTER(rebound.Simulation)),
                  ("ephem", POINTER(Ephem)),
                  ("_ephem_cache", c_void_p),
@@ -66,7 +77,7 @@ class Extras(Structure):
                  ("geocentric", c_int),
                  ("last_state", POINTER(rebound.Particle)),
                  ("current_state", POINTER(rebound.Particle)),
-                 ("particle_params", c_void_p),
+                 ("_particle_params", POINTER(c_double)),
                  ("steps_done", c_int),
                  ("_forces", c_int),
         ]
