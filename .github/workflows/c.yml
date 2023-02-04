@@ -41,6 +41,11 @@ jobs:
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Reproduce Apophis Encounter (non gravitational forces) 
+        working-directory: ./unit_tests/apophis/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Reproduce Ceres-5303 encounter 
         working-directory: ./unit_tests/5303_Ceres/
         run: |
