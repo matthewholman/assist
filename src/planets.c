@@ -244,7 +244,7 @@ enum ASSIST_STATUS assist_jpl_calc(struct _jpl_s *pl, double jd_ref, double jd_r
 
     if (pl == NULL || pl->map == NULL)
         return ASSIST_ERROR_EPHEM_FILE;
-    if(body<0 || body>10)
+    if(body<0 || body >= ASSIST_BODY_NPLANETS)
 	    return(ASSIST_ERROR_NEPHEM);
     
     struct mpos_s pos;
@@ -252,7 +252,7 @@ enum ASSIST_STATUS assist_jpl_calc(struct _jpl_s *pl, double jd_ref, double jd_r
     // The values below are G*mass.
     // Units are solar masses, au, days.
     // DE440/441 units: au^3 day^-2.
-    const static double JPL_GM[11] =
+    const static double JPL_GM[ASSIST_BODY_NPLANETS] =
 	{
 	    JPL_EPHEM_GMS, // 0 sun
 	    JPL_EPHEM_GM1, // 1 mercury
@@ -274,7 +274,7 @@ enum ASSIST_STATUS assist_jpl_calc(struct _jpl_s *pl, double jd_ref, double jd_r
 
         // check if covered by this file
         if (jd_ref + jd_rel < pl->beg || jd_ref + jd_rel > pl->end)
-                return -1;
+            return ASSIST_ERROR_EPHEM_FILE;
 
         // compute record number and 'offset' into record
         blk = (u_int32_t)((jd_ref + jd_rel - pl->beg) / pl->inc);
@@ -282,16 +282,16 @@ enum ASSIST_STATUS assist_jpl_calc(struct _jpl_s *pl, double jd_ref, double jd_r
         t = ((jd_ref - pl->beg - (double)blk * pl->inc) + jd_rel) / pl->inc;
 
         switch (body) { // The indices in the pl-> arrays match the JPL component index for the body
-            case 0: // SUN
+            case ASSIST_BODY_SUN:
                 assist_jpl_work(&z[pl->off[10]], pl->ncm[10], pl->ncf[10], pl->niv[10], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 1: // MER
+            case ASSIST_BODY_MERCURY:
                 assist_jpl_work(&z[pl->off[JPL_MER]], pl->ncm[JPL_MER], pl->ncf[JPL_MER], pl->niv[JPL_MER], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 2: // VEN
+            case ASSIST_BODY_VENUS:
                 assist_jpl_work(&z[pl->off[JPL_VEN]], pl->ncm[JPL_VEN], pl->ncf[JPL_VEN], pl->niv[JPL_VEN], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 3: // EAR
+            case ASSIST_BODY_EARTH:
                 {
                     struct mpos_s emb, lun;
                     assist_jpl_work(&z[pl->off[JPL_EMB]], pl->ncm[JPL_EMB], pl->ncf[JPL_EMB], pl->niv[JPL_EMB], t, pl->inc, emb.u, emb.v, emb.w); // earth moon barycenter
@@ -307,7 +307,7 @@ enum ASSIST_STATUS assist_jpl_calc(struct _jpl_s *pl, double jd_ref, double jd_r
                     vecpos_off(pos.w, lun.w, -1.0 / (1.0 + pl->cem));
                 }
                 break;
-            case 4: // LUN 
+            case ASSIST_BODY_MOON: 
                 {
                     struct mpos_s emb, lun;
                     assist_jpl_work(&z[pl->off[JPL_EMB]], pl->ncm[JPL_EMB], pl->ncf[JPL_EMB], pl->niv[JPL_EMB], t, pl->inc, emb.u, emb.v, emb.w);
@@ -323,26 +323,23 @@ enum ASSIST_STATUS assist_jpl_calc(struct _jpl_s *pl, double jd_ref, double jd_r
                     vecpos_off(pos.w, lun.w, pl->cem / (1.0 + pl->cem));
                 }
                 break;
-            case 5: // MAR
+            case ASSIST_BODY_MARS:
                 assist_jpl_work(&z[pl->off[JPL_MAR]], pl->ncm[JPL_MAR], pl->ncf[JPL_MAR], pl->niv[JPL_MAR], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 6: // JUP
+            case ASSIST_BODY_JUPITER:
                 assist_jpl_work(&z[pl->off[JPL_JUP]], pl->ncm[JPL_JUP], pl->ncf[JPL_JUP], pl->niv[JPL_JUP], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 7: // SAT
+            case ASSIST_BODY_SATURN:
                 assist_jpl_work(&z[pl->off[JPL_SAT]], pl->ncm[JPL_SAT], pl->ncf[JPL_SAT], pl->niv[JPL_SAT], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 8: // URA
+            case ASSIST_BODY_URANUS:
                 assist_jpl_work(&z[pl->off[JPL_URA]], pl->ncm[JPL_URA], pl->ncf[JPL_URA], pl->niv[JPL_URA], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 9: // NEP
+            case ASSIST_BODY_NEPTUNE:
                 assist_jpl_work(&z[pl->off[JPL_NEP]], pl->ncm[JPL_NEP], pl->ncf[JPL_NEP], pl->niv[JPL_NEP], t, pl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 10: // PLU
+            case ASSIST_BODY_PLUTO:
                 assist_jpl_work(&z[pl->off[JPL_PLU]], pl->ncm[JPL_PLU], pl->ncf[JPL_PLU], pl->niv[JPL_PLU], t, pl->inc, pos.u, pos.v, pos.w);
-                break;
-            case 11: // BAR
-                     // Nothing needs to be done
                 break;
             default:
                 return ASSIST_ERROR_NEPHEM; // body not found
