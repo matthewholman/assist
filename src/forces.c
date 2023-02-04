@@ -80,7 +80,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	// Get mass, position, velocity, and acceleration of the Earth for later use.
 	// The offset position is used to adjust the particle positions.
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, 3, t, &GM, &xo, &yo, &zo, &vxo, &vyo, &vzo, &axo, &ayo, &azo);
-	if(flag != ASSIST_ERROR_NONE){
+	if(flag != ASSIST_SUCCESS){
 	    char outstring[50];
 	    sprintf(outstring, "%s %d %d\n", "Ephemeris error a ", 3, flag);
 	    reb_error(sim, outstring);
@@ -199,7 +199,7 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
                 *ax = items->ax;
                 *ay = items->ay;
                 *az = items->az;
-                return ASSIST_ERROR_NONE;
+                return ASSIST_SUCCESS;
             }
         }
         // No match
@@ -210,16 +210,16 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
     // Get position and mass of massive body i.
     if(i < N_ephem){
         int flag = assist_jpl_calc(ephem->pl, jd_ref, t, i,  GM, x, y, z, vx, vy, vz, ax, ay, az);
-        if(flag != ASSIST_ERROR_NONE) return(flag);
+        if(flag != ASSIST_SUCCESS) return(flag);
     }else{
         // Get position and mass of asteroid i-N_ephem.
         int flag = assist_spk_calc(ephem->spl, jd_ref, t, i-N_ephem, GM, x, y, z);
-        if(flag != ASSIST_ERROR_NONE) return(flag);
+        if(flag != ASSIST_SUCCESS) return(flag);
 
         double GMs, xs, ys, zs;
         double vxs, vys, vzs, axs, ays, azs; // Not needed
         flag = assist_all_ephem(ephem, ephem_cache, 0, t, &GMs, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
-        if(flag != ASSIST_ERROR_NONE) return(flag);		    
+        if(flag != ASSIST_SUCCESS) return(flag);		    
 
         // Translate massive asteroids from heliocentric to barycentric.
         *x += xs; *y += ys; *z += zs;
@@ -255,7 +255,7 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
         items->ay = *ay;
         items->az = *az;
     }
-    return(ASSIST_ERROR_NONE);
+    return(ASSIST_SUCCESS);
 }
 
 
@@ -293,7 +293,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 
         int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
 
-        if(flag != ASSIST_ERROR_NONE){
+        if(flag != ASSIST_SUCCESS){
             char outstring[50];
             sprintf(outstring, "%s %d %d\n", "Ephemeris error b ", i, flag);	    
             reb_error(sim, outstring);
@@ -335,7 +335,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
         // Get position and mass of massive body i.	
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
 
-	if(flag != ASSIST_ERROR_NONE){
+	if(flag != ASSIST_SUCCESS){
 	    char outstring[50];
 	    sprintf(outstring, "%s %d %d\n", "Ephemeris error c ", i, flag);	    	    
 	    reb_error(sim, outstring);

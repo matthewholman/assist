@@ -62,7 +62,7 @@ enum ASSIST_FORCES {
 };
 
 enum ASSIST_STATUS{
-    ASSIST_ERROR_NONE,         // no error
+    ASSIST_SUCCESS,         // no error
     ASSIST_ERROR_EPHEM_FILE,   // JPL ephemeris file not found
     ASSIST_ERROR_AST_FILE,     // JPL asteroid file not found
     ASSIST_ERROR_NAST,         // asteroid number out of range

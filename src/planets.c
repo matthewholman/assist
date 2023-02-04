@@ -364,7 +364,7 @@ enum ASSIST_STATUS assist_jpl_calc(struct _jpl_s *pl, double jd_ref, double jd_r
     *out_ay = pos.w[1];
     *out_az = pos.w[2];
 
-    return(ASSIST_ERROR_NONE);
+    return(ASSIST_SUCCESS);
 
 }
 

@@ -127,13 +127,13 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
         return ASSIST_ERROR_AST_FILE;	  
     }
 
-    return ASSIST_ERROR_NONE;
+    return ASSIST_SUCCESS;
 }
 
 struct assist_ephem* assist_ephem_create(char *user_planets_path, char *user_asteroids_path){
     struct assist_ephem* ephem = calloc(1, sizeof(struct assist_ephem));
     int ret = assist_ephem_init(ephem, user_planets_path, user_asteroids_path);
-    if (ret != ASSIST_ERROR_NONE){
+    if (ret != ASSIST_SUCCESS){
         assist_ephem_free(ephem);
         return NULL;
     }
@@ -270,7 +270,7 @@ struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int pa
     struct reb_particle p = {0};
     double GM = 0;
     int flag = assist_all_ephem(ephem, NULL, particle_id, t, &GM, &p.x, &p.y, &p.z, &p.vx, &p.vy, &p.vz, &p.ax, &p.ay, &p.az);
-    if (flag != ASSIST_ERROR_NONE){
+    if (flag != ASSIST_SUCCESS){
         fprintf(stderr, "An error occured while trying to initialize particle from ephemeris data.\n");
     }
     p.m = GM; // Note this is GM, not M
