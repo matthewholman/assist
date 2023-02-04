@@ -388,7 +388,15 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
         reb_integrate(sim, t);
     }
     double h = 1.0-(sim->t -t) / sim->dt_last_done; 
-    assist_interpolate(ax->last_state, sim->ri_ias15.br, sim->dt_last_done, h, sim->N, ax->current_state);
+    if (sim->t - t==0.){
+        memcpy(ax->current_state, sim->particles, sizeof(struct reb_particle)*sim->N);
+    }else if (h<0.0 || h>=1.0 || !isnormal(h)){
+        printf("Error: cannot interpolate beyond timestep bounds (h=%e).\n",h);
+    }else if (sim->ri_ias15.br.p0 == NULL) {
+        printf("Error: cannot interpolate before first timestep is complete (h=%e).\n",h);
+    }else{
+        assist_interpolate(ax->last_state, sim->ri_ias15.br, sim->dt_last_done, h, sim->N, ax->current_state);
+    }
     assist_swap_particles(sim);
 }
 

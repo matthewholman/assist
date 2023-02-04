@@ -21,6 +21,15 @@ class TestAssist(unittest.TestCase):
         p = ephem.get_particle(20,200) #asteroid
         self.assertEqual(p.x, -2.62956381075119)
         del ephem
+    
+    def test_ephem_names(self):
+        ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
+        p1 = ephem.get_particle(0,0) # Sun
+        p2 = ephem.get_particle("Sun",0) # Also Sun
+        self.assertEqual(p1.x, p2.x)
+        
+        with self.assertRaises(ValueError) as context:
+            ephem.get_particle("Planet 9",0) # Does not exist
 
     def test_holman(self):
         ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
