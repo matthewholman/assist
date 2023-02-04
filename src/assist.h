@@ -61,6 +61,14 @@ enum ASSIST_FORCES {
     ASSIST_FORCE_GR_POTENTIAL       = 0x100,
 };
 
+enum ASSIST_STATUS{
+    ASSIST_ERROR_NONE,         // no error
+    ASSIST_ERROR_EPHEM_FILE,   // JPL ephemeris file not found
+    ASSIST_ERROR_AST_FILE,     // JPL asteroid file not found
+    ASSIST_ERROR_NAST,         // asteroid number out of range
+    ASSIST_ERROR_NEPHEM,      // planet number out of range
+};
+
 
 struct assist_ephem {
     double jd_ref;

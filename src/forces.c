@@ -38,14 +38,6 @@
 #include "forces.h"
 
 
-enum {
-    NO_ERR,        // no error
-    ERR_JPL_EPHEM, // JPL ephemeris file not found
-    ERR_JPL_AST,   // JPL asteroid file not found
-    ERR_NAST,      // asteroid number out of range
-    ERR_NEPH,      // planet number out of range
-};
-
 // Forward function declarations
 static void assist_additional_force_direct(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
 static void assist_additional_force_solar_J2(struct reb_simulation* sim, double xo, double yo, double zo, FILE *outfile);
@@ -88,7 +80,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	// Get mass, position, velocity, and acceleration of the Earth for later use.
 	// The offset position is used to adjust the particle positions.
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, 3, t, &GM, &xo, &yo, &zo, &vxo, &vyo, &vzo, &axo, &ayo, &azo);
-	if(flag != NO_ERR){
+	if(flag != ASSIST_ERROR_NONE){
 	    char outstring[50];
 	    sprintf(outstring, "%s %d %d\n", "Ephemeris error a ", 3, flag);
 	    reb_error(sim, outstring);
@@ -187,152 +179,6 @@ void assist_additional_forces(struct reb_simulation* sim){
     }
 }
 
-static int planet_ephem(struct assist_ephem* ephem, const int i, const double jd_ref, const double t,
-		 double* const GM,
-		 double* const x, double* const y, double* const z,
-		 double* const vx, double* const vy, double* const vz,
-		 double* const ax, double* const ay, double* const az){
-
-    //static int initialized = 0;
-
-    //static struct _jpl_s *pl;
-    struct mpos_s now;
-
-    // Calculate GM values for Earth and Moon
-    // from Earth-moon ratio and sum.
-#define    em_r JPL_EPHEM_EMRAT
-#define    GMe (em_r/(1.+em_r) * JPL_EPHEM_GMB)
-#define    GMm (1./(1.+em_r) * JPL_EPHEM_GMB)
-
-    // The values below are G*mass.
-    // Units are solar masses, au, days.
-    // DE440/441 units: au^3 day^-2.
-    const static double JPL_GM[11] =
-	{
-	    JPL_EPHEM_GMS, // 0 sun
-	    JPL_EPHEM_GM1, // 1 mercury
-	    JPL_EPHEM_GM2, // 2 venus
-	    GMe,           // 3 earth
-	    GMm,           // 4 moon
-	    JPL_EPHEM_GM4, // 5 mars
-	    JPL_EPHEM_GM5, // 6 jupiter
-	    JPL_EPHEM_GM6, // 7 saturn
-	    JPL_EPHEM_GM7, // 8 uranus
-	    JPL_EPHEM_GM8, // 9 neptune
-	    JPL_EPHEM_GM9, // 10 pluto
-	};
-
-    if(i<0 || i>10){
-	return(ERR_NEPH);
-    }
-
-    if(ephem->pl==NULL){
-	return(ERR_JPL_EPHEM);
-    }
-
-    /*
-    if (initialized == 0){
-	char buf[] = "/Users/mholman/assist/data/linux_m13000p17000.441";
-	if ((pl = assist_jpl_init(buf)) == NULL) {
-	    printf("Couldn't find planet ephemeris file: %s\n", buf);	  
-	    return(ERR_JPL_EPHEM);	  
-	}
-	initialized = 1;
-    }
-    */
-
-    // Get position, velocity, and mass of body i in barycentric coords.
-
-    *GM = JPL_GM[i];
-
-    assist_jpl_calc(ephem->pl, &now, jd_ref, t, i); 
-
-    // Convert to au/day and au/day^2
-    vecpos_div(now.u, ephem->pl->cau);
-    vecpos_div(now.v, ephem->pl->cau/86400.);
-    vecpos_div(now.w, ephem->pl->cau/(86400.*86400.));
-
-    *x = now.u[0];
-    *y = now.u[1];
-    *z = now.u[2];
-    *vx = now.v[0];
-    *vy = now.v[1];
-    *vz = now.v[2];
-    *ax = now.w[0];
-    *ay = now.w[1];
-    *az = now.w[2];
-
-    return(NO_ERR);
-    
-}
-
-static int ast_ephem(struct assist_ephem* ephem, const int i, const double jd_ref, const double t, double* const GM, double* const x, double* const y, double* const z){
-
-    //static int initialized = 0;
-
-    //static struct spk_s *spl;
-    struct mpos_s pos;
-
-    // DE441
-    // The values below are G*mass.
-    // Units are solar masses, au, days.
-    const static double JPL_GM[16] =    
-    {
-	JPL_EPHEM_MA0107, // 107 camilla
-	JPL_EPHEM_MA0001, // 1 Ceres
-	JPL_EPHEM_MA0065, // 65 cybele
-	JPL_EPHEM_MA0511, // 511 davida
-	JPL_EPHEM_MA0015, // 15 eunomia
-	JPL_EPHEM_MA0031, // 31 euphrosyne	    
-	JPL_EPHEM_MA0052, // 52 europa
-	JPL_EPHEM_MA0010, // 10 hygiea
-	JPL_EPHEM_MA0704, // 704 interamnia
-	JPL_EPHEM_MA0007, // 7 iris
-	JPL_EPHEM_MA0003, // 3 juno
-	JPL_EPHEM_MA0002, // 2 pallas
-	JPL_EPHEM_MA0016, // 16 psyche
-	JPL_EPHEM_MA0087, // 87 sylvia
-	JPL_EPHEM_MA0088, // 88 thisbe
-	JPL_EPHEM_MA0004  // 4 vesta
-    };
-
-    if(i<0 || i>15){
-	return(ERR_NAST);
-    }
-
-    if(ephem->spl==NULL){
-	return(ERR_JPL_EPHEM);	
-    }
-
-    /*
-    if (initialized == 0){
-	char buf[] = "/Users/mholman/assist/data/sb441-n16.bsp";
-	if ((spl = assist_spk_init(buf)) == NULL) {
-	    printf("Couldn't find asteroid ephemeris file: %s\n", buf);
-	    return(ERR_JPL_AST);
-	}
-
-	initialized = 1;
-
-    }
-    */
-    
-    // TODO: again, the units might be handled more
-    // generally
-
-    *GM = JPL_GM[i];
-
-    assist_spk_calc(ephem->spl, i, jd_ref, t, &pos);
-
-    *x = pos.u[0];
-    *y = pos.u[1];
-    *z = pos.u[2];
-
-    return(NO_ERR);
-
-}
-
-
 int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephem_cache, const int i, const double t, double* const GM,
 		      double* const x, double* const y, double* const z,
 		      double* const vx, double* const vy, double* const vz,
@@ -353,7 +199,7 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
                 *ax = items->ax;
                 *ay = items->ay;
                 *az = items->az;
-                return NO_ERR;
+                return ASSIST_ERROR_NONE;
             }
         }
         // No match
@@ -363,17 +209,17 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
 
     // Get position and mass of massive body i.
     if(i < N_ephem){
-        int flag = planet_ephem(ephem, i, jd_ref, t, GM, x, y, z, vx, vy, vz, ax, ay, az);
-        if(flag != NO_ERR) return(flag);
+        int flag = assist_jpl_calc(ephem->pl, jd_ref, t, i,  GM, x, y, z, vx, vy, vz, ax, ay, az);
+        if(flag != ASSIST_ERROR_NONE) return(flag);
     }else{
         // Get position and mass of asteroid i-N_ephem.
-        int flag = ast_ephem(ephem, i-N_ephem, jd_ref, t, GM, x, y, z);
-        if(flag != NO_ERR) return(flag);
+        int flag = assist_spk_calc(ephem->spl, jd_ref, t, i-N_ephem, GM, x, y, z);
+        if(flag != ASSIST_ERROR_NONE) return(flag);
 
         double GMs, xs, ys, zs;
         double vxs, vys, vzs, axs, ays, azs; // Not needed
         flag = assist_all_ephem(ephem, ephem_cache, 0, t, &GMs, &xs, &ys, &zs, &vxs, &vys, &vzs, &axs, &ays, &azs);
-        if(flag != NO_ERR) return(flag);		    
+        if(flag != ASSIST_ERROR_NONE) return(flag);		    
 
         // Translate massive asteroids from heliocentric to barycentric.
         *x += xs; *y += ys; *z += zs;
@@ -409,7 +255,7 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
         items->ay = *ay;
         items->az = *az;
     }
-    return(NO_ERR);
+    return(ASSIST_ERROR_NONE);
 }
 
 
@@ -447,7 +293,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 
         int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
 
-        if(flag != NO_ERR){
+        if(flag != ASSIST_ERROR_NONE){
             char outstring[50];
             sprintf(outstring, "%s %d %d\n", "Ephemeris error b ", i, flag);	    
             reb_error(sim, outstring);
@@ -489,7 +335,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
         // Get position and mass of massive body i.	
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
 
-	if(flag != NO_ERR){
+	if(flag != ASSIST_ERROR_NONE){
 	    char outstring[50];
 	    sprintf(outstring, "%s %d %d\n", "Ephemeris error c ", i, flag);	    	    
 	    reb_error(sim, outstring);

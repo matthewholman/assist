@@ -8,6 +8,7 @@
 #ifndef _SPK_H
 #define _SPK_H
 
+#include "assist.h"
 #define _SPK_MAX	32	// maximum body count
 
 enum {
@@ -71,7 +72,7 @@ struct spk_s {
 int assist_spk_free(struct spk_s *pl);
 struct spk_s * assist_spk_init(const char *path);
 int assist_spk_find(struct spk_s *pl, int m);
-int assist_spk_calc(struct spk_s *pl, int tar, double jde, double rel, struct mpos_s *pos);
+enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int m, double* GM, double* x, double* y, double* z);
 
 #endif // _SPK_H
 
