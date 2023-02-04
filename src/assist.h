@@ -96,13 +96,8 @@ struct assist_extras {
     int geocentric;
     struct reb_particle* last_state;
     struct reb_particle* current_state;
-    int nsubsteps;
-    double* hg;
     //particle_params* particle_params;
     double* particle_params;
-    double* output_t; 
-    double* output_state;
-    int output_n_alloc;
     int steps_done;
     int forces;
 };
@@ -150,27 +145,6 @@ struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int pa
 // Functions called from python:
 void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struct assist_ephem* ephem);
 void assist_free_pointers(struct assist_extras* assist);
-
-int assist_integrate(struct assist_ephem* ephem,
-		     double tstart, double tend, double tstep,
-		     int geocentric,
-		     double epsilon,
-		     int n_particles,
-		     double* instate,
-		     //particle_params* part_params,
-		     double* part_params,
-		     int n_var,
-		     int* invar_part,			 
-		     double* invar,
-		     //particle_params* var_part_params,
-		     double* var_part_params,			 
-		     int n_alloc,			 
-		     int *n_out,
-		     int nsubsteps,
-		     double* hg,
-		     double* outtime,
-		     double* outstate,
-		     double min_dt);
 
 
 void test_vary(struct reb_simulation* sim, FILE *vfile);

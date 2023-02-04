@@ -248,6 +248,7 @@ void assist_free_pointers(struct assist_extras* assist){
     }
 }
 
+
 void assist_free(struct assist_extras* assist){
     // Freeing pointers is separate because python handles memory management of structure itself.
     assist_free_pointers(assist);
