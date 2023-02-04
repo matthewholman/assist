@@ -190,8 +190,10 @@ struct _jpl_s * assist_jpl_init(char *str)
         // this file descriptor is no longer needed since we are memory mapped
         if (close(fd) < 0)
                 { ; } // perror ...
+#if defined(MADV_RANDOM)
         if (madvise(jpl->map, jpl->len, MADV_RANDOM) < 0)
                 { ; } // perror ...
+#endif
 
         return jpl;
 

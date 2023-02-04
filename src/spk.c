@@ -187,8 +187,10 @@ next:	n = (int)val[0] - 1;
 
 	if (close(fd) < 0)
 		{ ; }
+#if defined(MADV_RANDOM)
 	if (madvise(pl->map, pl->len, MADV_RANDOM) < 0)
 		{ ; }
+#endif
 
 	return pl;
 

@@ -36,18 +36,28 @@ jobs:
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
-      - name: Reproduce Holman trajectory (plain interface)
-        working-directory: ./unit_tests/plain_interface/
+      - name: Reproduce Holman trajectory (backwards in time)
+        working-directory: ./unit_tests/holman_reverse/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
-      - name: Reproduce Holman trajectory (plain interface, backwards in time)
-        working-directory: ./unit_tests/plain_interface_reverse/
+      - name: Reproduce Apophis Encounter (non gravitational forces) 
+        working-directory: ./unit_tests/apophis/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Reproduce Ceres-5303 encounter 
         working-directory: ./unit_tests/5303_Ceres/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test interpolation 
+        working-directory: ./unit_tests/interpolation/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test onthefly interpolation 
+        working-directory: ./unit_tests/onthefly_interpolation/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound

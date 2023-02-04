@@ -14,7 +14,7 @@ int main(int argc, char* argv[]){
 
 
     // Load the ephemeris data
-    struct assist_ephem* ephem = assist_ephem_init(
+    struct assist_ephem* ephem = assist_ephem_create(
             "../../data/linux_m13000p17000.441",
             "../../data/sb441-n16.bsp");
     

@@ -94,17 +94,10 @@ struct assist_extras {
     struct assist_ephem_cache* ephem_cache;
     int extras_should_free_ephem;   // Internal use only. Set to 1 if extras allocated memory for ephem.
     int geocentric;
-    double last_state_t;
-    double* last_state_x;
-    double* last_state_v;
-    double* last_state_a;
-    int nsubsteps;
-    double* hg;
+    struct reb_particle* last_state;
+    struct reb_particle* current_state;
     //particle_params* particle_params;
     double* particle_params;
-    double* output_t; 
-    double* output_state;
-    int output_n_alloc;
     int steps_done;
     int forces;
 };
@@ -142,39 +135,22 @@ void assist_detach(struct reb_simulation* sim, struct assist_extras* assist);
 void assist_error(struct assist_extras* assist, const char* const msg);
 
 
+int assist_interpolate_simulation(struct reb_simulation* sim1, struct reb_simulation* sim2, double h);
+struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulationarchive* sa, double t);
+void assist_integrate_or_interpolate(struct assist_extras* ax, double t);
+
 // Find particle position and velocity based on ephemeris data
 struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t);
 
 // Functions called from python:
-void assist_initialize(struct reb_simulation* sim, struct assist_extras* assist, struct assist_ephem* ephem); // Initializes all pointers and values.
+void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struct assist_ephem* ephem);
 void assist_free_pointers(struct assist_extras* assist);
-
-int assist_integrate(struct assist_ephem* ephem,
-		     double tstart, double tend, double tstep,
-		     int geocentric,
-		     double epsilon,
-		     int n_particles,
-		     double* instate,
-		     //particle_params* part_params,
-		     double* part_params,
-		     int n_var,
-		     int* invar_part,			 
-		     double* invar,
-		     //particle_params* var_part_params,
-		     double* var_part_params,			 
-		     int n_alloc,			 
-		     int *n_out,
-		     int nsubsteps,
-		     double* hg,
-		     double* outtime,
-		     double* outstate,
-		     double min_dt);
 
 
 void test_vary(struct reb_simulation* sim, FILE *vfile);
 
 void test_vary_2nd(struct reb_simulation* sim, FILE *vfile);
 
-struct assist_ephem* assist_ephem_init(char *planets_file_name, char *asteroids_file_name);
+struct assist_ephem* assist_ephem_create(char *planets_file_name, char *asteroids_file_name);
 
 #endif
