@@ -106,7 +106,7 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
         strncpy(planets_path, user_planets_path, FNAMESIZE-1);	
     }
 
-    if ((ephem->pl = assist_jpl_init(planets_path)) == NULL) {
+    if ((ephem->jpl = assist_jpl_init(planets_path)) == NULL) {
         printf("Couldn't find planet ephemeris file: %s\n", planets_path);	  
         return ASSIST_ERROR_EPHEM_FILE;	  
     }
@@ -141,8 +141,8 @@ struct assist_ephem* assist_ephem_create(char *user_planets_path, char *user_ast
 }
 
 void assist_ephem_free_pointers(struct assist_ephem* ephem){
-    if (ephem->pl){
-        assist_jpl_free(ephem->pl);
+    if (ephem->jpl){
+        assist_jpl_free(ephem->jpl);
     }
     if (ephem->spl){
         assist_spk_free(ephem->spl);

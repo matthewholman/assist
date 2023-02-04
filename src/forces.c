@@ -206,7 +206,7 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
 
     // Get position and mass of massive body i.
     if(i < ASSIST_BODY_NPLANETS){
-        int flag = assist_jpl_calc(ephem->pl, jd_ref, t, i,  GM, x, y, z, vx, vy, vz, ax, ay, az);
+        int flag = assist_jpl_calc(ephem->jpl, jd_ref, t, i,  GM, x, y, z, vx, vy, vz, ax, ay, az);
         if(flag != ASSIST_SUCCESS) return(flag);
     }else{
         // Get position and mass of asteroid i-ASSIST_BODY_NPLANETS.

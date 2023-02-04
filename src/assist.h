@@ -106,7 +106,7 @@ enum ASSIST_BODY {
 
 struct assist_ephem {
     double jd_ref;
-    struct _jpl_s* pl;
+    struct jpl_s* jpl;
     struct spk_s* spl;
 };
 

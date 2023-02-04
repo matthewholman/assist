@@ -14,7 +14,7 @@
 
 int main(int argc, char **argv)
 {
-    struct _jpl_s *pl;
+    struct jpl_s *pl;
     double m;
     int n;
 
