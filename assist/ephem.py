@@ -4,6 +4,36 @@ import rebound
 import assist
 import warnings
 
+ASSIST_BODY_IDS = {
+        0: "Sun",
+        1: "Mercury",
+        2: "Venus",
+        3: "Earth",
+        4: "Moon",
+        5: "Mars",
+        6: "Jupiter",
+        7: "Saturn",
+        8: "Uranus",
+        9: "Neptune",
+        10: "Pluto",
+	    11: "Camilla",
+        12: "Ceres",
+        13: "Cybele",
+        14: "Davida",
+	    15: "Eunomia",
+        16: "Euphrosyne",
+        17: "Europa",
+        18: "Hygiea",
+        19: "Interamnia",
+        20: "Iris",
+        21: "Juno",
+        22: "Pallas",
+        23: "Psyche",
+        24: "Sylvia",
+        25: "Thisbe",
+        26: "Vesta",
+        }
+
 class Ephem(Structure):
     """
     Main object used for all ASSIST Ephemeris operations.
@@ -25,9 +55,20 @@ class Ephem(Structure):
 
             raise RuntimeError("An error occured while creating the ephemeris structure.")
 
-    def get_particle(self, i, t):
+    def get_particle(self, body, t):
+        if isinstance(body, str):
+            body_str = body.lower()
+            body = -1
+            for k in ASSIST_BODY_IDS:
+                if body_str == ASSIST_BODY_IDS[k].lower():
+                    body = k
+            if body < 0:
+                raise ValueError("Cannot find body '"+body_str+"'. Needs to be one of: "+", ".join([ASSIST_BODY_IDS[k] for k in ASSIST_BODY_IDS])+".")
+        if not isinstance(body, int):
+            raise ValueError("Expecting integer for body id.")
+
         clibassist.assist_get_particle.restype = rebound.Particle
-        p = clibassist.assist_get_particle(byref(self), c_int(i), c_double(t))
+        p = clibassist.assist_get_particle(byref(self), c_int(body), c_double(t))
         return p
 
 
