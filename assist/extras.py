@@ -17,12 +17,14 @@ class Extras(Structure):
 
     def __del__(self):
         clibassist.assist_free_pointers(byref(self))
-        pass
 
     def detach(self, sim):
         sim._extras_ref = None # remove reference to assist so it can be garbage collected 
         clibassist.assist_detach(byref(sim), byref(self))
-    
+
+    def integrate_or_interpolate(self, t):
+        clibassist.assist_integrate_or_interpolate(byref(self), c_double(t))
+
     _fields_ =  [("_sim", POINTER(rebound.Simulation)),
                  ("ephem", POINTER(Ephem)),
                  ("_ephem_cache", c_void_p),

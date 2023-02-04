@@ -3,7 +3,7 @@ import assist
 import unittest
 import math
 
-class TestRebx(unittest.TestCase):
+class TestAssist(unittest.TestCase):
     def test_rebound(self):
         sim = rebound.Simulation()
         sim.add(m=1)
