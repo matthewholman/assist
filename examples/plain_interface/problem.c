@@ -17,6 +17,10 @@ int main(int argc, char* argv[]){
     struct assist_ephem* ephem = assist_ephem_create(
             "../../data/linux_m13000p17000.441",
             "../../data/sb441-n16.bsp");
+    if (!ephem){
+        printf("Cannot create ephemeris structure.\n");
+        exit(-1);
+    }
     
     // One has the option to change other setting.
     ephem->jd_ref = 2451545.0; // Reference JD. This line can be commented out as this is the default.

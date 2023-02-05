@@ -12,6 +12,7 @@
 #include "spk.h"
 #include "planets.h"
 #include "const.h"
+#include "assist.h"
 
 #ifndef JPL_EPHEM_FILE
 #define JPL_EPHEM_FILE "../../data/linux_m13000p17000.441"
@@ -75,9 +76,9 @@ void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1,
  *
  */
 
-struct _jpl_s * assist_jpl_init(char *str)
+struct jpl_s * assist_jpl_init(char *str)
 {
-        struct _jpl_s *jpl;
+        struct jpl_s *jpl;
 	struct stat sb;
 	//char *str;
 	ssize_t ret;
@@ -93,8 +94,8 @@ struct _jpl_s * assist_jpl_init(char *str)
         if ((fd = open(str, O_RDONLY)) < 0)
                 return NULL;
 
-        jpl = malloc(sizeof(struct _jpl_s));
-        memset(jpl, 0, sizeof(struct _jpl_s));
+        jpl = malloc(sizeof(struct jpl_s));
+        memset(jpl, 0, sizeof(struct jpl_s));
 
         if (fstat(fd, &sb) < 0)
                 goto err;
@@ -207,7 +208,7 @@ err:    close(fd);
  *  assist_jpl_free
  *
  */
-int assist_jpl_free(struct _jpl_s *jpl)
+int assist_jpl_free(struct jpl_s *jpl)
 {
 	int p;
 
@@ -222,7 +223,7 @@ int assist_jpl_free(struct _jpl_s *jpl)
 
 	free(jpl->str);
 	free(jpl->con);
-        memset(jpl, 0, sizeof(struct _jpl_s));
+        memset(jpl, 0, sizeof(struct jpl_s));
         free(jpl);
         return 0;
 }
@@ -233,104 +234,147 @@ int assist_jpl_free(struct _jpl_s *jpl)
  *  Caculate the position+velocity in _equatorial_ coordinates.
  *  Assumes pos is initially zero.
  */
-int assist_jpl_calc(struct _jpl_s *pl, struct mpos_s *pos, double jd_ref, double jd_rel, int body) {
-        double t, *z;
-        u_int32_t blk;
+enum ASSIST_STATUS assist_jpl_calc(struct jpl_s *jpl, double jd_ref, double jd_rel, int body, 
+		 double* const GM,
+		 double* const out_x, double* const out_y, double* const out_z,
+		 double* const out_vx, double* const out_vy, double* const out_vz,
+         double* const out_ax, double* const out_ay, double* const out_az){
+    double t, *z;
+    u_int32_t blk;
 
-        if (pl == NULL || pl->map == NULL || pos == NULL)
-                return -1;
+    if (jpl == NULL || jpl->map == NULL)
+        return ASSIST_ERROR_EPHEM_FILE;
+    if(body<0 || body >= ASSIST_BODY_NPLANETS)
+	    return(ASSIST_ERROR_NEPHEM);
+    
+    struct mpos_s pos;
+
+    // The values below are G*mass.
+    // Units are solar masses, au, days.
+    // DE440/441 units: au^3 day^-2.
+    const static double JPL_GM[ASSIST_BODY_NPLANETS] =
+	{
+	    JPL_EPHEM_GMS, // 0 sun
+	    JPL_EPHEM_GM1, // 1 mercury
+	    JPL_EPHEM_GM2, // 2 venus
+	    (JPL_EPHEM_EMRAT/(1.+JPL_EPHEM_EMRAT) * JPL_EPHEM_GMB),  // 3 earth    Calculate GM values for Earth and Moon
+	    (1./(1.+JPL_EPHEM_EMRAT) * JPL_EPHEM_GMB),               // 4 moon     from Earth-moon ratio and sum.
+	    JPL_EPHEM_GM4, // 5 mars
+	    JPL_EPHEM_GM5, // 6 jupiter
+	    JPL_EPHEM_GM6, // 7 saturn
+	    JPL_EPHEM_GM7, // 8 uranus
+	    JPL_EPHEM_GM8, // 9 neptune
+	    JPL_EPHEM_GM9, // 10 pluto
+	};
+
+
+    // Get position, velocity, and mass of body i in barycentric coords.
+
+    *GM = JPL_GM[body];
 
         // check if covered by this file
-        if (jd_ref + jd_rel < pl->beg || jd_ref + jd_rel > pl->end)
-                return -1;
+        if (jd_ref + jd_rel < jpl->beg || jd_ref + jd_rel > jpl->end)
+            return ASSIST_ERROR_EPHEM_FILE;
 
         // compute record number and 'offset' into record
-        blk = (u_int32_t)((jd_ref + jd_rel - pl->beg) / pl->inc);
-        z = (double*)pl->map + (blk + 2) * pl->rec/sizeof(double);
-        t = ((jd_ref - pl->beg - (double)blk * pl->inc) + jd_rel) / pl->inc;
+        blk = (u_int32_t)((jd_ref + jd_rel - jpl->beg) / jpl->inc);
+        z = (double*)jpl->map + (blk + 2) * jpl->rec/sizeof(double);
+        t = ((jd_ref - jpl->beg - (double)blk * jpl->inc) + jd_rel) / jpl->inc;
 
-        switch (body) { // The indices in the pl-> arrays match the JPL component index for the body
-            case 0: // SUN
-                assist_jpl_work(&z[pl->off[10]], pl->ncm[10], pl->ncf[10], pl->niv[10], t, pl->inc, pos->u, pos->v, pos->w);
+        switch (body) { // The indices in the jpl-> arrays match the JPL component index for the body
+            case ASSIST_BODY_SUN:
+                assist_jpl_work(&z[jpl->off[10]], jpl->ncm[10], jpl->ncf[10], jpl->niv[10], t, jpl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 1: // MER
-                assist_jpl_work(&z[pl->off[JPL_MER]], pl->ncm[JPL_MER], pl->ncf[JPL_MER], pl->niv[JPL_MER], t, pl->inc, pos->u, pos->v, pos->w);
+            case ASSIST_BODY_MERCURY:
+                assist_jpl_work(&z[jpl->off[JPL_MER]], jpl->ncm[JPL_MER], jpl->ncf[JPL_MER], jpl->niv[JPL_MER], t, jpl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 2: // VEN
-                assist_jpl_work(&z[pl->off[JPL_VEN]], pl->ncm[JPL_VEN], pl->ncf[JPL_VEN], pl->niv[JPL_VEN], t, pl->inc, pos->u, pos->v, pos->w);
+            case ASSIST_BODY_VENUS:
+                assist_jpl_work(&z[jpl->off[JPL_VEN]], jpl->ncm[JPL_VEN], jpl->ncf[JPL_VEN], jpl->niv[JPL_VEN], t, jpl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 3: // EAR
+            case ASSIST_BODY_EARTH:
                 {
                     struct mpos_s emb, lun;
-                    assist_jpl_work(&z[pl->off[JPL_EMB]], pl->ncm[JPL_EMB], pl->ncf[JPL_EMB], pl->niv[JPL_EMB], t, pl->inc, emb.u, emb.v, emb.w); // earth moon barycenter
-                    assist_jpl_work(&z[pl->off[JPL_LUN]], pl->ncm[JPL_LUN], pl->ncf[JPL_LUN], pl->niv[JPL_LUN], t, pl->inc, lun.u, lun.v, lun.w);
+                    assist_jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, emb.u, emb.v, emb.w); // earth moon barycenter
+                    assist_jpl_work(&z[jpl->off[JPL_LUN]], jpl->ncm[JPL_LUN], jpl->ncf[JPL_LUN], jpl->niv[JPL_LUN], t, jpl->inc, lun.u, lun.v, lun.w);
 
-                    vecpos_set(pos->u, emb.u);
-                    vecpos_off(pos->u, lun.u, -1.0 / (1.0 + pl->cem));
+                    vecpos_set(pos.u, emb.u);
+                    vecpos_off(pos.u, lun.u, -1.0 / (1.0 + jpl->cem));
 
-                    vecpos_set(pos->v, emb.v);
-                    vecpos_off(pos->v, lun.v, -1.0 / (1.0 + pl->cem));
+                    vecpos_set(pos.v, emb.v);
+                    vecpos_off(pos.v, lun.v, -1.0 / (1.0 + jpl->cem));
 
-                    vecpos_set(pos->w, emb.w);
-                    vecpos_off(pos->w, lun.w, -1.0 / (1.0 + pl->cem));
+                    vecpos_set(pos.w, emb.w);
+                    vecpos_off(pos.w, lun.w, -1.0 / (1.0 + jpl->cem));
                 }
                 break;
-            case 4: // LUN 
+            case ASSIST_BODY_MOON: 
                 {
                     struct mpos_s emb, lun;
-                    assist_jpl_work(&z[pl->off[JPL_EMB]], pl->ncm[JPL_EMB], pl->ncf[JPL_EMB], pl->niv[JPL_EMB], t, pl->inc, emb.u, emb.v, emb.w);
-                    assist_jpl_work(&z[pl->off[JPL_LUN]], pl->ncm[JPL_LUN], pl->ncf[JPL_LUN], pl->niv[JPL_LUN], t, pl->inc, lun.u, lun.v, lun.w);
+                    assist_jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, emb.u, emb.v, emb.w);
+                    assist_jpl_work(&z[jpl->off[JPL_LUN]], jpl->ncm[JPL_LUN], jpl->ncf[JPL_LUN], jpl->niv[JPL_LUN], t, jpl->inc, lun.u, lun.v, lun.w);
 
-                    vecpos_set(pos->u, emb.u);
-                    vecpos_off(pos->u, lun.u, pl->cem / (1.0 + pl->cem));
+                    vecpos_set(pos.u, emb.u);
+                    vecpos_off(pos.u, lun.u, jpl->cem / (1.0 + jpl->cem));
 
-                    vecpos_set(pos->v, emb.v);
-                    vecpos_off(pos->v, lun.v, pl->cem / (1.0 + pl->cem));
+                    vecpos_set(pos.v, emb.v);
+                    vecpos_off(pos.v, lun.v, jpl->cem / (1.0 + jpl->cem));
 
-                    vecpos_set(pos->w, emb.w);
-                    vecpos_off(pos->w, lun.w, pl->cem / (1.0 + pl->cem));
+                    vecpos_set(pos.w, emb.w);
+                    vecpos_off(pos.w, lun.w, jpl->cem / (1.0 + jpl->cem));
                 }
                 break;
-            case 5: // MAR
-                assist_jpl_work(&z[pl->off[JPL_MAR]], pl->ncm[JPL_MAR], pl->ncf[JPL_MAR], pl->niv[JPL_MAR], t, pl->inc, pos->u, pos->v, pos->w);
+            case ASSIST_BODY_MARS:
+                assist_jpl_work(&z[jpl->off[JPL_MAR]], jpl->ncm[JPL_MAR], jpl->ncf[JPL_MAR], jpl->niv[JPL_MAR], t, jpl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 6: // JUP
-                assist_jpl_work(&z[pl->off[JPL_JUP]], pl->ncm[JPL_JUP], pl->ncf[JPL_JUP], pl->niv[JPL_JUP], t, pl->inc, pos->u, pos->v, pos->w);
+            case ASSIST_BODY_JUPITER:
+                assist_jpl_work(&z[jpl->off[JPL_JUP]], jpl->ncm[JPL_JUP], jpl->ncf[JPL_JUP], jpl->niv[JPL_JUP], t, jpl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 7: // SAT
-                assist_jpl_work(&z[pl->off[JPL_SAT]], pl->ncm[JPL_SAT], pl->ncf[JPL_SAT], pl->niv[JPL_SAT], t, pl->inc, pos->u, pos->v, pos->w);
+            case ASSIST_BODY_SATURN:
+                assist_jpl_work(&z[jpl->off[JPL_SAT]], jpl->ncm[JPL_SAT], jpl->ncf[JPL_SAT], jpl->niv[JPL_SAT], t, jpl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 8: // URA
-                assist_jpl_work(&z[pl->off[JPL_URA]], pl->ncm[JPL_URA], pl->ncf[JPL_URA], pl->niv[JPL_URA], t, pl->inc, pos->u, pos->v, pos->w);
+            case ASSIST_BODY_URANUS:
+                assist_jpl_work(&z[jpl->off[JPL_URA]], jpl->ncm[JPL_URA], jpl->ncf[JPL_URA], jpl->niv[JPL_URA], t, jpl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 9: // NEP
-                assist_jpl_work(&z[pl->off[JPL_NEP]], pl->ncm[JPL_NEP], pl->ncf[JPL_NEP], pl->niv[JPL_NEP], t, pl->inc, pos->u, pos->v, pos->w);
+            case ASSIST_BODY_NEPTUNE:
+                assist_jpl_work(&z[jpl->off[JPL_NEP]], jpl->ncm[JPL_NEP], jpl->ncf[JPL_NEP], jpl->niv[JPL_NEP], t, jpl->inc, pos.u, pos.v, pos.w);
                 break;
-            case 10: // PLU
-                assist_jpl_work(&z[pl->off[JPL_PLU]], pl->ncm[JPL_PLU], pl->ncf[JPL_PLU], pl->niv[JPL_PLU], t, pl->inc, pos->u, pos->v, pos->w);
-                break;
-            case 11: // BAR
-                     // Nothing needs to be done
+            case ASSIST_BODY_PLUTO:
+                assist_jpl_work(&z[jpl->off[JPL_PLU]], jpl->ncm[JPL_PLU], jpl->ncf[JPL_PLU], jpl->niv[JPL_PLU], t, jpl->inc, pos.u, pos.v, pos.w);
                 break;
             default:
-                return -1; // body not found
+                return ASSIST_ERROR_NEPHEM; // body not found
                 break;
         }
 
-        pos->jde = jd_ref + jd_rel;
-        return 0;
+    // Convert to au/day and au/day^2
+    vecpos_div(pos.u, jpl->cau);
+    vecpos_div(pos.v, jpl->cau/86400.);
+    vecpos_div(pos.w, jpl->cau/(86400.*86400.));
+
+    *out_x = pos.u[0];
+    *out_y = pos.u[1];
+    *out_z = pos.u[2];
+    *out_vx = pos.v[0];
+    *out_vy = pos.v[1];
+    *out_vz = pos.v[2];
+    *out_ax = pos.w[0];
+    *out_ay = pos.w[1];
+    *out_az = pos.w[2];
+
+    return(ASSIST_SUCCESS);
+
 }
 
 /*
  *  assist_jpl_mass
  *
  */
-double assist_jpl_mass(struct _jpl_s *pl, int tar)
+double assist_jpl_mass(struct jpl_s *jpl, int tar)
 {
 	char buf[14];
 	int n;
 
-	if (pl == NULL)
+	if (jpl == NULL)
 		return 0.0;
 
 	if (tar >= 10000)
@@ -338,9 +382,9 @@ double assist_jpl_mass(struct _jpl_s *pl, int tar)
 
 	snprintf(buf, sizeof(buf), "MA%04d", tar);
 
-	for (n = 0; n < pl->num; n++) {
-		if (strncmp(pl->str[n], buf, 6) == 0)
-			return pl->con[n];
+	for (n = 0; n < jpl->num; n++) {
+		if (strncmp(jpl->str[n], buf, 6) == 0)
+			return jpl->con[n];
 	}
 
 	// not found
