@@ -1,4 +1,4 @@
-name: ASSIST (python)
+name: ASSIST Unit Tests (python)
 
 on: [push, pull_request]
 
