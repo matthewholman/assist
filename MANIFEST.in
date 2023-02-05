@@ -7,6 +7,6 @@ include src/forces.h
 include src/const.h
 include src/planets.h
 include src/spk.h
-include README.rst
+include README.md
 include LICENSE
 include version.txt
