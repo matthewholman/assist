@@ -22,7 +22,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DASSISTGITHASH="+ghash
 except:
-    ghash_arg = "-DASSISTGITHASH=d1fdc41f4261785432904f9d3963d26a14241b3e" #GITHASHAUTOUPDATE
+    ghash_arg = "-DASSISTGITHASH=4bd94bfbca75815bddb8aace4379954bb081eec3" #GITHASHAUTOUPDATE
 
 class build_ext(_build_ext):
     def finalize_options(self):
@@ -73,7 +73,7 @@ libassistmodule = Extension('libassist',
                     )
 
 here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='assist',

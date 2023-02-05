@@ -267,7 +267,8 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
     *GM = JPL_GM[m];
 
 	int n, b, p, P, R;
-	double T[32], S[32];
+	double T[32];
+    // double S[32]; // Not used at the moment
 	double *val, z;
     struct mpos_s pos = {0};
 
@@ -293,12 +294,14 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
 	z = ((jde - _jul(val[0])) + rel) / (val[1] / 86400.0);
 
 	// set up Chebyshev polynomials
-	T[0] = 1.0; S[0] = 0.0;
-	T[1] = z;   S[1] = 1.0;
+	T[0] = 1.0; T[1] = z;   
+    // Not used at the moment:
+    // S[1] = 1.0; S[0] = 0.0;
 
 	for (p = 2; p < P; p++) {
 		T[p] = 2.0 * z * T[p-1] - T[p-2];
-		S[p] = 2.0 * z * S[p-1] + 2.0 * T[p-1] - S[p-2];
+        // Not used at the moment:
+		// S[p] = 2.0 * z * S[p-1] + 2.0 * T[p-1] - S[p-2];
 	}
 
 	for (n = 0; n < 3; n++) {
@@ -323,6 +326,6 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
     *out_y = pos.u[1];
     *out_z = pos.u[2];
 
-	return 0;
+	return ASSIST_SUCCESS;
 }
 

@@ -2,15 +2,15 @@
 #define _JPL_EPHEM_H
 #include "assist.h"
 
-struct _jpl_s * assist_jpl_init(char *str);
-int assist_jpl_free(struct _jpl_s *jpl);
+struct jpl_s * assist_jpl_init(char *str);
+int assist_jpl_free(struct jpl_s *jpl);
 void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1, double *u, double *v, double *w);
-enum ASSIST_STATUS assist_jpl_calc(struct _jpl_s *pl, double jd_ref, double jd_rel, int body, 
+enum ASSIST_STATUS assist_jpl_calc(struct jpl_s *pl, double jd_ref, double jd_rel, int body, 
 		 double* const GM,
 		 double* const x, double* const y, double* const z,
 		 double* const vx, double* const vy, double* const vz,
          double* const ax, double* const ay, double* const az);
-double assist_jpl_mass(struct _jpl_s *pl, int tar);
+double assist_jpl_mass(struct jpl_s *pl, int tar);
 
 // Order of columns in JPL Ephemeris file
 enum {
@@ -33,7 +33,7 @@ enum {
          JPL_N,                          // Number of columns
  };
 
-struct _jpl_s {
+struct jpl_s {
         double beg, end;                // begin and end times
         double inc;                     // time step size
         double cau;                     // definition of AU
