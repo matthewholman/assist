@@ -21,6 +21,9 @@ int main(int argc, char* argv[]){
     struct reb_simulation* r = reb_create_simulation();
     struct assist_extras* ax = assist_attach(r, ephem);
 
+    // Turn on GR from all planets
+    ax->gr_eih_sources = ASSIST_BODY_NPLANETS;
+
     double t_initial = 2.4621385359989386E+06 - ephem->jd_ref;
     r->t = t_initial;
 
