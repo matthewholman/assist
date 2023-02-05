@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
 
 
     // Query the position of the sun at current simulation time.
-    struct reb_particle sun = assist_get_particle(ephem, 0, r->t); // 0 stans dfor sun
+    struct reb_particle sun = assist_get_particle(ephem, ASSIST_BODY_SUN, r->t);
     
     // Add another test particle using orbital parameters relative to the sun
     reb_add_fmt(r, "a e omega primary",
@@ -61,7 +61,7 @@ int main(int argc, char* argv[]){
     
     
     // Query the position of the earth at current simulation time.
-    struct reb_particle earth = assist_get_particle(ephem, 3, r->t); // 3 stands for earth
+    struct reb_particle earth = assist_get_particle(ephem, ASSIST_BODY_EARTH, r->t); 
     printf("%f %f %f \n", earth.x, earth.y, earth.z);
     
     // Add another test particle in orbit around the Earth
