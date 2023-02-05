@@ -15,7 +15,7 @@ int main(int argc, char* argv[]){
 
     // Load the ephemeris data
     struct assist_ephem* ephem = assist_ephem_create(
-            "../../data/linux_m13000p17000.441",
+            "../../data/linux_p1550p2650.440",
             "../../data/sb441-n16.bsp");
     if (!ephem){
         printf("Cannot create ephemeris structure.\n");
@@ -88,6 +88,7 @@ int main(int argc, char* argv[]){
 
     // Clean up memory
     assist_free(ax);
+    assist_ephem_free(ephem);
     reb_free_simulation(r);
 }
 
