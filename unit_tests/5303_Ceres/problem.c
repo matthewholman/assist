@@ -27,6 +27,9 @@ int main(int argc, char* argv[]){
     // ax->forces ^= ASSIST_FORCE_EARTH_HARMONICS;
     // ax->forces ^= ASSIST_FORCE_SUN_HARMONICS;
 
+    // Decide whether to include GR of planets or not
+    ax->gr_eih_sources = ASSIST_BODY_NPLANETS;
+
     // Initial conditions of asteroid (5303) Parijskij
     reb_add_fmt(r, "x y z vx vy vz",
         -2.232847879711731E+00, 1.574146331186095E+00, 8.329414259670296E-01,
