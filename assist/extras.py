@@ -80,6 +80,7 @@ class Extras(Structure):
                  ("_particle_params", POINTER(c_double)),
                  ("steps_done", c_int),
                  ("_forces", c_int),
+                 ("gr_eih_sources", c_int),
         ]
 
 # avoid circular imports

@@ -142,6 +142,7 @@ struct assist_extras {
     double* particle_params;
     int steps_done;
     int forces;
+    int gr_eih_sources;
 };
 
 /**

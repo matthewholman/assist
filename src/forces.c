@@ -45,7 +45,7 @@ static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, doubl
 static void assist_additional_force_non_gravitational(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
 static void assist_additional_force_potential_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
 static void assist_additional_force_simple_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
-static void assist_additional_force_eih_GR(struct reb_simulation* sim, int eih_loop_limit, double xo, double yo, double zo, double vxo, double vyo, double vzo, double axo, double ayo, double azo,	FILE *outfile, FILE *eih_file);
+static void assist_additional_force_eih_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, double axo, double ayo, double azo,	FILE *outfile, FILE *eih_file);
 
 void assist_additional_forces(struct reb_simulation* sim){
 
@@ -135,7 +135,7 @@ void assist_additional_forces(struct reb_simulation* sim){
     //eih_file = fopen("eih_acc.out", "w");
 
     if (assist->forces & ASSIST_FORCE_GR_EIH){
-        assist_additional_force_eih_GR(sim, eih_loop_limit,
+        assist_additional_force_eih_GR(sim,
            xo, yo, zo, vxo, vyo, vzo, axo, ayo, azo,
            outfile, eih_file);
     }
@@ -1296,7 +1296,6 @@ static void assist_additional_force_simple_GR(struct reb_simulation* sim,
 }
 
 static void assist_additional_force_eih_GR(struct reb_simulation* sim,
-	    int eih_loop_limit,
 	    double xo, double yo, double zo,
 	    double vxo, double vyo, double vzo,
 	    double axo, double ayo, double azo,	       	    
@@ -1306,6 +1305,7 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
     struct assist_ephem* ephem = assist->ephem;
     const double jd_ref = ephem->jd_ref;
+    const int gr_eih_sources = assist->gr_eih_sources;
 
     // Einstein-Infeld-Hoffman PPN GR treatment
     // This is one of three options for GR.
@@ -1344,7 +1344,7 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	double gry = 0.0;
 	double grz = 0.0;		
 
-	for (int j=0; j<eih_loop_limit; j++){ // This is either 1 or ASSIST_BODY_NPLANETS
+	for (int j=0; j<gr_eih_sources; j++){
 
 	    // Get position and mass of massive body j.
 	    assist_all_ephem(ephem, assist->ephem_cache, j, t, &GMj,
@@ -1586,7 +1586,7 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
 	double gry = 0.0;
 	double grz = 0.0;		
 
-	for (int j=0; j<eih_loop_limit; j++){ // This is either 1 or ASSIST_BODY_NPLANETS
+	for (int j=0; j<gr_eih_sources; j++){
 
 	    // Get position and mass of massive body j.
 	    assist_all_ephem(ephem, assist->ephem_cache, j, t, &GMj,
