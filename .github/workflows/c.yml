@@ -66,6 +66,11 @@ jobs:
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test variational 
+        working-directory: ./unit_tests/variational/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Test roundtrip
         working-directory: ./unit_tests/roundtrip/
         run: |
