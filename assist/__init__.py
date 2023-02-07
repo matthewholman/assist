@@ -22,6 +22,14 @@ __build__ = c_char_p.in_dll(clibassist, "assist_build_str").value.decode('ascii'
 # Githash
 __githash__ = c_char_p.in_dll(clibassist, "assist_githash_str").value.decode('ascii')
 
+def assist_error_messages(e):
+    e_N = c_int.in_dll(clibassist, "assist_error_messages_N").value
+    if e >= e_N:
+        raise RuntimeError("And error occured while trying to process an ASSIST error message.")
+    ccpp  = c_char_p * e_N
+    message = ccpp.in_dll(clibassist, "assist_error_messages")[e]
+    return message.decode("ascii")
+
 try:
     import pkg_resources
     moduleversion = pkg_resources.require("assist")[0].version

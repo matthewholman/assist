@@ -274,7 +274,7 @@ enum ASSIST_STATUS assist_jpl_calc(struct jpl_s *jpl, double jd_ref, double jd_r
 
         // check if covered by this file
         if (jd_ref + jd_rel < jpl->beg || jd_ref + jd_rel > jpl->end)
-            return ASSIST_ERROR_EPHEM_FILE;
+            return ASSIST_ERROR_COVERAGE;
 
         // compute record number and 'offset' into record
         blk = (u_int32_t)((jd_ref + jd_rel - jpl->beg) / jpl->inc);

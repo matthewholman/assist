@@ -260,6 +260,10 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
     if(m<0 || m > pl->num){
         return(ASSIST_ERROR_NAST);
     }
+        
+    if (jde + rel < pl->beg[m] || jde + rel > pl->beg[m] + pl->ind[m] * pl->res[m]){
+        return ASSIST_ERROR_COVERAGE;
+    }
 
     // TODO: again, the units might be handled more
     // generally

@@ -1,4 +1,4 @@
-from . import clibassist
+from . import clibassist, assist_error_messages
 from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref, c_uint32, c_uint, cast, c_char
 import rebound
 import assist
@@ -67,8 +67,11 @@ class Ephem(Structure):
         if not isinstance(body, int):
             raise ValueError("Expecting integer for body id.")
 
-        clibassist.assist_get_particle.restype = rebound.Particle
-        p = clibassist.assist_get_particle(byref(self), c_int(body), c_double(t))
+        clibassist.assist_get_particle_with_error.restype = rebound.Particle
+        e = c_int(0)
+        p = clibassist.assist_get_particle_with_error(byref(self), c_int(body), c_double(t), byref(e))
+        if e.value:
+            raise RuntimeError(assist_error_messages(e.value))
         return p
 
 
