@@ -22,7 +22,7 @@ science by the small body community.
 
 If you are using ASSIST for the first time check out the quickstart guides below with installation instructions.
 
-If you clone the repository at `https://github.com/mholman/assist <https://github.com/mholman/assist>`_ you can 
+If you clone the repository at `https://github.com/matthewholman/assist <https://github.com/matthewholman/assist>`_ you can 
 load and run all the jupyter notebook examples locally (under assist/jupyter_examples) 
 as well as the C examples 
 (under assist/examples. In the terminal you can run the example in each folder with ``make clean && make && ./rebound``). 
