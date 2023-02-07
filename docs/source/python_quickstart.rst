@@ -114,5 +114,8 @@ and integrate forward to a desired final time (here, 10000 days):
     t_final = sim.t + 100000
     ax.integrate_or_interpolate(t_final)
 
+display the courdinates of the asteroid at t_final:
 
-
+.. code:: python
+ 
+   sim.particle[0].xyz
