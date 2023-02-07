@@ -6,7 +6,7 @@ Quickstart (Python)
 Installation
 ------------
 It's easiest to install ASSIST into a python virtual environment. If you already have a virtual environment 
-or do not want to use one, you can skip this step. Otherwise, run the following command in an empty directory. 
+or do not want to use one, you can skip this step. Otherwise, run the following commands in an empty directory. 
 They will setup and activate a new virtual environment in a directory.
 
 .. code-block:: console
@@ -33,7 +33,7 @@ download them using your browser. Note that these are large files, almost 1GB in
 	curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de440/linux_p1550p2650.440 -o data/linux_p1550p2650.440
 	curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp -o data/sb441-n16.bsp
 
-Now you can try out if assist works.
+Now you can verify that assist works.
 
 .. code-block:: console
 
@@ -65,6 +65,9 @@ Then, to install the Python version from this repository, navigate to the `assis
 Quick Start Guide
 -----------------
 
+(See also: ipython notebook on Github- 
+`https://github.com/mholman/assist/jupyter_examples/Getting started.ipynb <https://github.com/matthewholman/assist/blob/main/jupyter_examples/Getting%20started.ipynb>`_)
+
 You begin by importing rebound and assist
 
 
@@ -81,7 +84,7 @@ You then import the downloaded ephemeris data, using the path to the data direct
     ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
 
 Then  set up your REBOUND simulation with initial positions in AU and initial velocities in AU/day 
-(Here we use the initial conditions for asteroid 3666 Holman 
+(Here we use the initial conditions for asteroid 3666 Holman) 
 
 .. code:: python
 
@@ -118,4 +121,4 @@ display the courdinates of the asteroid at t_final:
 
 .. code:: python
  
-   sim.particle[0].xyz
+   sim.particles[0].xyz
