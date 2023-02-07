@@ -65,7 +65,8 @@ Then, to install the Python version from this repository, navigate to the `assis
 Quick Start Guide
 -----------------
 
-(See also: ipython notebook on Github- `https://github.com/mholman/assist/jupyter_examples/Getting started.ipynb <https://github.com/mholman/assist/jupyter_examples/Getting started.ipynb>`_)
+(See also: ipython notebook on Github- 
+`https://github.com/mholman/assist/jupyter_examples/Getting started.ipynb <https://https://github.com/matthewholman/assist/blob/main/jupyter_examples/Getting%20started.ipynb>`_)
 
 You begin by importing rebound and assist
 
