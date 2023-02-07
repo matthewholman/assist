@@ -78,9 +78,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	// The offset position is used to adjust the particle positions.
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, ASSIST_BODY_EARTH, t, &GM, &xo, &yo, &zo, &vxo, &vyo, &vzo, &axo, &ayo, &azo);
 	if(flag != ASSIST_SUCCESS){
-	    char outstring[50];
-	    sprintf(outstring, "%s %d %d\n", "Ephemeris error a ", 3, flag);
-	    reb_error(sim, outstring);
+        reb_error(sim, assist_error_messages[flag]);
 	}
     }else{
 	// barycentric
@@ -315,9 +313,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
         int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
 
         if(flag != ASSIST_SUCCESS){
-            char outstring[50];
-            sprintf(outstring, "%s %d %d\n", "Ephemeris error b ", i, flag);	    
-            reb_error(sim, outstring);
+            reb_error(sim, assist_error_messages[flag]);
         }
 
         // Loop over test particles
@@ -356,9 +352,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
 
 	if(flag != ASSIST_SUCCESS){
-	    char outstring[50];
-	    sprintf(outstring, "%s %d %d\n", "Ephemeris error c ", i, flag);	    	    
-	    reb_error(sim, outstring);
+        reb_error(sim, assist_error_messages[flag]);
 	}
 
     // Skip remainder of calculation if variational particles are not used
