@@ -65,6 +65,8 @@ Then, to install the Python version from this repository, navigate to the `assis
 Quick Start Guide
 -----------------
 
+(See also: ipython notebook: assist/jupyter_examples/Getting started.ipynb on github)
+
 You begin by importing rebound and assist
 
 
@@ -81,7 +83,7 @@ You then import the downloaded ephemeris data, using the path to the data direct
     ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
 
 Then  set up your REBOUND simulation with initial positions in AU and initial velocities in AU/day 
-(Here we use the initial conditions for asteroid 3666 Holman 
+(Here we use the initial conditions for asteroid 3666 Holman) 
 
 .. code:: python
 
