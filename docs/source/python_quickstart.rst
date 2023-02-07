@@ -118,4 +118,4 @@ display the courdinates of the asteroid at t_final:
 
 .. code:: python
  
-   sim.particle[0].xyz
+   sim.particles[0].xyz
