@@ -41,7 +41,7 @@ go to one of the example directories and compile the problem file in the directo
 
 .. code-block:: console
 
-	cd assist/examples/plain_interface
+	cd assist/examples/asteroid
 	make
 
 And run the example with:
