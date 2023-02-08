@@ -61,10 +61,6 @@ void assist_additional_forces(struct reb_simulation* sim){
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;    
 
-    // The limit of the EIH GR limit should be a free
-    // parameter
-    int eih_loop_limit = ASSIST_BODY_NPLANETS; // 1;
-
     const double t = sim->t;
 
     double GM;
