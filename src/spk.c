@@ -171,6 +171,7 @@ next:	n = (int)val[0] - 1;
 		c = pl->ind[m]++;
 		pl->one[m][c] = sum->one;
 		pl->two[m][c] = sum->two;
+		pl->end[m] = _jul(sum->end);
 	}
 
 	if (n >= 0) {
@@ -259,6 +260,10 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
 
     if(m<0 || m > pl->num){
         return(ASSIST_ERROR_NAST);
+    }
+        
+    if (jde + rel < pl->beg[m] || jde + rel > pl->end[m]){
+        return ASSIST_ERROR_COVERAGE;
     }
 
     // TODO: again, the units might be handled more

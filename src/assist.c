@@ -48,6 +48,20 @@ const int reb_max_messages_N = 10;
 const char* assist_build_str = __DATE__ " " __TIME__;   // Date and time build string. 
 const char* assist_version_str = "1.0.2";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets updated automatically. Do not edit manually.
+
+
+// These correspond to ASSIST_STATUS enum.
+
+const char* assist_error_messages[] = {
+    "No error has occured.", // ASSIST_SUCCESS
+    "The JPL planet ephemeris file has not been found.", // ASSIST_ERROR_EPHEM_FILE
+    "The JPL asteroid ephemeris file has not been found.", // ASSIST_ERROR_AST_FILE
+    "The requested asteroid ID has not been found.", // ASSIST_ERROR_NAST
+    "The requested planet ID has not been found.", // ASSIST_ERROR_NEPHEM
+    "The requested time is outside the coverage provided by the ephemeris file.", // ASSIST_ERROR_COVERAGE
+};
+const int assist_error_messages_N = ASSIST_ERROR_N;
+
     
 // Forward function declarations
 static void assist_pre_timestep_modifications(struct reb_simulation* r);
@@ -96,7 +110,6 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
      */
 
     if(user_planets_path == NULL && getenv("ASSIST_DIR")==NULL){
-        fprintf(stderr, "No user or default planet ephemeris file\n");
         return ASSIST_ERROR_EPHEM_FILE;	  
     }
 
@@ -107,12 +120,10 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
     }
 
     if ((ephem->jpl = assist_jpl_init(planets_path)) == NULL) {
-        printf("Couldn't find planet ephemeris file: %s\n", planets_path);	  
         return ASSIST_ERROR_EPHEM_FILE;	  
     }
 
     if(user_asteroids_path == NULL && getenv("ASSIST_DIR")==NULL){
-        fprintf(stderr, "No user or asteroid ephemeris file\n");
         return ASSIST_ERROR_AST_FILE;	  
     }
 
@@ -123,7 +134,6 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
     }
 
     if ((ephem->spl = assist_spk_init(asteroids_path)) == NULL) {
-        printf("Couldn't find asteroid ephemeris file: %s\n", asteroids_path);
         return ASSIST_ERROR_AST_FILE;	  
     }
 
@@ -132,8 +142,10 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
 
 struct assist_ephem* assist_ephem_create(char *user_planets_path, char *user_asteroids_path){
     struct assist_ephem* ephem = calloc(1, sizeof(struct assist_ephem));
-    int ret = assist_ephem_init(ephem, user_planets_path, user_asteroids_path);
-    if (ret != ASSIST_SUCCESS){
+    int error = assist_ephem_init(ephem, user_planets_path, user_asteroids_path);
+    if (error != ASSIST_SUCCESS){
+        fprintf(stderr, "(ASSIST) An error occured while trying to initialize the ephemeris structure.\n");
+        fprintf(stderr, "(ASSIST) %s\n", assist_error_messages[error]);
         assist_ephem_free(ephem);
         return NULL;
     }
@@ -155,7 +167,7 @@ void assist_ephem_free(struct assist_ephem* ephem){
 
 struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ephem* ephem){  
     if (sim == NULL){
-        fprintf(stderr, "ASSIST Error: Simulation pointer passed to assist_attach was NULL.\n");
+        fprintf(stderr, "(ASSIST) Error: Simulation pointer passed to assist_attach was NULL.\n");
         return NULL;
     }
     int extras_should_free_ephem = 0;
@@ -163,7 +175,7 @@ struct assist_extras* assist_attach(struct reb_simulation* sim, struct assist_ep
         // Try default 
         ephem = assist_ephem_create(NULL, NULL);
         if (ephem == NULL){
-            fprintf(stderr, "ASSIST Error: Ephemeris pointer passed to assist_attach was NULL. Initialization with default path failed.\n");
+            fprintf(stderr, "(ASSIST) Error: Ephemeris pointer passed to assist_attach was NULL. Initialization with default path failed.\n");
             return NULL;
         }
         extras_should_free_ephem = 1;
@@ -260,21 +272,30 @@ void assist_detach(struct reb_simulation* sim, struct assist_extras* assist){
 
 void assist_error(struct assist_extras* assist, const char* const msg){
     if (assist->sim == NULL){
-        fprintf(stderr, "ASSIST Error: A Simulation is no longer attached to the ASSIST extras instance. Most likely the Simulation has been freed.\n");
+        fprintf(stderr, "(ASSIST) Error: A Simulation is no longer attached to the ASSIST extras instance. Most likely the Simulation has been freed.\n");
     } else{
         reb_error(assist->sim, msg);
     }
 }
 
 
-struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t){
+struct reb_particle assist_get_particle_with_error(struct assist_ephem* ephem, const int particle_id, const double t, int* error){
     struct reb_particle p = {0};
     double GM = 0;
     int flag = assist_all_ephem(ephem, NULL, particle_id, t, &GM, &p.x, &p.y, &p.z, &p.vx, &p.vy, &p.vz, &p.ax, &p.ay, &p.az);
-    if (flag != ASSIST_SUCCESS){
-        fprintf(stderr, "An error occured while trying to initialize particle from ephemeris data.\n");
-    }
+    *error = flag;
     p.m = GM; // Note this is GM, not M
+    return p;
+}
+
+
+struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t){
+    int error = 0;
+    struct reb_particle p = assist_get_particle_with_error(ephem, particle_id, t, &error);
+    if (error != ASSIST_SUCCESS){
+        fprintf(stderr, "(ASSIST) An error occured while trying to initialize particle from ephemeris data.\n");
+        fprintf(stderr, "(ASSIST) %s\n", assist_error_messages[error]);
+    }
     return p;
 }
 
