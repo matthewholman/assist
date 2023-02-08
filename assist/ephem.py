@@ -48,12 +48,7 @@ class Ephem(Structure):
         clibassist.assist_ephem_init.restype = c_int
         ret = clibassist.assist_ephem_init(byref(self), c_char_p(planets_path), c_char_p(asteroids_path))
         if ret != 0:
-            if ret == 1:
-                raise RuntimeError("JPL planet ephemeris file not found.")
-            if ret == 2:
-                raise RuntimeError("JPL asteroid ephemeris file not found.")
-
-            raise RuntimeError("An error occured while creating the ephemeris structure.")
+            raise RuntimeError(assist_error_messages(ret))
 
     def get_particle(self, body, t):
         if isinstance(body, str):
