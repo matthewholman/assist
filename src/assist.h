@@ -131,6 +131,7 @@ struct assist_cache_item {
 
 struct assist_ephem_cache {
     double* t;
+    double dt_sign;
     int* index;
     struct assist_cache_item* items;
 };
