@@ -58,6 +58,7 @@ struct spk_s {
 	int tar[_SPK_MAX];		// target code
 	int cen[_SPK_MAX];		// centre target
 	double beg[_SPK_MAX];		// begin epoch
+	double end[_SPK_MAX];		// begin epoch
 	double res[_SPK_MAX];		// epoch step
 	int *one[_SPK_MAX];		// record index
 	int *two[_SPK_MAX];		// ... ditto

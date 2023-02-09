@@ -53,14 +53,13 @@ void assist_additional_forces(struct reb_simulation* sim){
 
     struct assist_extras* assist = (struct assist_extras*) sim->extras;
     struct assist_ephem* ephem = assist->ephem;
+    if (assist->ephem_cache){
+        assist->ephem_cache->dt_sign = copysign(1.,sim->dt_last_done);
+    }
     int geo = assist->geocentric;
 
     const unsigned int N = sim->N;  // N includes real+variational particles
     const unsigned int N_real = N - sim->N_var;    
-
-    // The limit of the EIH GR limit should be a free
-    // parameter
-    int eih_loop_limit = ASSIST_BODY_NPLANETS; // 1;
 
     const double t = sim->t;
 
@@ -78,9 +77,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	// The offset position is used to adjust the particle positions.
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, ASSIST_BODY_EARTH, t, &GM, &xo, &yo, &zo, &vxo, &vyo, &vzo, &axo, &ayo, &azo);
 	if(flag != ASSIST_SUCCESS){
-	    char outstring[50];
-	    sprintf(outstring, "%s %d %d\n", "Ephemeris error a ", 3, flag);
-	    reb_error(sim, outstring);
+        reb_error(sim, assist_error_messages[flag]);
 	}
     }else{
 	// barycentric
@@ -229,13 +226,23 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
 
     if (ephem_cache){
         double* ct = ephem_cache->t+7*i;
-        // Find oldest
         int os = 0;
         double ot = ct[0];
-        for (int s=1; s<7; s+=1){
-            if (ct[s]<ot){
-                ot = ct[s];
-                os = s;
+        if(ephem_cache->dt_sign>0){
+            // Find oldest (forward integration)
+            for (int s=1; s<7; s+=1){
+                if (ct[s]<ot){
+                    ot = ct[s];
+                    os = s;
+                }
+            }
+        }else{
+            // Find oldest (backward integration)
+            for (int s=1; s<7; s+=1){
+                if (ct[s]>ot){
+                    ot = ct[s];
+                    os = s;
+                }
             }
         }
         // repolace oldest
@@ -315,9 +322,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
         int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
 
         if(flag != ASSIST_SUCCESS){
-            char outstring[50];
-            sprintf(outstring, "%s %d %d\n", "Ephemeris error b ", i, flag);	    
-            reb_error(sim, outstring);
+            reb_error(sim, assist_error_messages[flag]);
         }
 
         // Loop over test particles
@@ -356,9 +361,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
 
 	if(flag != ASSIST_SUCCESS){
-	    char outstring[50];
-	    sprintf(outstring, "%s %d %d\n", "Ephemeris error c ", i, flag);	    	    
-	    reb_error(sim, outstring);
+        reb_error(sim, assist_error_messages[flag]);
 	}
 
     // Skip remainder of calculation if variational particles are not used

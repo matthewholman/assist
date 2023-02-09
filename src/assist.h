@@ -61,13 +61,18 @@ enum ASSIST_FORCES {
     ASSIST_FORCE_GR_POTENTIAL       = 0x100,
 };
 
+// Error code. Corresponding messages are in assist.c
 enum ASSIST_STATUS{
-    ASSIST_SUCCESS,         // no error
-    ASSIST_ERROR_EPHEM_FILE,   // JPL ephemeris file not found
-    ASSIST_ERROR_AST_FILE,     // JPL asteroid file not found
-    ASSIST_ERROR_NAST,         // asteroid number out of range
-    ASSIST_ERROR_NEPHEM,      // planet number out of range
+    ASSIST_SUCCESS,
+    ASSIST_ERROR_EPHEM_FILE,
+    ASSIST_ERROR_AST_FILE,
+    ASSIST_ERROR_NAST,
+    ASSIST_ERROR_NEPHEM,
+    ASSIST_ERROR_COVERAGE,
+    ASSIST_ERROR_N,
 };
+
+extern const char* assist_error_messages[];
 
 enum ASSIST_BODY {
     ASSIST_BODY_SUN         = 0,
@@ -126,6 +131,7 @@ struct assist_cache_item {
 
 struct assist_ephem_cache {
     double* t;
+    double dt_sign;
     int* index;
     struct assist_cache_item* items;
 };
