@@ -65,7 +65,8 @@ class Extras(Structure):
 
     @particle_params.setter
     def particle_params(self, value):
-        value_p = value.ctypes.data_as(POINTER(c_double))
+        self._particle_params_reference = value.copy() # keep copy of array to avoid it beeing freed
+        value_p = self._particle_params_reference.ctypes.data_as(POINTER(c_double))
         self._particle_params = value_p
 
 
