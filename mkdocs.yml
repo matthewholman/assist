@@ -3,9 +3,7 @@ repo_url: https://github.com/matthewholman/assist
 repo_name: matthewholman/assist
 edit_uri: ""
 nav:
-  - "Home":
-    - index.md
-    - changelog.md
+  - index.md
   - "C Examples":
     - c_examples/ephemeris.md
     - c_examples/asteroid.md
