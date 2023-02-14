@@ -1,4 +1,6 @@
 /**
+ * Asteroid orbit
+ *
  * This example demonstrates how to use ASSIST to integrate two test particles in 
  * the field of the Sun, planets, moon, and a set of massive asteroids, whose
  * positions come from JPL's DE440/441 ephemeris.
