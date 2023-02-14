@@ -6,8 +6,15 @@ nav:
   - "Home":
     - index.md
     - changelog.md
-  - "Examples":
-    - ipython_examples/RadialVelocity.ipynb
+  - "C Examples":
+    - c_examples/ephemeris.md
+    - c_examples/asteroid.md
+    - c_examples/interpolation.md
+  - "Python Examples":
+    - jupyter_examples/GettingStarted.ipynb
+    - jupyter_examples/VariationalEquations.ipynb
+    - jupyter_examples/Apophis.ipynb
+    - jupyter_examples/5303_Ceres.ipynb
 
 theme:
   name: material
