@@ -26,18 +26,17 @@ ASSIST is a software package for ephemeris-quality integrations of test particle
         git clone https://github.com/matthewholman/assist.git
     ```
 
+!!! Warning inline end "Large file size"
 
-To use ASSIST, you also need to download ephemeris data files. One file for planet ephemeris and another suplementary file for asteroid ephemeris. The following commands download these files with curl. You can also manually download them using your browser. Note that these are large files, almost 1GB in size. You can store these files anywhere. If you're installing REBOUND from the repository, a good place to put them is in a new directory with the name `data`.
+    Some of the files are over 2 GB in size.
+
+To use ASSIST, you also need to download ephemeris data files. One file for planet ephemeris and another suplementary file for asteroid ephemeris. The following commands download these files with curl. You can also manually download them using your browser. You can store these files anywhere. If you're installing REBOUND from the repository, a good place to put them is in a new directory with the name `data`.
 
 ```bash
     mkdir data
     curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de440/linux_p1550p2650.440 -o data/linux_p1550p2650.440
     curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp -o data/sb441-n16.bsp
 ```
-    
-!!! Warning inline end "Large file size"
-
-    This file is 2.6GB in size.
 
 For some of the examples, you will also need the planet ephemeris file with an extended coverage.
 
