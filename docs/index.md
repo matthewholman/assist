@@ -6,7 +6,7 @@ ASSIST is a software package for ephemeris-quality integrations of test particle
 
 ## Installation
 
-=== Python
+=== "Python"
     It's easiest to install ASSIST into a python virtual environment. If you already have a virtual environment or do not want to use one, you can skip this step. Otherwise, run the following command in an empty directory. They will setup and activate a new virtual environment in a directory. 
     ```bash
         python3 -m venv venv
@@ -19,7 +19,7 @@ ASSIST is a software package for ephemeris-quality integrations of test particle
         pip install assist
     ```
 
-=== C
+=== "C"
     To use the C version of ASSIST, first clone the REBOUND and then the ASSIST repository. In an empty directory, run:
     ```bash
         git clone https://github.com/hannorein/rebound.git
@@ -35,7 +35,11 @@ To use ASSIST, you also need to download ephemeris data files. One file for plan
     curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp -o data/sb441-n16.bsp
 ```
     
-For some of the examples, you will also need the planet ephemeris file with an extended coverage. Note that this file is 2.6GB in size.
+For some of the examples, you will also need the planet ephemeris file with an extended coverage.
+
+!!! Warning
+
+    This file is 2.6GB in size.
 
 ```bash
     curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de441/linux_m13000p17000.441 -o assist/data/linux_m13000p17000.441
@@ -43,7 +47,7 @@ For some of the examples, you will also need the planet ephemeris file with an e
 
 Now you can try out if assist works.
 
-=== Python
+=== "Python"
     Start a python interpreter, or open a new notebook if you're planning to use Jupyter notebooks.
     ```bash
         python3
@@ -57,7 +61,7 @@ Now you can try out if assist works.
     ```
     You should see the default reference Julian date (2451545.0) and the position of the Earth at that time printed on the screen.
 
-=== C
+=== "C"
     Go to one of the example directories and compile the problem file. This will also trigger the installation of the REBOUND and ASSIST shared libraries.
 
     ```bash
