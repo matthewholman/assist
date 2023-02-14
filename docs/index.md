@@ -24,7 +24,7 @@ ASSIST is a software package for ephemeris-quality integrations of test particle
     ```bash
         git clone https://github.com/hannorein/rebound.git
         git clone https://github.com/matthewholman/assist.git
-    ```bash
+    ```
 
 
 To use ASSIST, you also need to download ephemeris data files. One file for planet ephemeris and another suplementary file for asteroid ephemeris. The following commands download these files with curl. You can also manually download them using your browser. Note that these are large files, almost 1GB in size. You can store these files anywhere. If you're installing REBOUND from the repository, a good place to put them is in a new directory with the name `data`.
@@ -37,7 +37,7 @@ To use ASSIST, you also need to download ephemeris data files. One file for plan
     
 For some of the examples, you will also need the planet ephemeris file with an extended coverage.
 
-!!! Warning
+!!! Warning inline end "Large file size"
 
     This file is 2.6GB in size.
 
@@ -74,6 +74,9 @@ Now you can try out if assist works.
     ```bash
         ./rebound
     ```
+
+!!! Info "Windows"
+    ASSIST has been tested on both linux and MacOS. You might be able to run it on Windows with the help of the Windows Subsystem for Linux (WSL). 
 
 
 ## License
