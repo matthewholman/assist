@@ -4,6 +4,7 @@ repo_name: matthewholman/assist
 edit_uri: ""
 nav:
   - index.md
+  - installation.md
   - "C Examples":
     - c_examples/ephemeris.md
     - c_examples/asteroid.md
