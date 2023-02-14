@@ -21,7 +21,7 @@ theme:
   logo: img/rebound.png
   favicon: img/favicon.ico
   features:
-    - navigation.tabs
+    #- navigation.tabs
     - toc.integrate
 markdown_extensions:
   - admonition
