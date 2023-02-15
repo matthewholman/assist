@@ -36,6 +36,33 @@ The following code removes the higher order gravitational harmonics of the Earth
         For example, by default the bit that corresponds to earth harmonics in `forces` is turned on (set to 1). 
         The `^=` operator is an in-place bitwise xor operator which flips the earth harmonics bit to 0.
 
+
+## Non-gravitational forces
+
+We use the model by [Marsen 1973](https://ui.adsabs.harvard.edu/abs/1991AJ....102.1539M) for non-gravitational forces such as radiation pressure, Yarkovsky effect, and outgassing. 
+For this force to have any effect on your particles, you need to provide a list of three parameters \(A_1\), \(A_2\), and \(A_3\) for each particle. The following code demonstrates how this can be done.
+
+=== "Python"
+    
+    !!! Note inline end
+        This has to be a numpy array.
+
+    ```python
+    import numpy as np
+    ...
+    extras = assist.Extras(sim, ephem)
+    ex.particle_params = np.array([4.99e-13, -2.90e-14, 0.0])
+    ```
+    
+
+=== "C"
+
+    ```c
+    struct assist_extras* ax = ...
+    double params[] = {4.99e-13, -2.90e-14, 0.0};
+    ax->particle_params = params;
+    ```
+
 ## Einstein, Infeld, Hoffman GR treatment
 
 The Einstein, Infeld, Hoffman GR treatment (EIH) is very accurate but slow. 
