@@ -1,0 +1,54 @@
+site_name: ASSIST
+repo_url: https://github.com/matthewholman/assist
+repo_name: matthewholman/assist
+edit_uri: ""
+nav:
+  - index.md
+  - installation.md
+  - "C Examples":
+    - c_examples/ephemeris.md
+    - c_examples/asteroid.md
+    - c_examples/interpolation.md
+  - "Python Examples":
+    - jupyter_examples/GettingStarted.ipynb
+    - jupyter_examples/VariationalEquations.ipynb
+    - jupyter_examples/Apophis.ipynb
+    - jupyter_examples/5303_Ceres.ipynb
+
+theme:
+  name: material
+  logo: img/rebound.png
+  favicon: img/favicon.ico
+  features:
+    #- navigation.tabs
+    - toc.integrate
+markdown_extensions:
+  - admonition
+  - def_list
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - wikilinks
+extra_javascript:
+  - javascripts/config.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js      
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/matthewholman/assist
+
+plugins:
+  - search
+  - mkdocs-simple-hooks:
+      hooks:
+        on_pre_build: "docs.c_examples.generate_c_examples:run"
+  - mkdocs-jupyter
+  - mkdocs-video:
+      css_style:
+        width: "48vw"
+        height: "27vw"

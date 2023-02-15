@@ -1,4 +1,6 @@
 /**
+ * Querying ephemeris data
+ *
  * This example demonstrates how to use ASSIST to query the JPL DE440/441
  * ephemeris data. 
  */

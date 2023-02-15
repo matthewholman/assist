@@ -43,3 +43,4 @@ Untitled*
 .vscode/*
 *.code-workspace
 .eggs/*
+docs/c_examples/*.md

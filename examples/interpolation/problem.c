@@ -1,4 +1,6 @@
 /**
+ * Interpolation
+ *
  * This example demonstrates how to interpolate between timesteps using 
  * ASSIST's built in interpolation feature.
  */
