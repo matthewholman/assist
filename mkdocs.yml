@@ -5,6 +5,7 @@ edit_uri: ""
 nav:
   - index.md
   - installation.md
+  - forces.md
   - "C Examples":
     - c_examples/ephemeris.md
     - c_examples/asteroid.md
