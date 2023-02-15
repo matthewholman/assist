@@ -40,7 +40,7 @@ The following code removes the higher order gravitational harmonics of the Earth
 ## Non-gravitational forces
 
 We use the model by [Marsen 1973](https://ui.adsabs.harvard.edu/abs/1991AJ....102.1539M) for non-gravitational forces such as radiation pressure, Yarkovsky effect, and outgassing. 
-For this force to have any effect on your particles, you need to provide a list of three parameters \(A_1\), \(A_2\), and \(A_3\) for each particle. The following code demonstrates how this can be done.
+For this force to have any effect on your particles, you need to provide a list of three parameters \(A_1\), \(A_2\), and \(A_3\) for each particle. These are the coefficients, in units of \(au/d^2\), for the radial, tangential, and normal components of the non-gravitational forces. The following code demonstrates how this can be done.
 
 === "Python"
     
