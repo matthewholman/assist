@@ -65,7 +65,7 @@ For this force to have any effect on your particles, you need to provide a list 
 
 ## Einstein, Infeld, Hoffman GR treatment
 
-The Einstein, Infeld, Hoffman GR treatment (EIH) is very accurate up to order \(v/c\)^2, but theimplementation is slow and computationally expensive.
+The Einstein, Infeld, Hoffman GR treatment (EIH) is very accurate up to order \((v/c)^2\), but theimplementation is slow and computationally expensive.
 By default only the Sun is considered as a source for general relativistic correction.
 However, for some cases such as when an asteroid has a close encounter with a planet, it can be important to include general relativistic corrections for other 
 planets as well.
@@ -94,9 +94,9 @@ The following table provides a summary of all available force routines in ASSIST
 
 Name (C)   | Name (python) | Numerical value (hex) | Default | Description
 ---------- | ------------- | --------------------- | ------- | -----------
-ASSIST_FORCE_SUN               | SUN               | 0x01  | On  | Gravitational interaction(\(1/r\)) due to the Sun 
-ASSIST_FORCE_PLANETS           | PLANETS           | 0x02  | On  | Gravitational interaction(\(1/r\)) due to all planets
-ASSIST_FORCE_ASTEROIDS         | ASTEROIDS         | 0x04  | On  | Gravitational interaction(\(1/r\)) due to16 massive asteroids
+ASSIST_FORCE_SUN               | SUN               | 0x01  | On  | Gravitational interaction (\(1/r\)) due to the Sun 
+ASSIST_FORCE_PLANETS           | PLANETS           | 0x02  | On  | Gravitational interaction (\(1/r\)) due to all planets
+ASSIST_FORCE_ASTEROIDS         | ASTEROIDS         | 0x04  | On  | Gravitational interaction (\(1/r\)) due to16 massive asteroids
 ASSIST_FORCE_NON_GRAVITATIONAL | NON_GRAVITATIONAL | 0x08  | On  | Non-gravitational effects from radiation pressure, outgassing, etc. Using the Marsden (1973) model. 
 ASSIST_FORCE_EARTH_HARMONICS   | EARTH_HARMONICS   | 0x10  | On  | Earth's \(J_2\), \(J_3\), \(J_4\), \(J_5\) zonal harmonics  
 ASSIST_FORCE_SUN_HARMONICS     | SUN_HARMONICS     | 0x20  | On  | \(J_2\) zonal harmonic of the Sun
