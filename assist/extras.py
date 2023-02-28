@@ -25,6 +25,9 @@ class Extras(Structure):
     def __init__(self, sim, ephem):
         sim._extras_ref = self # add a reference to this instance in sim to make sure it's not garbage collected_ 
         clibassist.assist_init(byref(self), byref(sim), byref(ephem))
+        # set up units and frame to allow direct access to JPL Horizons via REBOUND
+        sim.update_units(("au","day","massist"))
+        sim.default_plane = "frame"
         self.extras_should_free_ephem = 0
 
     def __del__(self):
