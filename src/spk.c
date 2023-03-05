@@ -86,11 +86,8 @@ static int _com(const char *buf)
 
 struct spk_s * assist_spk_init(const char *path)
 {
-	struct spk_s *pl;
 	struct stat sb;
 	char buf[1024];
-	struct sum_s *sum;
-	double *val;
 	int fd, nd, ni, nc;
 	int m, n, c, b, B;
 	off_t off;
@@ -98,10 +95,9 @@ struct spk_s * assist_spk_init(const char *path)
 	if ((fd = open(path, O_RDONLY)) < 0)
 		return NULL;
 
-	pl = malloc(sizeof(struct spk_s));
-	memset(pl, 0, sizeof(struct spk_s));
-	val = (double *)buf;
-	sum = (struct sum_s *)buf;
+	struct spk_s* pl = calloc(1, sizeof(struct spk_s));
+	double* val = (double *)buf;
+	struct sum_s* sum = (struct sum_s *)buf;
 
 	if (fstat(fd, &sb) < 0)
 		goto err;
@@ -234,26 +230,6 @@ int assist_spk_find(struct spk_s *pl, int tar)
 
 enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int m, double* GM, double* out_x, double* out_y, double* out_z)
 {
-    const static double JPL_GM[16] =    
-    {
-	JPL_EPHEM_MA0107, // 107 camilla
-	JPL_EPHEM_MA0001, // 1 Ceres
-	JPL_EPHEM_MA0065, // 65 cybele
-	JPL_EPHEM_MA0511, // 511 davida
-	JPL_EPHEM_MA0015, // 15 eunomia
-	JPL_EPHEM_MA0031, // 31 euphrosyne	    
-	JPL_EPHEM_MA0052, // 52 europa
-	JPL_EPHEM_MA0010, // 10 hygiea
-	JPL_EPHEM_MA0704, // 704 interamnia
-	JPL_EPHEM_MA0007, // 7 iris
-	JPL_EPHEM_MA0003, // 3 juno
-	JPL_EPHEM_MA0002, // 2 pallas
-	JPL_EPHEM_MA0016, // 16 psyche
-	JPL_EPHEM_MA0087, // 87 sylvia
-	JPL_EPHEM_MA0088, // 88 thisbe
-	JPL_EPHEM_MA0004  // 4 vesta
-    };
-
     if(pl==NULL){
         return(ASSIST_ERROR_AST_FILE);	
     }
@@ -266,10 +242,7 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
         return ASSIST_ERROR_COVERAGE;
     }
 
-    // TODO: again, the units might be handled more
-    // generally
-
-    *GM = JPL_GM[m];
+    *GM = pl->mass[m]; // Note mass constants defined in DE440/441 ephemeris files. If not found mass of 0 is used.
 
 	int n, b, p, P, R;
 	double T[32];

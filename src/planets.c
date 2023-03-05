@@ -135,14 +135,14 @@ struct jpl_s * assist_jpl_init(char *str)
     // retrieve the names of the first 400 constants
     lseek(fd, 0x00FC, SEEK_SET);    
     for (int p = 0; p < 400; p++) {     // Group 1040
-        jpl->str[p] = calloc(1, 8);
+        jpl->str[p] = calloc(8, sizeof(char));
         read(fd, jpl->str[p], 6);
     }
 
     // read the remaining constant names
     lseek(fd, 0x0B28, SEEK_SET);
     for (int p = 400; p < jpl->num; p++) {
-        jpl->str[p] = calloc(1, 8);
+        jpl->str[p] = calloc(8, sizeof(char));
         read(fd, jpl->str[p], 6);
     }
 
