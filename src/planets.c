@@ -78,8 +78,8 @@ void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1,
 
 struct jpl_s * assist_jpl_init(char *str)
 {
-	struct stat sb;
-	ssize_t ret;
+    struct stat sb;
+    ssize_t ret;
     int fd;
 
     if ((fd = open(str, O_RDONLY)) < 0){
@@ -93,7 +93,7 @@ struct jpl_s * assist_jpl_init(char *str)
     }
     
 
-	// skip the header and constant names for now
+    // skip the header and constant names for now
     if (lseek(fd, 0x0A5C, SEEK_SET) < 0){
         close(fd);
         fprintf(stderr, "Error while seeking to header.\n");
@@ -129,22 +129,22 @@ struct jpl_s * assist_jpl_init(char *str)
     ret += read(fd, &jpl->ncf[12], sizeof(int32_t));
     ret += read(fd, &jpl->niv[12], sizeof(int32_t));
 
-	// Get all the constant names
-	jpl->str = calloc(jpl->num, sizeof(char *));
+    // Get all the constant names
+    jpl->str = calloc(jpl->num, sizeof(char *));
 
-	// retrieve the names of the first 400 constants
-	lseek(fd, 0x00FC, SEEK_SET);    
-	for (int p = 0; p < 400; p++) {     // Group 1040
-		jpl->str[p] = calloc(1, 8);
-		read(fd, jpl->str[p], 6);
-	}
+    // retrieve the names of the first 400 constants
+    lseek(fd, 0x00FC, SEEK_SET);    
+    for (int p = 0; p < 400; p++) {     // Group 1040
+        jpl->str[p] = calloc(1, 8);
+        read(fd, jpl->str[p], 6);
+    }
 
-	// read the remaining constant names
-	lseek(fd, 0x0B28, SEEK_SET);
-	for (int p = 400; p < jpl->num; p++) {
-		jpl->str[p] = calloc(1, 8);
-		read(fd, jpl->str[p], 6);
-	}
+    // read the remaining constant names
+    lseek(fd, 0x0B28, SEEK_SET);
+    for (int p = 400; p < jpl->num; p++) {
+        jpl->str[p] = calloc(1, 8);
+        read(fd, jpl->str[p], 6);
+    }
 
     for (int p = 13; p < 15; p++) {                     // Columns 14 and 15 of Group 1050
         ret += read(fd, &jpl->off[p], sizeof(int32_t));
@@ -176,10 +176,10 @@ struct jpl_s * assist_jpl_init(char *str)
     }
 
     // Read constants
-	jpl->con = calloc(jpl->num, sizeof(double));
-	lseek(fd, jpl->rec, SEEK_SET); // Starts at offset of 1 block size
-	for (int p = 0; p < jpl->num; p++){
-		read(fd, &jpl->con[p], sizeof(double));
+    jpl->con = calloc(jpl->num, sizeof(double));
+    lseek(fd, jpl->rec, SEEK_SET); // Starts at offset of 1 block size
+    for (int p = 0; p < jpl->num; p++){
+        read(fd, &jpl->con[p], sizeof(double));
         //printf("%6d  %s   %.5e\n",p,jpl->str[p],jpl->con[p]);
     }
 
