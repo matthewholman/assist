@@ -21,16 +21,6 @@
 #include "const.h"
 
 
-struct sum_s {
-	double beg;		// begin epoch, seconds since J2000.0
-	double end;		// ending epoch
-	int tar;		// target code
-	int cen;		// centre code (10 = sun)
-	int ref;		// reference frame (1 = J2000.0)
-	int ver;		// type of ephemeris (2 = chebyshev)
-	int one;		// initial array address
-	int two;		// final array address
-};
 
 
 /*
@@ -76,17 +66,28 @@ static int _com(const char *record) {
 }
 
 struct spk_s * assist_spk_init(const char *path) {
-    // For file format, see https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/daf.html
+    // For file format information, see https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/daf.html
 
-	struct stat sb;
+    // Format for one summary
+    struct sum_s {
+        double beg;		// begin epoch, seconds since J2000.0
+        double end;		// ending epoch
+        int tar;		// target code
+        int cen;		// centre code (10 = sun)
+        int ref;		// reference frame (1 = J2000.0)
+        int ver;		// type of ephemeris (2 = chebyshev)
+        int one;		// initial array address
+        int two;		// final array address
+    };
 
-    // We will read one record at a time.
+    // File is split into records. We read one record at a time.
     union {
 	    char buf[record_length];
         struct {
-            double next;
-            double prev;
-            double nsum;
+            double next;    // The record number of the next summary record in the file. Zero if this is the final summary record.
+            double prev;    // The record number of the previous summary record in the file. Zero if this is the initial summary record.
+            double nsum;    // Number of summaries in this record
+            struct sum_s s[25]; // Summaries (25 is the maximum)
         } summary;          // Summary record
         struct {
             char locidw[8]; // An identification word
@@ -95,18 +96,11 @@ struct spk_s * assist_spk_init(const char *path) {
         } file;             // File record
     } record;
 
-	int fd;
-	off_t off;
-
-	if ((fd = open(path, O_RDONLY)) < 0){
+    // Try opening file.
+	int fd = open(path, O_RDONLY);
+	if (fd < 0){
 		return NULL;
     }
-
-	double* val = (double *)record.buf;
-	struct sum_s* sum = (struct sum_s *)record.buf;
-
-	if (fstat(fd, &sb) < 0)
-		goto err;
 
 	// Read the file record. 
     read(fd, &record, 1024);
@@ -132,95 +126,72 @@ struct spk_s * assist_spk_init(const char *path) {
 
 	// We are at the first summary block, validate
 	if ((int64_t)record.buf[8] != 0) {
-		errno = EILSEQ;
-		goto err;
+        fprintf(stderr, "Error parsing DAF/SPL file. Cannot find summary block.\n");
+		close(fd);
+        return NULL; 
 	}
 
 	// okay, let's go
 	struct spk_s* pl = calloc(1, sizeof(struct spk_s));
-	int c ;
-	int m = 0;
-next:
-	for (int b = 0; b < (int)record.summary.nsum; b++) {
-		sum = (struct sum_s *)&record.buf[24 + b * sizeof(struct sum_s)];
+	int m = 0; 
+    while (1){ // Loop over records 
+        for (int b = 0; b < (int)record.summary.nsum; b++) { // Loop over summaries
+            struct sum_s* sum = &record.summary.s[b]; // get current summary
 
-		// pick out new target!
-		if (sum->tar != pl->tar[m]) {
-			m = pl->num++;
-			pl->tar[m] = sum->tar;
-			pl->cen[m] = sum->cen;
-			pl->beg[m] = _jul(sum->beg);
-			pl->res[m] = _jul(sum->end) - pl->beg[m];
-			pl->one[m] = calloc(32768, sizeof(int));
-			pl->two[m] = calloc(32768, sizeof(int));
-		}
+            // pick out new target!
+            if (sum->tar != pl->tar[m]) {
+                m = pl->num++;
+                pl->tar[m] = sum->tar;
+                pl->cen[m] = sum->cen;
+                pl->beg[m] = _jul(sum->beg);
+                pl->res[m] = _jul(sum->end) - pl->beg[m];
+                pl->one[m] = calloc(32768, sizeof(int));
+                pl->two[m] = calloc(32768, sizeof(int));
+            }
 
-		// add index
-		c = pl->ind[m]++;
-		pl->one[m][c] = sum->one;
-		pl->two[m][c] = sum->two;
-		pl->end[m] = _jul(sum->end);
-	}
+            // add index
+            pl->one[m][pl->ind[m]] = sum->one;
+            pl->two[m][pl->ind[m]] = sum->two;
+            pl->end[m] = _jul(sum->end);
+            pl->ind[m]++;
+        }
 
-    // Location of next record
-    int n = (int)record.summary.next - 1;
-	if (n >= 0) {
-		// this could probably be more elegant if the mmap happened sooner
-		off = lseek(fd, n * 1024, SEEK_SET);
-		read(fd, record.buf, 1024);
-		goto next;
-	}
+        // Location of next record
+        int n = (int)record.summary.next - 1;
+        if (n<0){ // this is already the last record.
+            break;
+        }
+        // Find and read next record
+        lseek(fd, n * 1024, SEEK_SET);
+        read(fd, record.buf, 1024);
+    }
 
-	// memory map : kernel caching and thread safe
+    // Get file size
+	struct stat sb;
+	if (fstat(fd, &sb) < 0){
+        fprintf(stderr, "Error calculating size for DAF/SPL file.\n");
+        return NULL; 
+    }
 	pl->len = sb.st_size;
+
+    // Memory map
 	pl->map = mmap(NULL, pl->len, PROT_READ, MAP_SHARED, fd, 0);
+	if (pl->map == NULL){
+        fprintf(stderr, "Error creating memory map.\n");
+        return NULL; // Will leak memory
+    }
 
-	if (pl->map == NULL)
-		goto err;
-
-	if (close(fd) < 0)
-		{ ; }
 #if defined(MADV_RANDOM)
-	if (madvise(pl->map, pl->len, MADV_RANDOM) < 0)
-		{ ; }
+	if (madvise(pl->map, pl->len, MADV_RANDOM) < 0){
+        fprintf(stderr, "Error while calling madvise().\n");
+        return NULL; // Will leak memory
+    }
 #endif
 
+	close(fd);
 	return pl;
-
-err:	perror(path);
-	free(pl);
-
-	return NULL;
 }
 
-
-/*
- *  assist_spk_find
- *
- *  See if we have the given body.
- *
- */
-int assist_spk_find(struct spk_s *pl, int tar)
-{
-	int n;
-
-	if (pl == NULL)
-		return -1;
-
-	for (n = 0; n < pl->num; n++)
-		if (pl->tar[n] == tar)
-			{ return n; }
-
-	return -1;
-}
-
-
-/*
- *  assist_spk_calc
- *
- *  Compute the position and velocity after fetching the chebyshev polynomials.
- *
- */
 
 enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int m, double* GM, double* out_x, double* out_y, double* out_z)
 {
