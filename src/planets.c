@@ -78,154 +78,138 @@ void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1,
 
 struct jpl_s * assist_jpl_init(char *str)
 {
-        struct jpl_s *jpl;
 	struct stat sb;
-	//char *str;
 	ssize_t ret;
-	off_t off;
-        int fd, p;
+    int fd;
 
-        /** use or environment-specified file, 
-	 * or the default filename, in that order
-         */
-	//if ((str = getenv("JPL_PLANET_EPHEM")) == NULL)
-	//str = JPL_EPHEM_FILE;
+    if ((fd = open(str, O_RDONLY)) < 0){
+        return NULL;
+    }
 
-        if ((fd = open(str, O_RDONLY)) < 0)
-                return NULL;
-
-        jpl = malloc(sizeof(struct jpl_s));
-        memset(jpl, 0, sizeof(struct jpl_s));
-
-        if (fstat(fd, &sb) < 0)
-                goto err;
-
-	// FIXME : probably should ensure the file is sized corrrectly
-	// FIXME : also could read 3*84 bytes to see if this is a JPL file
+    if (fstat(fd, &sb) < 0){
+        close(fd);
+        fprintf(stderr, "Error while trying to determine filesize.\n");
+        return NULL;
+    }
+    
 
 	// skip the header and constant names for now
-        if (lseek(fd, 0x0A5C, SEEK_SET) < 0)
-                goto err;
+    if (lseek(fd, 0x0A5C, SEEK_SET) < 0){
+        close(fd);
+        fprintf(stderr, "Error while seeking to header.\n");
+        return NULL;
+    }
 
-        // read header
-        ret  = read(fd, &jpl->beg, sizeof(double));
-        ret += read(fd, &jpl->end, sizeof(double));
-        ret += read(fd, &jpl->inc, sizeof(double));
-        ret += read(fd, &jpl->num, sizeof(int32_t));
-        ret += read(fd, &jpl->cau, sizeof(double));
-        ret += read(fd, &jpl->cem, sizeof(double));
+    struct jpl_s* jpl = calloc(1, sizeof(struct jpl_s));
 
-	//printf("%lf %lf %lf %d\n", jpl->beg, jpl->end, jpl->inc, jpl->num);
+    // read header
+    ret  = read(fd, &jpl->beg, sizeof(double));     // Start JD
+    ret += read(fd, &jpl->end, sizeof(double));     // End JD
+    ret += read(fd, &jpl->inc, sizeof(double));     // Days per block
+    ret += read(fd, &jpl->num, sizeof(int32_t));    // Number of constants
+    ret += read(fd, &jpl->cau, sizeof(double));     // AU to km 
+    ret += read(fd, &jpl->cem, sizeof(double));     // Ratio between Earth/Moon
 
-        // number of coefficients for all components
-        for (p = 0; p < JPL_N; p++)
-                jpl->ncm[p] = 3;
+    // number of coefficients for all components
+    for (int p = 0; p < JPL_N; p++){
+        jpl->ncm[p] = 3;
+    }
+    // exceptions:
+    jpl->ncm[JPL_NUT] = 2; // nutations
+    jpl->ncm[JPL_TDB] = 1; // TT-TDB
 
-        // exceptions:
-        jpl->ncm[JPL_NUT] = 2; // nutations
-        jpl->ncm[JPL_TDB] = 1; // TT-TDB
+    for (int p = 0; p < 12; p++) {                      // Columns 1-12 of Group 1050
+        ret += read(fd, &jpl->off[p], sizeof(int32_t));
+        ret += read(fd, &jpl->ncf[p], sizeof(int32_t));
+        ret += read(fd, &jpl->niv[p], sizeof(int32_t));
+    }
 
-        for (p = 0; p < 12; p++) {
-                ret += read(fd, &jpl->off[p], sizeof(int32_t));
-                ret += read(fd, &jpl->ncf[p], sizeof(int32_t));
-                ret += read(fd, &jpl->niv[p], sizeof(int32_t));
-        }
+    ret += read(fd, &jpl->ver,     sizeof(int32_t));    // Version. e.g. 440
+    ret += read(fd, &jpl->off[12], sizeof(int32_t));    // Columns 13 of Group 1050
+    ret += read(fd, &jpl->ncf[12], sizeof(int32_t));
+    ret += read(fd, &jpl->niv[12], sizeof(int32_t));
 
-        ret += read(fd, &jpl->ver,     sizeof(int32_t));
-        ret += read(fd, &jpl->off[12], sizeof(int32_t));
-        ret += read(fd, &jpl->ncf[12], sizeof(int32_t));
-        ret += read(fd, &jpl->niv[12], sizeof(int32_t));
-
-	// get all the constant names, from two lcoations
+	// Get all the constant names
 	jpl->str = calloc(jpl->num, sizeof(char *));
-	off = lseek(fd, 0, SEEK_CUR);
-	lseek(fd, 0x00FC, SEEK_SET);
 
 	// retrieve the names of the first 400 constants
-	for (p = 0; p < 400; p++) {
+	lseek(fd, 0x00FC, SEEK_SET);    
+	for (int p = 0; p < 400; p++) {     // Group 1040
 		jpl->str[p] = calloc(1, 8);
 		read(fd, jpl->str[p], 6);
 	}
-
-	lseek(fd, off, SEEK_SET);
 
 	// read the remaining constant names
-	for (p = 400; p < jpl->num; p++) {
+	lseek(fd, 0x0B28, SEEK_SET);
+	for (int p = 400; p < jpl->num; p++) {
 		jpl->str[p] = calloc(1, 8);
 		read(fd, jpl->str[p], 6);
 	}
 
-        // finishing reading
-        for (p = 13; p < 15; p++) {
-                ret += read(fd, &jpl->off[p], sizeof(int32_t));
-                ret += read(fd, &jpl->ncf[p], sizeof(int32_t));
-                ret += read(fd, &jpl->niv[p], sizeof(int32_t));
-        }
+    for (int p = 13; p < 15; p++) {                     // Columns 14 and 15 of Group 1050
+        ret += read(fd, &jpl->off[p], sizeof(int32_t));
+        ret += read(fd, &jpl->ncf[p], sizeof(int32_t));
+        ret += read(fd, &jpl->niv[p], sizeof(int32_t));
+    }
 
-        // adjust for correct indexing (ie: zero based)
-        for (p = 0; p < JPL_N; p++)
-                jpl->off[p] -= 1;
+    // adjust for correct indexing (ie: zero based)
+    for (int p = 0; p < JPL_N; p++){
+        jpl->off[p] -= 1;
+    }
 
-        // save file size, and determine 'kernel size'
-        jpl->len = sb.st_size;
-        jpl->rec = sizeof(double) * 2;
+    // save file size, and determine 'kernel size' or 'block size' (=8144 bytes for DE440/441)
+    jpl->len = sb.st_size;
+    jpl->rec = sizeof(double) * 2;
 
-        for (p = 0; p < JPL_N; p++)
-                jpl->rec += sizeof(double) * jpl->ncf[p] * jpl->niv[p] * jpl->ncm[p];
+    for (int p = 0; p < JPL_N; p++){
+        jpl->rec += sizeof(double) * jpl->ncf[p] * jpl->niv[p] * jpl->ncm[p];
+    }
 
-        // memory map the file, which makes us thread-safe with kernel caching
-        jpl->map = mmap(NULL, jpl->len, PROT_READ, MAP_SHARED, fd, 0);
+    // memory map the file, which makes us thread-safe with kernel caching
+    jpl->map = mmap(NULL, jpl->len, PROT_READ, MAP_SHARED, fd, 0);
 
-        if (jpl->map == NULL)
-                goto err;
+    if (jpl->map == NULL){ 
+        close(fd);
+        free(jpl); // note constants leak
+        fprintf(stderr, "Error while calling mmap().\n");
+        return NULL;
+    }
 
-	// now read the constant values after seeking to where they are
-	if (lseek(fd, jpl->rec, SEEK_SET) < 0)
-		goto err;
-
+    // Read constants
 	jpl->con = calloc(jpl->num, sizeof(double));
-
-	for (p = 0; p < jpl->num; p++)
+	lseek(fd, jpl->rec, SEEK_SET); // Starts at offset of 1 block size
+	for (int p = 0; p < jpl->num; p++){
 		read(fd, &jpl->con[p], sizeof(double));
+        //printf("%6d  %s   %.5e\n",p,jpl->str[p],jpl->con[p]);
+    }
 
-        // this file descriptor is no longer needed since we are memory mapped
-        if (close(fd) < 0)
-                { ; } // perror ...
+    // this file descriptor is no longer needed since we are memory mapped
+    if (close(fd) < 0) { 
+        fprintf(stderr, "Error while closing file.\n");
+    }
 #if defined(MADV_RANDOM)
-        if (madvise(jpl->map, jpl->len, MADV_RANDOM) < 0)
-                { ; } // perror ...
+    if (madvise(jpl->map, jpl->len, MADV_RANDOM) < 0){
+        fprintf(stderr, "Error during madvise.\n");
+    }
 #endif
 
-        return jpl;
+    return jpl;
 
-err:    close(fd);
-        free(jpl);
-
-        return NULL;
 }
 
-/*
- *  assist_jpl_free
- *
- */
-int assist_jpl_free(struct jpl_s *jpl)
-{
-	int p;
-
-        if (jpl == NULL)
-                return -1;
-
-        if (munmap(jpl->map, jpl->len) < 0)
-                { ; } // perror...
-
-	for (p = 0; p < jpl->num; p++)
-		free(jpl->str[p]);
-
-	free(jpl->str);
-	free(jpl->con);
-        memset(jpl, 0, sizeof(struct jpl_s));
-        free(jpl);
-        return 0;
+void assist_jpl_free(struct jpl_s *jpl) {
+    if (jpl == NULL){
+        return;
+    }
+    if (munmap(jpl->map, jpl->len) < 0){ 
+        fprintf(stderr, "Error during munmap().\n");
+    }
+    for (int p = 0; p < jpl->num; p++){
+        free(jpl->str[p]);
+    }
+    free(jpl->str);
+    free(jpl->con);
+    free(jpl);
 }
 
 /*
@@ -363,31 +347,5 @@ enum ASSIST_STATUS assist_jpl_calc(struct jpl_s *jpl, double jd_ref, double jd_r
 
     return(ASSIST_SUCCESS);
 
-}
-
-/*
- *  assist_jpl_mass
- *
- */
-double assist_jpl_mass(struct jpl_s *jpl, int tar)
-{
-	char buf[14];
-	int n;
-
-	if (jpl == NULL)
-		return 0.0;
-
-	if (tar >= 10000)
-		return 0.0;
-
-	snprintf(buf, sizeof(buf), "MA%04d", tar);
-
-	for (n = 0; n < jpl->num; n++) {
-		if (strncmp(jpl->str[n], buf, 6) == 0)
-			return jpl->con[n];
-	}
-
-	// not found
-	return 0.0;
 }
 
