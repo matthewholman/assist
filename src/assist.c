@@ -210,7 +210,7 @@ void assist_extras_cleanup(struct reb_simulation* sim){
 void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struct assist_ephem* ephem){
     assist->sim = sim;
     assist->ephem_cache = calloc(1, sizeof(struct assist_ephem_cache));
-    const int N_total = ASSIST_BODY_NPLANETS + ASSIST_BODY_NASTEROIDS;
+    const int N_total = ASSIST_BODY_NPLANETS + ephem->spl->num;
     assist->gr_eih_sources = 1; // Only include Sun by default
     assist->ephem_cache->items = calloc(N_total*7, sizeof(struct assist_cache_item));
     assist->ephem_cache->t = malloc(N_total*7*sizeof(double));

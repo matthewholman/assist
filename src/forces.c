@@ -278,23 +278,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
     double GM;
     double x, y, z, vx, vy, vz, ax, ay, az;
 
-    static const int order[ASSIST_BODY_NPLANETS + ASSIST_BODY_NASTEROIDS] = { 
-        ASSIST_BODY_CYBELE,
-        ASSIST_BODY_EUPHROSYNE,
-        ASSIST_BODY_IRIS,
-        ASSIST_BODY_THISBE,
-        ASSIST_BODY_CAMILLA,
-        ASSIST_BODY_PSYCHE,
-        ASSIST_BODY_JUNO,
-        ASSIST_BODY_EUNOMIA,
-        ASSIST_BODY_SYLVIA,
-        ASSIST_BODY_EUROPA,
-        ASSIST_BODY_INTERAMNIA,
-        ASSIST_BODY_DAVIDA,
-        ASSIST_BODY_HYGIEA,
-        ASSIST_BODY_PALLAS,
-        ASSIST_BODY_VESTA,
-        ASSIST_BODY_CERES,
+    static const int order[ASSIST_BODY_NPLANETS] = { 
         ASSIST_BODY_PLUTO,
         ASSIST_BODY_MOON,
         ASSIST_BODY_MARS,
@@ -309,8 +293,13 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
     };
 
     // Direct forces from massives bodies
-    for (int k=0; k < ASSIST_BODY_NPLANETS + ASSIST_BODY_NASTEROIDS; k++){
-        int i = order[k];
+    for (int k=0; k < ASSIST_BODY_NPLANETS + ephem->spl->num; k++){
+        int i; // ordered index
+        if (k>=ephem->spl->num){
+            i = order[k-ephem->spl->num]; // planets and sun last 
+        }else{
+            i = k + ASSIST_BODY_NPLANETS; // asteroids first
+        }
         if (i==ASSIST_BODY_SUN && !(assist->forces & ASSIST_FORCE_SUN)) continue;
         if (i>ASSIST_BODY_SUN && i<ASSIST_BODY_NPLANETS && !(assist->forces & ASSIST_FORCE_PLANETS)) continue;
         if (i>=ASSIST_BODY_NPLANETS && !(assist->forces & ASSIST_FORCE_ASTEROIDS)) continue;
@@ -353,9 +342,14 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
     // We should put a check at the top to see if there are any variational
     // particles.
 
-    for (int k=0; k < ASSIST_BODY_NPLANETS + ASSIST_BODY_NASTEROIDS; k++){
-	int i = order[k];
-	//int i = k;
+    for (int k=0; k < ASSIST_BODY_NPLANETS + ephem->spl->num; k++){
+        int i; // ordered index
+        if (k>=ephem->spl->num){
+            i = order[k-ephem->spl->num]; // planets and sun last 
+        }else{
+            i = k + ASSIST_BODY_NPLANETS; // asteroids first
+        }
+        // Note need checks for force flags here. TODO!
 
         // Get position and mass of massive body i.	
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
