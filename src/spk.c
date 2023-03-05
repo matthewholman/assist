@@ -29,15 +29,17 @@
  */
 int assist_spk_free(struct spk_s *pl)
 {
-	int m;
 
 	if (pl == NULL)
 		return -1;
 
-	for (m = 0; m < pl->num; m++) {
-		free(pl->one[m]);
-		free(pl->two[m]);
-	}
+    if (pl->targets){
+        for (int m = 0; m < pl->num; m++) {
+            free(pl->targets[m].one);
+            free(pl->targets[m].two);
+        }
+        free(pl->targets);
+    }
 
 	munmap(pl->map, pl->len);
 	memset(pl, 0, sizeof(struct spk_s));
@@ -133,37 +135,46 @@ struct spk_s * assist_spk_init(const char *path) {
 
 	// okay, let's go
 	struct spk_s* pl = calloc(1, sizeof(struct spk_s));
-	int m = 0; 
     while (1){ // Loop over records 
         for (int b = 0; b < (int)record.summary.nsum; b++) { // Loop over summaries
             struct sum_s* sum = &record.summary.s[b]; // get current summary
+            
+            // Index in our arrays for current target
+            int m = pl->num - 1;
 
-            // pick out new target!
-            if (sum->tar != pl->tar[m]) {
-                m = pl->num++;
-                pl->tar[m] = sum->tar;
-                pl->cen[m] = sum->cen;
-                pl->beg[m] = _jul(sum->beg);
-                pl->res[m] = _jul(sum->end) - pl->beg[m];
-                pl->one[m] = calloc(32768, sizeof(int));
-                pl->two[m] = calloc(32768, sizeof(int));
+            // New target?
+            if (pl->num==0 || sum->tar != pl->targets[m].code) {
+                if (pl->num <= pl->allocated_num){
+                    pl->allocated_num += 32; // increase space in batches of 32
+                    pl->targets = realloc(pl->targets, pl->allocated_num*sizeof(struct spk_target));
+                }
+                m++;
+                pl->targets[m].code = sum->tar;
+                pl->targets[m].cen = sum->cen;
+                pl->targets[m].beg = _jul(sum->beg);
+                pl->targets[m].res = _jul(sum->end) - pl->targets[m].beg;
+                pl->targets[m].one = calloc(32768, sizeof(int));
+                pl->targets[m].two = calloc(32768, sizeof(int));
+                pl->num++;
             }
 
-            // add index
-            pl->one[m][pl->ind[m]] = sum->one;
-            pl->two[m][pl->ind[m]] = sum->two;
-            pl->end[m] = _jul(sum->end);
-            pl->ind[m]++;
+            // add index for target
+            pl->targets[m].one[pl->targets[m].ind] = sum->one;
+            pl->targets[m].two[pl->targets[m].ind] = sum->two;
+            pl->targets[m].end = _jul(sum->end);
+            pl->targets[m].ind++;
         }
 
         // Location of next record
         int n = (int)record.summary.next - 1;
-        if (n<0){ // this is already the last record.
+        if (n<0){
+            // this is already the last record.
             break;
+        }else{
+            // Find and read next record
+            lseek(fd, n * 1024, SEEK_SET);
+            read(fd, record.buf, 1024);
         }
-        // Find and read next record
-        lseek(fd, n * 1024, SEEK_SET);
-        read(fd, record.buf, 1024);
     }
 
     // Get file size
@@ -202,12 +213,13 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
     if(m<0 || m > pl->num){
         return(ASSIST_ERROR_NAST);
     }
+    struct spk_target* target = &(pl->targets[m]);
         
-    if (jde + rel < pl->beg[m] || jde + rel > pl->end[m]){
+    if (jde + rel < target->beg || jde + rel > target->end){
         return ASSIST_ERROR_COVERAGE;
     }
 
-    *GM = pl->mass[m]; // Note mass constants defined in DE440/441 ephemeris files. If not found mass of 0 is used.
+    *GM = target->mass; // Note mass constants defined in DE440/441 ephemeris files. If not found mass of 0 is used.
 
 	int n, b, p, P, R;
 	double T[32];
@@ -219,9 +231,8 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
 		pos.u[n] = pos.v[n] = 0.0;
 
 	// find location of 'directory' describing the data records
-	n = (int)((jde + rel - pl->beg[m]) / pl->res[m]);
-	//val = (double*)pl->map + sizeof(double) * (pl->two[m][n] - 1);
-	val = (double *)pl->map + pl->two[m][n] - 1;	
+	n = (int)((jde + rel - target->beg) / target->res);
+	val = (double *)pl->map + target->two[n] - 1;	
 
 	// record size and number of coefficients per coordinate
 	R = (int)val[-1];
@@ -229,9 +240,8 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
 
 	// pick out the precise record
 	b = (int)(((jde - _jul(val[-3])) + rel) / (val[-2] / 86400.0));
-	//val = (double*)pl->map + sizeof(double) * (pl->one[m][n] - 1)
 	//+ sizeof(double) * b * R;
-	val = (double *)pl->map + (pl->one[m][n] - 1) + b * R;
+	val = (double *)pl->map + (target->one[n] - 1) + b * R;
 
 	// scale to interpolation units
 	z = ((jde - _jul(val[0])) + rel) / (val[1] / 86400.0);

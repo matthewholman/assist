@@ -142,8 +142,8 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
 	        if (strncmp(ephem->jpl->str[c], "MA", 2) == 0) {
                 int cid = atoi(ephem->jpl->str[c]+2);
                 int offset = 2000000;
-                if (cid==ephem->spl->tar[n]-offset){
-                    ephem->spl->mass[n] = ephem->jpl->con[c];
+                if (cid==ephem->spl->targets[n].code-offset){
+                    ephem->spl->targets[n].mass = ephem->jpl->con[c];
                     //printf("match %d %e\n", n,ephem->spl->mass[n] );
                 }
             }

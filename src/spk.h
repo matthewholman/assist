@@ -9,7 +9,6 @@
 #define _SPK_H
 
 #include "assist.h"
-#define _SPK_MAX	32	// maximum body count
 
 struct mpos_s {
 	double u[3];
@@ -18,19 +17,24 @@ struct mpos_s {
 	double jde;
 };
 
+
+struct spk_target {
+    int code;       // Target code
+    int cen;     // Centre target
+    double mass;    // Mass. Set to 0 if not found in ephemeris file.
+    double beg;     // Begin epoch
+    double end;     // End epoch
+    double res;     // Epoch step
+	int *one;		// Record index
+	int *two;		// ... ditto
+	int ind;		// Length of index
+
+};
+
 struct spk_s {
-
-	int tar[_SPK_MAX];		// target code
-	double mass[_SPK_MAX];		// mass (0 unless id is found in jpl file)
-	int cen[_SPK_MAX];		// centre target
-	double beg[_SPK_MAX];		// begin epoch
-	double end[_SPK_MAX];		// begin epoch
-	double res[_SPK_MAX];		// epoch step
-	int *one[_SPK_MAX];		// record index
-	int *two[_SPK_MAX];		// ... ditto
-	int ind[_SPK_MAX];		// length of index
-
+    struct spk_target* targets;
 	int num;			// number of targets
+	int allocated_num;	// space allocated for this many targets
 	void *map;			// memory map
 	size_t len;			// map length
 };
