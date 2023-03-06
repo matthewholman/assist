@@ -155,6 +155,7 @@ struct spk_s * assist_spk_init(const char *path) {
                 pl->targets[m].res = _jul(sum->end) - pl->targets[m].beg;
                 pl->targets[m].one = calloc(32768, sizeof(int));
                 pl->targets[m].two = calloc(32768, sizeof(int));
+                pl->targets[m].ind = 0;
                 pl->num++;
             }
 
