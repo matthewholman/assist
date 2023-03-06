@@ -138,16 +138,22 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
     }
     // Try to find masses of bodies in spk file in ephemeris constants
     for(int n=0; n<ephem->spl->num; n++){ // loop over all asteroids
+        int found = 0;
         for(int c=0; c<ephem->jpl->num; c++){ // loop over all constants
 	        if (strncmp(ephem->jpl->str[c], "MA", 2) == 0) {
                 int cid = atoi(ephem->jpl->str[c]+2);
                 int offset = 2000000;
                 if (cid==ephem->spl->targets[n].code-offset){
                     ephem->spl->targets[n].mass = ephem->jpl->con[c];
-                    //printf("match %d %e\n", n,ephem->spl->mass[n] );
+                    found = 1;
+                    break;
                 }
             }
         }
+        if (found==0){
+            fprintf(stderr,"WARNING: Cannot find mass for asteroid %d (NAIF ID Number %d).\n", n, ephem->spl->targets[n].code );
+        }
+
     }
 
     return ASSIST_SUCCESS;

@@ -166,7 +166,7 @@ struct spk_s * assist_spk_init(const char *path) {
         }
 
         // Location of next record
-        int n = (int)record.summary.next - 1;
+        long n = (long)record.summary.next - 1;
         if (n<0){
             // this is already the last record.
             break;
