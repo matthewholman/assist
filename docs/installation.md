@@ -42,7 +42,7 @@ If you wish to carry out a calculation with 373 small bodies (instead of just th
 download the full asteroid file:
 
 ```bash
-curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp -o data/sb441-n373.bsp
+curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n373.bsp -o data/sb441-n373.bsp
 ```
 
 You can now verify that your installation of assist works.
