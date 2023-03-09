@@ -148,6 +148,62 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
                 }
             }
         }
+        // Use lookup table for new KBO objects in DE440/441
+        // Source: https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/README.txt
+        int massmap[] = {
+            // ID, SPK_ID
+            8001,  2136199,
+            8002,  2136108,
+            8003,  2090377,
+            8004,  2136472,
+            8005,  2050000,
+            8006,  2084522,
+            8007,  2090482,
+            8008,  2020000,
+            8009,  2055637,
+            8010,  2028978,
+            8011,  2307261,
+            8012,  2174567,
+            8013,  3361580,
+            8014,  3308265,
+            8015,  2055565,
+            8016,  2145452,
+            8017,  2090568,
+            8018,  2208996,
+            8019,  2225088,
+            8020,  2019521,
+            8021,  2120347,
+            8022,  2278361,
+            8023,  3525142,
+            8024,  2230965,
+            8025,  2042301,
+            8026,  2455502,
+            8027,  3545742,
+            8028,  2523639,
+            8029,  2528381,
+            8030,  3515022,
+        };
+        if (found==0){
+            int mapped = -1;
+            for (int m=0; m<sizeof(massmap); m+=2){
+                if (massmap[m+1]==ephem->spl->targets[n].code){
+                    mapped = massmap[m];
+                    break;
+                }
+            }
+            if (mapped != -1){
+                for(int c=0; c<ephem->jpl->num; c++){ // loop over all constants (again)
+                    if (strncmp(ephem->jpl->str[c], "MA", 2) == 0) {
+                        int cid = atoi(ephem->jpl->str[c]+2);
+                        if (cid==mapped){
+                            ephem->spl->targets[n].mass = ephem->jpl->con[c];
+                            found = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
         if (found==0){
             fprintf(stderr,"WARNING: Cannot find mass for asteroid %d (NAIF ID Number %d).\n", n, ephem->spl->targets[n].code );
         }
