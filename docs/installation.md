@@ -38,7 +38,16 @@ For some of the examples, you will also need the planet ephemeris file with an e
 curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de441/linux_m13000p17000.441 -o assist/data/linux_m13000p17000.441
 ```
 
-Now you can try out if assist works.
+If you wish to carry out a calculation with 373 small bodies (instead of just the 16 most massive asteroids in the  'n16' file above) you will want to
+download the full asteroid file:
+
+```bash
+curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n373.bsp -o data/sb441-n373.bsp
+```
+
+You can now verify that your installation of assist works.
+
+Note: make sure you upgrade to the latest version of REBOUND if you have previously installed it in your envirnoment.
 
 === "Python"
     Start a python interpreter, or open a new notebook if you're planning to use Jupyter notebooks.
