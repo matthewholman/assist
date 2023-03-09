@@ -32,7 +32,6 @@
 #include <float.h>
 #include "assist.h"
 #include "rebound.h"
-#include "const.h"
 #include "spk.h"
 #include "planets.h"
 #include "forces.h"
@@ -456,11 +455,10 @@ static void assist_additional_force_earth_J2J4(struct reb_simulation* sim, doubl
     double xr, yr, zr; //, vxr, vyr, vzr, axr, ayr, azr;
     xr = xe;  yr = ye;  zr = ze;
 
-    const double J2e = JPL_EPHEM_J2E;
-    const double J3e = JPL_EPHEM_J3E;
-    const double J4e = JPL_EPHEM_J4E;
-    const double au = JPL_EPHEM_CAU;
-    const double Re_eq = JPL_EPHEM_RE/au;
+    const double J2e = ephem->jpl->J2E;
+    const double J3e = ephem->jpl->J3E;
+    const double J4e = ephem->jpl->J4E;
+    const double Re_eq = ephem->jpl->RE/ephem->jpl->AU;
 
     // Unit vector to equatorial pole at the epoch
     // Note also that the pole orientation is not changing during
@@ -653,9 +651,9 @@ static void assist_additional_force_solar_J2(struct reb_simulation* sim, double 
     assist_all_ephem(ephem, assist->ephem_cache, ASSIST_BODY_SUN, t, &GM, &xr, &yr, &zr, &vxr, &vyr, &vzr, &axr, &ayr, &azr);
     const double GMsun = GM;    
 
-    const double au = JPL_EPHEM_CAU;
-    const double Rs_eq = JPL_EPHEM_ASUN/au;
-    const double J2s = JPL_EPHEM_J2SUN;
+    const double au = ephem->jpl->AU;
+    const double Rs_eq = ephem->jpl->ASUN/au;
+    const double J2s = ephem->jpl->J2SUN;
 
     // Hard-coded constants.  BEWARE!
     double RAs = 286.13*M_PI/180.;
@@ -1067,8 +1065,8 @@ static void assist_additional_force_potential_GR(struct reb_simulation* sim,
     
     // Nobili and Roxburgh GR treatment
 
-    const double au = JPL_EPHEM_CAU;    
-    const double c = (JPL_EPHEM_CLIGHT/au)*86400;
+    const double au = ephem->jpl->AU;    
+    const double c = (ephem->jpl->CLIGHT/au)*86400;
     const double C2 = c*c;  
     
     const unsigned int N = sim->N;  // N includes real+variational particles
@@ -1174,8 +1172,8 @@ static void assist_additional_force_simple_GR(struct reb_simulation* sim,
     
     // Damour and Deruelle solar GR treatment
 
-    const double au = JPL_EPHEM_CAU;    
-    const double c = (JPL_EPHEM_CLIGHT/au)*86400;
+    const double au = ephem->jpl->AU;    
+    const double c = (ephem->jpl->CLIGHT/au)*86400;
 
     const double C2 = c*c; 
     
@@ -1308,8 +1306,8 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
     // This is one of three options for GR.
     // This version is only rarely needed.
 
-    const double au = JPL_EPHEM_CAU;    
-    const double c = (JPL_EPHEM_CLIGHT/au)*86400;
+    const double au = ephem->jpl->AU;    
+    const double c = (ephem->jpl->CLIGHT/au)*86400;
     const double C2 = c*c;
     const double over_C2 = 1./(c*c);
 
@@ -2007,8 +2005,8 @@ static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
     // This is one of three options for GR.
     // This version is only rarely needed.
 
-    const double au = JPL_EPHEM_CAU;    
-    const double c = (JPL_EPHEM_CLIGHT/au)*86400;
+    const double au = ephem->jpl->AU;    
+    const double c = (ephem->jpl->CLIGHT/au)*86400;
     const double C2 = c*c;  // This could be stored as C2.
     const double over_C2 = 1./(c*c);    
 

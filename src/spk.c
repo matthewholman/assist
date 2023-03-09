@@ -18,7 +18,6 @@
 #include <time.h>
 #include "assist.h"
 #include "spk.h"
-#include "const.h"
 
 
 

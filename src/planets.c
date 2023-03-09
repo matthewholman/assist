@@ -11,7 +11,6 @@
 
 #include "spk.h"
 #include "planets.h"
-#include "const.h"
 #include "assist.h"
 
 /*
@@ -204,6 +203,17 @@ struct jpl_s * assist_jpl_init(char *str)
     jpl->mass[8] = getConstant(jpl, "GM7   ");
     jpl->mass[9] = getConstant(jpl, "GM8   ");
     jpl->mass[10] = getConstant(jpl, "GM9   "); // Pluto
+
+
+    // Other constants
+    jpl->J2E = getConstant(jpl, "J2E   ");
+    jpl->J3E = getConstant(jpl, "J3E   ");
+    jpl->J4E = getConstant(jpl, "J4E   ");
+    jpl->J2SUN = getConstant(jpl, "J2SUN ");
+    jpl->AU = getConstant(jpl, "AU    ");
+    jpl->RE = getConstant(jpl, "RE    ");
+    jpl->CLIGHT = getConstant(jpl, "CLIGHT");
+    jpl->ASUN = getConstant(jpl, "ASUN  ");
 
     // this file descriptor is no longer needed since we are memory mapped
     if (close(fd) < 0) { 
