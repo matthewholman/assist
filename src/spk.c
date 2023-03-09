@@ -18,19 +18,8 @@
 #include <time.h>
 #include "assist.h"
 #include "spk.h"
-#include "const.h"
 
 
-struct sum_s {
-	double beg;		// begin epoch, seconds since J2000.0
-	double end;		// ending epoch
-	int tar;		// target code
-	int cen;		// centre code (10 = sun)
-	int ref;		// reference frame (1 = J2000.0)
-	int ver;		// type of ephemeris (2 = chebyshev)
-	int one;		// initial array address
-	int two;		// final array address
-};
 
 
 /*
@@ -39,15 +28,17 @@ struct sum_s {
  */
 int assist_spk_free(struct spk_s *pl)
 {
-	int m;
 
 	if (pl == NULL)
 		return -1;
 
-	for (m = 0; m < pl->num; m++) {
-		free(pl->one[m]);
-		free(pl->two[m]);
-	}
+    if (pl->targets){
+        for (int m = 0; m < pl->num; m++) {
+            free(pl->targets[m].one);
+            free(pl->targets[m].two);
+        }
+        free(pl->targets);
+    }
 
 	munmap(pl->map, pl->len);
 	memset(pl, 0, sizeof(struct spk_s));
@@ -65,195 +56,156 @@ int assist_spk_free(struct spk_s *pl)
 static double inline _jul(double eph)
 	{ return 2451545.0 + eph / 86400.0; }
 
+
+#define record_length 1024
 // check for any non-7bit ascii characters
-static int _com(const char *buf)
-{
-	for (int n = 0; n < 1024; n++)
-		{ if (buf[n] < 0) return 0; }
+static int _com(const char *record) {
+	for (int n = 0; n < record_length; n++)
+		{ if (record[n] < 0) return 0; }
 
 	return 1;
 }
 
-// display output strings to console
-//static void _sho(const char *buf)
-//{
-//	int n;
-//
-//	// this doesn't always handle the newlines correctly
-//	for (n = 0; buf[n+1] != '\0';)
-//		n += fprintf(stdout, "%s\n", &buf[n]) - 1;
-//}
+struct spk_s * assist_spk_init(const char *path) {
+    // For file format information, see https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/daf.html
 
-struct spk_s * assist_spk_init(const char *path)
-{
-	struct spk_s *pl;
-	struct stat sb;
-	char buf[1024];
-	struct sum_s *sum;
-	double *val;
-	int fd, nd, ni, nc;
-	int m, n, c, b, B;
-	off_t off;
+    // Format for one summary
+    struct sum_s {
+        double beg;		// begin epoch, seconds since J2000.0
+        double end;		// ending epoch
+        int tar;		// target code
+        int cen;		// centre code (10 = sun)
+        int ref;		// reference frame (1 = J2000.0)
+        int ver;		// type of ephemeris (2 = chebyshev)
+        int one;		// initial array address
+        int two;		// final array address
+    };
 
-	if ((fd = open(path, O_RDONLY)) < 0)
+    // File is split into records. We read one record at a time.
+    union {
+	    char buf[record_length];
+        struct {
+            double next;    // The record number of the next summary record in the file. Zero if this is the final summary record.
+            double prev;    // The record number of the previous summary record in the file. Zero if this is the initial summary record.
+            double nsum;    // Number of summaries in this record
+            struct sum_s s[25]; // Summaries (25 is the maximum)
+        } summary;          // Summary record
+        struct {
+            char locidw[8]; // An identification word
+            int nd;         // The number of double precision components in each array summary.
+            int ni;         // The number of integer components in each array summary.
+        } file;             // File record
+    } record;
+
+    // Try opening file.
+	int fd = open(path, O_RDONLY);
+	if (fd < 0){
 		return NULL;
+    }
 
-	pl = malloc(sizeof(struct spk_s));
-	memset(pl, 0, sizeof(struct spk_s));
-	val = (double *)buf;
-	sum = (struct sum_s *)buf;
-
-	if (fstat(fd, &sb) < 0)
-		goto err;
-
-	// LOCIDW
-	if (read(fd, buf, 8) != 8)
-		goto err;
-
-	if (strncmp(buf, "DAF/SPK", 7) != 0) {
-		errno = EILSEQ;
-		goto err;
+	// Read the file record. 
+    read(fd, &record, 1024);
+    // Check if the file is a valid Double Precision Array File
+	if (strncmp(record.file.locidw, "DAF/SPK", 7) != 0) {
+        fprintf(stderr,"Error parsing DAF/SPK file. Incorrect header.\n");
+		close(fd);
+		return NULL;
 	}
 
-	// ND, NI
-	read(fd, &nd, sizeof(int));
-	read(fd, &ni, sizeof(int));
-
-	// length of each segment, must match our sum_s struct
-	nc = 8 * ( nd + (ni + 1) / 2 );
-
+    // Check that the size of a summary record is equal to the size of our struct.
+	int nc = 8 * ( record.file.nd + (record.file.ni + 1) / 2 );
 	if (nc != sizeof(struct sum_s)) {
-		errno = EILSEQ;
-		goto err;
+        fprintf(stderr,"Error parsing DAF/SPK file. Wrong size of summary record.\n");
+		close(fd);
+		return NULL;
 	}
+    
+    // Continue reading file until we find a non-ascii record.
+    do {
+		read(fd, record.buf, 1024);
+    } while (_com(record.buf) > 0);
 
-	// could check the other headers, but we really don't care
-	// so find the first summary record (after potential comments)
-	off = lseek(fd, 1024, SEEK_SET);
-	read(fd, buf, 1024);
-
-	while (_com(buf) > 0) {
-	//	_sho(buf);
-		off = lseek(fd, 0, SEEK_CUR);
-		read(fd, buf, 1024);
-	}
-
-	// we are at the first summary block, validate
-	if (val[1] != 0.0) {
-		errno = EILSEQ;
-		goto err;
+	// We are at the first summary block, validate
+	if ((int64_t)record.buf[8] != 0) {
+        fprintf(stderr, "Error parsing DAF/SPL file. Cannot find summary block.\n");
+		close(fd);
+        return NULL; 
 	}
 
 	// okay, let's go
-	m = 0;
-next:	n = (int)val[0] - 1;
-	B = (int)val[2];
+	struct spk_s* pl = calloc(1, sizeof(struct spk_s));
+    while (1){ // Loop over records 
+        for (int b = 0; b < (int)record.summary.nsum; b++) { // Loop over summaries
+            struct sum_s* sum = &record.summary.s[b]; // get current summary
+            
+            // Index in our arrays for current target
+            int m = pl->num - 1;
 
-	for (b = 0; b < B; b++) {
-		sum = (struct sum_s *)&buf[24 + b * sizeof(struct sum_s)];
+            // New target?
+            if (pl->num==0 || sum->tar != pl->targets[m].code) {
+                if (pl->num <= pl->allocated_num){
+                    pl->allocated_num += 32; // increase space in batches of 32
+                    pl->targets = realloc(pl->targets, pl->allocated_num*sizeof(struct spk_target));
+                }
+                m++;
+                pl->targets[m].code = sum->tar;
+                pl->targets[m].cen = sum->cen;
+                pl->targets[m].beg = _jul(sum->beg);
+                pl->targets[m].res = _jul(sum->end) - pl->targets[m].beg;
+                pl->targets[m].one = calloc(32768, sizeof(int));
+                pl->targets[m].two = calloc(32768, sizeof(int));
+                pl->targets[m].ind = 0;
+                pl->num++;
+            }
 
-//		fprintf(stdout, "beg %.1f end %.1f tar %d cen %d ref %d ver %d one %d two %d\n",
-//				_jul(sum->beg), _jul(sum->end), sum->tar, sum->cen,
-//				sum->ref, sum->ver, sum->one, sum->two);
+            // add index for target
+            pl->targets[m].one[pl->targets[m].ind] = sum->one;
+            pl->targets[m].two[pl->targets[m].ind] = sum->two;
+            pl->targets[m].end = _jul(sum->end);
+            pl->targets[m].ind++;
+        }
 
-		// pick out new target!
-		if (sum->tar != pl->tar[m]) {
-			m = pl->num++;
-			pl->tar[m] = sum->tar;
-			pl->cen[m] = sum->cen;
-			pl->beg[m] = _jul(sum->beg);
-			pl->res[m] = _jul(sum->end) - pl->beg[m];
-			pl->one[m] = calloc(32768, sizeof(int));
-			pl->two[m] = calloc(32768, sizeof(int));
-		}
+        // Location of next record
+        long n = (long)record.summary.next - 1;
+        if (n<0){
+            // this is already the last record.
+            break;
+        }else{
+            // Find and read next record
+            lseek(fd, n * 1024, SEEK_SET);
+            read(fd, record.buf, 1024);
+        }
+    }
 
-		// add index
-		c = pl->ind[m]++;
-		pl->one[m][c] = sum->one;
-		pl->two[m][c] = sum->two;
-		pl->end[m] = _jul(sum->end);
-	}
-
-	if (n >= 0) {
-		// this could probably be more elegant if the mmap happened sooner
-		off = lseek(fd, n * 1024, SEEK_SET);
-		read(fd, buf, 1024);
-		goto next;
-	}
-
-	// memory map : kernel caching and thread safe
+    // Get file size
+	struct stat sb;
+	if (fstat(fd, &sb) < 0){
+        fprintf(stderr, "Error calculating size for DAF/SPL file.\n");
+        return NULL; 
+    }
 	pl->len = sb.st_size;
+
+    // Memory map
 	pl->map = mmap(NULL, pl->len, PROT_READ, MAP_SHARED, fd, 0);
+	if (pl->map == NULL){
+        fprintf(stderr, "Error creating memory map.\n");
+        return NULL; // Will leak memory
+    }
 
-	if (pl->map == NULL)
-		goto err;
-
-	if (close(fd) < 0)
-		{ ; }
 #if defined(MADV_RANDOM)
-	if (madvise(pl->map, pl->len, MADV_RANDOM) < 0)
-		{ ; }
+	if (madvise(pl->map, pl->len, MADV_RANDOM) < 0){
+        fprintf(stderr, "Error while calling madvise().\n");
+        return NULL; // Will leak memory
+    }
 #endif
 
+	close(fd);
 	return pl;
-
-err:	perror(path);
-	free(pl);
-
-	return NULL;
 }
 
-
-/*
- *  assist_spk_find
- *
- *  See if we have the given body.
- *
- */
-int assist_spk_find(struct spk_s *pl, int tar)
-{
-	int n;
-
-	if (pl == NULL)
-		return -1;
-
-	for (n = 0; n < pl->num; n++)
-		if (pl->tar[n] == tar)
-			{ return n; }
-
-	return -1;
-}
-
-
-/*
- *  assist_spk_calc
- *
- *  Compute the position and velocity after fetching the chebyshev polynomials.
- *
- */
 
 enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int m, double* GM, double* out_x, double* out_y, double* out_z)
 {
-    const static double JPL_GM[16] =    
-    {
-	JPL_EPHEM_MA0107, // 107 camilla
-	JPL_EPHEM_MA0001, // 1 Ceres
-	JPL_EPHEM_MA0065, // 65 cybele
-	JPL_EPHEM_MA0511, // 511 davida
-	JPL_EPHEM_MA0015, // 15 eunomia
-	JPL_EPHEM_MA0031, // 31 euphrosyne	    
-	JPL_EPHEM_MA0052, // 52 europa
-	JPL_EPHEM_MA0010, // 10 hygiea
-	JPL_EPHEM_MA0704, // 704 interamnia
-	JPL_EPHEM_MA0007, // 7 iris
-	JPL_EPHEM_MA0003, // 3 juno
-	JPL_EPHEM_MA0002, // 2 pallas
-	JPL_EPHEM_MA0016, // 16 psyche
-	JPL_EPHEM_MA0087, // 87 sylvia
-	JPL_EPHEM_MA0088, // 88 thisbe
-	JPL_EPHEM_MA0004  // 4 vesta
-    };
-
     if(pl==NULL){
         return(ASSIST_ERROR_AST_FILE);	
     }
@@ -261,15 +213,13 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
     if(m<0 || m > pl->num){
         return(ASSIST_ERROR_NAST);
     }
+    struct spk_target* target = &(pl->targets[m]);
         
-    if (jde + rel < pl->beg[m] || jde + rel > pl->end[m]){
+    if (jde + rel < target->beg || jde + rel > target->end){
         return ASSIST_ERROR_COVERAGE;
     }
 
-    // TODO: again, the units might be handled more
-    // generally
-
-    *GM = JPL_GM[m];
+    *GM = target->mass; // Note mass constants defined in DE440/441 ephemeris files. If not found mass of 0 is used.
 
 	int n, b, p, P, R;
 	double T[32];
@@ -281,9 +231,8 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
 		pos.u[n] = pos.v[n] = 0.0;
 
 	// find location of 'directory' describing the data records
-	n = (int)((jde + rel - pl->beg[m]) / pl->res[m]);
-	//val = (double*)pl->map + sizeof(double) * (pl->two[m][n] - 1);
-	val = (double *)pl->map + pl->two[m][n] - 1;	
+	n = (int)((jde + rel - target->beg) / target->res);
+	val = (double *)pl->map + target->two[n] - 1;	
 
 	// record size and number of coefficients per coordinate
 	R = (int)val[-1];
@@ -291,9 +240,8 @@ enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int
 
 	// pick out the precise record
 	b = (int)(((jde - _jul(val[-3])) + rel) / (val[-2] / 86400.0));
-	//val = (double*)pl->map + sizeof(double) * (pl->one[m][n] - 1)
 	//+ sizeof(double) * b * R;
-	val = (double *)pl->map + (pl->one[m][n] - 1) + b * R;
+	val = (double *)pl->map + (target->one[n] - 1) + b * R;
 
 	// scale to interpolation units
 	z = ((jde - _jul(val[0])) + rel) / (val[1] / 86400.0);

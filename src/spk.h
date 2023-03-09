@@ -9,42 +9,6 @@
 #define _SPK_H
 
 #include "assist.h"
-#define _SPK_MAX	32	// maximum body count
-
-enum {
-	SPK_NAIF_SSB		= 0,
-	SPK_NAIF_MER		= 1,
-	SPK_NAIF_VEN		= 2,
-	SPK_NAIF_EMB		= 3,
-	SPK_NAIF_MAR		= 4,
-	SPK_NAIF_JUP		= 5,
-	SPK_NAIF_SAT		= 6,
-	SPK_NAIF_URA		= 7,
-	SPK_NAIF_NEP		= 8,
-	SPK_NAIF_PLU		= 9,
-	SPK_NAIF_SUN		= 10,
-	SPK_NAIF_MER___		= 199,		// ?
-	SPK_NAIF_VEN___		= 299,		// ?
-	SPK_NAIF_EAR___		= 399,		// ?
-	SPK_NAIF_MOON		= 301,
-	SPK_NAIF_CAMLLA         = 2000107,      //
-	SPK_NAIF_CERES		= 2000001,	//
-	SPK_NAIF_CYBELE		= 2000065,	//
-	SPK_NAIF_DAVIDA		= 2000511,	//
-	SPK_NAIF_EUNOMIA	= 2000015,	//
-	SPK_NAIF_EUPHROSYNE	= 2000031,	//
-	SPK_NAIF_EUROPA		= 2000052,	//
-	SPK_NAIF_HYGIEA		= 2000010,	//
-	SPK_NAIF_INTERAMNIA	= 2000704,	//
-	SPK_NAIF_IRIS           = 2000007,      //
-	SPK_NAIF_JUNO		= 2000003,	//
-	SPK_NAIF_PALLAS		= 2000002,	//
-	SPK_NAIF_PSYCHE		= 2000016,	//
-	SPK_NAIF_SYLVIA		= 2000087,	//
-	SPK_NAIF_THISBE		= 2000088,	//
-	SPK_NAIF_VESTA		= 2000004,	//
-
-};
 
 struct mpos_s {
 	double u[3];
@@ -53,18 +17,24 @@ struct mpos_s {
 	double jde;
 };
 
+
+struct spk_target {
+    int code;       // Target code
+    int cen;     // Centre target
+    double mass;    // Mass. Set to 0 if not found in ephemeris file.
+    double beg;     // Begin epoch
+    double end;     // End epoch
+    double res;     // Epoch step
+	int *one;		// Record index
+	int *two;		// ... ditto
+	int ind;		// Length of index
+
+};
+
 struct spk_s {
-
-	int tar[_SPK_MAX];		// target code
-	int cen[_SPK_MAX];		// centre target
-	double beg[_SPK_MAX];		// begin epoch
-	double end[_SPK_MAX];		// begin epoch
-	double res[_SPK_MAX];		// epoch step
-	int *one[_SPK_MAX];		// record index
-	int *two[_SPK_MAX];		// ... ditto
-	int ind[_SPK_MAX];		// length of index
-
+    struct spk_target* targets;
 	int num;			// number of targets
+	int allocated_num;	// space allocated for this many targets
 	void *map;			// memory map
 	size_t len;			// map length
 };
@@ -72,7 +42,6 @@ struct spk_s {
 
 int assist_spk_free(struct spk_s *pl);
 struct spk_s * assist_spk_init(const char *path);
-int assist_spk_find(struct spk_s *pl, int m);
 enum ASSIST_STATUS assist_spk_calc(struct spk_s *pl, double jde, double rel, int m, double* GM, double* x, double* y, double* z);
 
 #endif // _SPK_H

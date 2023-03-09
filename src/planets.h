@@ -3,14 +3,13 @@
 #include "assist.h"
 
 struct jpl_s * assist_jpl_init(char *str);
-int assist_jpl_free(struct jpl_s *jpl);
+void assist_jpl_free(struct jpl_s *jpl);
 void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1, double *u, double *v, double *w);
 enum ASSIST_STATUS assist_jpl_calc(struct jpl_s *pl, double jd_ref, double jd_rel, int body, 
 		 double* const GM,
 		 double* const x, double* const y, double* const z,
 		 double* const vx, double* const vy, double* const vz,
          double* const ax, double* const ay, double* const az);
-double assist_jpl_mass(struct jpl_s *pl, int tar);
 
 // Order of columns in JPL Ephemeris file
 enum {
@@ -40,15 +39,23 @@ struct jpl_s {
         double cem;                     // Earth/Moon mass ratio
         int32_t num;                    // number of constants
         int32_t ver;                    // ephemeris version
-        int32_t off[JPL_N];                // indexing offset
-        int32_t ncf[JPL_N];                // number of chebyshev coefficients
-        int32_t niv[JPL_N];                // number of interpolation intervals
-        int32_t ncm[JPL_N];                // number of components / dimension
-///
+        int32_t off[JPL_N];             // indexing offset
+        int32_t ncf[JPL_N];             // number of chebyshev coefficients
+        int32_t niv[JPL_N];             // number of interpolation intervals
+        int32_t ncm[JPL_N];             // number of components / dimension
+        double mass[JPL_N];             // G*mass for all bodies
+        double J2E;                     // Other constant names follow JPL 
+        double J3E;
+        double J4E;
+        double J2SUN;
+        double AU;
+        double RE;
+        double CLIGHT;
+        double ASUN;
         size_t len, rec;                // file and record sizes
         void *map;                      // memory mapped location
-	double *con;			// constant values
-	char **str;			// constant names
+	    double *con;			        // constant values
+	    char **str;			            // constant names
 };
 
 // From Weryk's code

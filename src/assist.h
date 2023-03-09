@@ -88,25 +88,6 @@ enum ASSIST_BODY {
     ASSIST_BODY_PLUTO       = 10,
 
     ASSIST_BODY_NPLANETS    = 11,
-
-    ASSIST_BODY_CAMILLA     = 11,
-    ASSIST_BODY_CERES       = 12,
-    ASSIST_BODY_CYBELE      = 13,
-    ASSIST_BODY_DAVIDA      = 14,
-    ASSIST_BODY_EUNOMIA     = 15,
-    ASSIST_BODY_EUPHROSYNE  = 16,
-    ASSIST_BODY_EUROPA      = 17,
-    ASSIST_BODY_HYGIEA      = 18,
-    ASSIST_BODY_INTERAMNIA  = 19,
-    ASSIST_BODY_IRIS        = 20,
-    ASSIST_BODY_JUNO        = 21,
-    ASSIST_BODY_PALLAS      = 22,
-    ASSIST_BODY_PSYCHE      = 23,
-    ASSIST_BODY_SYLVIA      = 24,
-    ASSIST_BODY_THISBE      = 25,
-    ASSIST_BODY_VESTA       = 26,
-
-    ASSIST_BODY_NASTEROIDS  = 16,
 };
 
 struct assist_ephem {

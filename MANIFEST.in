@@ -4,7 +4,6 @@ include src/planets.c
 include src/spk.c
 include src/assist.h
 include src/forces.h
-include src/const.h
 include src/planets.h
 include src/spk.h
 include README.md
