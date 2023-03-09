@@ -1,5 +1,8 @@
 # Installation
 
+!!! Note 
+    If you have previously installed REBOUND in your environment, make sure you upgrade it to the latest version.
+
 === "Python"
     It's easiest to install ASSIST into a python virtual environment. If you already have a virtual environment or do not want to use one, you can skip this step. Otherwise, run the following command in an empty directory. They will setup and activate a new virtual environment in a directory. 
     ```bash
@@ -22,7 +25,7 @@
 
 !!! Warning inline end "Large file size"
 
-    Some of the files are over 2 GB in size.
+    Some of the files are over 2 GB in size. The sb441-n373.bsp file below is over 14 GB.
 
 To use ASSIST, you also need to download ephemeris data files. One file for planet ephemeris and another suplementary file for asteroid ephemeris. The following commands download these files with curl. You can also manually download them using your browser. You can store these files anywhere. If you're installing REBOUND from the repository, a good place to put them is in a new directory with the name `data`.
 
@@ -38,7 +41,10 @@ For some of the examples, you will also need the planet ephemeris file with an e
 curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de441/linux_m13000p17000.441 -o assist/data/linux_m13000p17000.441
 ```
 
-If you wish to carry out a calculation with 373 small bodies (instead of just the 16 most massive asteroids in the  'n16' file above) you will want to
+!!! Info 
+    Support for the n373 file has been added recently. Compare your results to those obtained with the standard n16 file.
+
+If you wish to carry out a calculation with 373 small bodies (instead of just the 16 most massive asteroids in the  n16 file above) you will want to
 download the full asteroid file:
 
 ```bash
@@ -47,7 +53,6 @@ curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n373.bs
 
 You can now verify that your installation of assist works.
 
-Note: make sure you upgrade to the latest version of REBOUND if you have previously installed it in your envirnoment.
 
 === "Python"
     Start a python interpreter, or open a new notebook if you're planning to use Jupyter notebooks.
