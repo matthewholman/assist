@@ -47,6 +47,8 @@ curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n373.bs
 
 You can now verify that your installation of assist works.
 
+Note: make sure you upgrade to the latest version of REBOUND if you have previously installed it in your envirnoment.
+
 === "Python"
     Start a python interpreter, or open a new notebook if you're planning to use Jupyter notebooks.
     ```bash
