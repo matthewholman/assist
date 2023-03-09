@@ -20,17 +20,6 @@
 #define JPL_EPHEM_BETA                 1.0000000000000000e+00	// 7
 #define JPL_EPHEM_GAMMA                1.0000000000000000e+00	// 8
 #define JPL_EPHEM_AU                   1.4959787069999999e+08	// 9
-#define JPL_EPHEM_EMRAT                8.1300568221497215e+01	// 10
-#define JPL_EPHEM_GM1                  4.9125001948893182e-11	// 11
-#define JPL_EPHEM_GM2                  7.2434523326441187e-10	// 12
-#define JPL_EPHEM_GMB                  8.9970113929473466e-10	// 13
-#define JPL_EPHEM_GM4                  9.5495488297258119e-11	// 14
-#define JPL_EPHEM_GM5                  2.8253458252257917e-07	// 15
-#define JPL_EPHEM_GM6                  8.4597059933762903e-08	// 16
-#define JPL_EPHEM_GM7                  1.2920265649682399e-08	// 17
-#define JPL_EPHEM_GM8                  1.5243573478851939e-08	// 18
-#define JPL_EPHEM_GM9                  2.1750964648933581e-12	// 19
-#define JPL_EPHEM_GMS                  2.9591220828411956e-04	// 20
 #define JPL_EPHEM_GMSDOT               -8.9999999999999995e-14	// 21
 #define JPL_EPHEM_X1                   3.6176197881308708e-01	// 22
 #define JPL_EPHEM_Y1                   -9.0782288231994912e-02	// 23

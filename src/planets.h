@@ -43,6 +43,7 @@ struct jpl_s {
         int32_t ncf[JPL_N];                // number of chebyshev coefficients
         int32_t niv[JPL_N];                // number of interpolation intervals
         int32_t ncm[JPL_N];                // number of components / dimension
+        double mass[JPL_N];
 ///
         size_t len, rec;                // file and record sizes
         void *map;                      // memory mapped location

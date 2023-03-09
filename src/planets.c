@@ -14,10 +14,6 @@
 #include "const.h"
 #include "assist.h"
 
-#ifndef JPL_EPHEM_FILE
-#define JPL_EPHEM_FILE "../../data/linux_m13000p17000.441"
-#endif
-
 /*
  *  assist_jpl_work
  *
@@ -75,6 +71,16 @@ void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1,
  *  Initialise everything needed ... probaly not be compatible with a non-430 file.
  *
  */
+
+static double getConstant(struct jpl_s* jpl, char* name){
+    for (int p = 0; p < jpl->num; p++) {
+        if (strncmp(name,jpl->str[p],6)==0){
+            return jpl->con[p];
+        }
+    }
+    fprintf(stderr,"WARNING: Constant [%s] not found in ephemeris file.\n",name); 
+    return 0;
+}
 
 struct jpl_s * assist_jpl_init(char *str)
 {
@@ -183,6 +189,22 @@ struct jpl_s * assist_jpl_init(char *str)
         //printf("%6d  %s   %.5e\n",p,jpl->str[p],jpl->con[p]);
     }
 
+
+    // Find masses
+    jpl->mass[0] = getConstant(jpl, "GMS   ");  // Sun 
+    jpl->mass[1] = getConstant(jpl, "GM1   ");  // Mercury
+    jpl->mass[2] = getConstant(jpl, "GM2   ");
+	double emrat = getConstant(jpl, "EMRAT  "); // Earth Moon Ratio
+    double gmb = getConstant(jpl, "GMB   ");    // Earth Moon combined
+    jpl->mass[3] = (emrat/(1.+emrat)) * gmb;    // Earth 
+    jpl->mass[4] = 1./(1+emrat) * gmb;          // Moon 
+    jpl->mass[5] = getConstant(jpl, "GM4   ");  // Mars
+    jpl->mass[6] = getConstant(jpl, "GM5   ");  // Jupiter
+    jpl->mass[7] = getConstant(jpl, "GM6   ");
+    jpl->mass[8] = getConstant(jpl, "GM7   ");
+    jpl->mass[9] = getConstant(jpl, "GM8   ");
+    jpl->mass[10] = getConstant(jpl, "GM9   "); // Pluto
+
     // this file descriptor is no longer needed since we are memory mapped
     if (close(fd) < 0) { 
         fprintf(stderr, "Error while closing file.\n");
@@ -233,28 +255,8 @@ enum ASSIST_STATUS assist_jpl_calc(struct jpl_s *jpl, double jd_ref, double jd_r
     
     struct mpos_s pos;
 
-    // The values below are G*mass.
-    // Units are solar masses, au, days.
-    // DE440/441 units: au^3 day^-2.
-    const static double JPL_GM[ASSIST_BODY_NPLANETS] =
-	{
-	    JPL_EPHEM_GMS, // 0 sun
-	    JPL_EPHEM_GM1, // 1 mercury
-	    JPL_EPHEM_GM2, // 2 venus
-	    (JPL_EPHEM_EMRAT/(1.+JPL_EPHEM_EMRAT) * JPL_EPHEM_GMB),  // 3 earth    Calculate GM values for Earth and Moon
-	    (1./(1.+JPL_EPHEM_EMRAT) * JPL_EPHEM_GMB),               // 4 moon     from Earth-moon ratio and sum.
-	    JPL_EPHEM_GM4, // 5 mars
-	    JPL_EPHEM_GM5, // 6 jupiter
-	    JPL_EPHEM_GM6, // 7 saturn
-	    JPL_EPHEM_GM7, // 8 uranus
-	    JPL_EPHEM_GM8, // 9 neptune
-	    JPL_EPHEM_GM9, // 10 pluto
-	};
-
-
-    // Get position, velocity, and mass of body i in barycentric coords.
-
-    *GM = JPL_GM[body];
+    // Get mass, position, velocity, and mass of body i in barycentric coords.
+    *GM = jpl->mass[body];
 
         // check if covered by this file
         if (jd_ref + jd_rel < jpl->beg || jd_ref + jd_rel > jpl->end)
