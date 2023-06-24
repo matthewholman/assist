@@ -1,4 +1,4 @@
-from typing import NoReturn
+from typing import NoReturn, List
 
 from . import clibassist
 from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref, c_uint32, c_uint, cast, c_char
@@ -42,16 +42,16 @@ class Extras(Structure):
 
     def integrate_or_interpolate(self, t: float) -> None:
         clibassist.assist_integrate_or_interpolate(byref(self), c_double(t))
-    
+
     @property
-    def forces(self) -> list[str]:
+    def forces(self) -> List[str]:
         l = []
         for k in ASSIST_FORCES:
             if self._forces & ASSIST_FORCES[k]:  # type: ignore
                 l.append(k)
         return l
     @forces.setter
-    def forces(self, value: list[str]) -> None:
+    def forces(self, value: List[str]) -> None:
         if not isinstance(value, list):
             raise AttributeError("Forces need to be a list.")
         for elem in value:
