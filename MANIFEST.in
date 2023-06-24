@@ -10,3 +10,4 @@ include README.md
 include LICENSE
 include version.txt
 include pyproject.toml
+include assist/py.typed
