@@ -66,13 +66,7 @@ class Ephem(Structure):
                 if body_str == ASSIST_BODY_IDS[k].lower():
                     body = k
             if body < 0:
-                raise ValueError(
-                    "Cannot find body '"
-                    + body_str
-                    + "'. Needs to be one of: "
-                    + ", ".join([ASSIST_BODY_IDS[k] for k in ASSIST_BODY_IDS])
-                    + "."
-                )
+                raise ValueError("Cannot find body '" + body_str + "'. Needs to be one of: " + ", ".join([ASSIST_BODY_IDS[k] for k in ASSIST_BODY_IDS]) + ".")
         if not isinstance(body, int):
             raise ValueError("Expecting integer for body id.")
 
