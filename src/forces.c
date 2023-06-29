@@ -290,12 +290,16 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
         ASSIST_BODY_JUPITER,
         ASSIST_BODY_SUN
     };
+    int spl_num = 0;
+    if (ephem->spl){
+        spl_num += ephem->spl->num;
+    }
 
     // Direct forces from massives bodies
-    for (int k=0; k < ASSIST_BODY_NPLANETS + ephem->spl->num; k++){
+    for (int k=0; k < ASSIST_BODY_NPLANETS + spl_num; k++){
         int i; // ordered index
-        if (k>=ephem->spl->num){
-            i = order[k-ephem->spl->num]; // planets and sun last 
+        if (k>=spl_num){
+            i = order[k-spl_num]; // planets and sun last 
         }else{
             i = k + ASSIST_BODY_NPLANETS; // asteroids first
         }
@@ -341,10 +345,10 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
     // We should put a check at the top to see if there are any variational
     // particles.
 
-    for (int k=0; k < ASSIST_BODY_NPLANETS + ephem->spl->num; k++){
+    for (int k=0; k < ASSIST_BODY_NPLANETS + spl_num; k++){
         int i; // ordered index
-        if (k>=ephem->spl->num){
-            i = order[k-ephem->spl->num]; // planets and sun last 
+        if (k>=spl_num){
+            i = order[k-spl_num]; // planets and sun last 
         }else{
             i = k + ASSIST_BODY_NPLANETS; // asteroids first
         }
