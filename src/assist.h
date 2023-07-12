@@ -172,6 +172,16 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t);
 // Find particle position and velocity based on ephemeris data
 struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t);
 
+/**
+ * @brief Find particle position and velocity based on ephemeris data.
+ * @details This function is the same as assist_get_particle, but also provides an error code.
+ * @param ephem The assist_ephem pointer.
+ * @param particle_id The index of the particle to find.
+ * @param t The time at which to find the particle.
+ * @param error Pointer to an integer to store the error code.
+ */
+struct reb_particle assist_get_particle_with_error(struct assist_ephem* ephem, const int particle_id, const double t, int* error);
+
 // Functions called from python:
 void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struct assist_ephem* ephem);
 void assist_free_pointers(struct assist_extras* assist);
@@ -182,5 +192,18 @@ void test_vary(struct reb_simulation* sim, FILE *vfile);
 void test_vary_2nd(struct reb_simulation* sim, FILE *vfile);
 
 struct assist_ephem* assist_ephem_create(char *planets_file_name, char *asteroids_file_name);
+
+/**
+ * @brief Initialize an ASSIST ephemeris structure.
+ * @details This function prepares an ASSIST ephemeris structure for use.
+ * @param ephem The assist_ephem pointer to initialize.
+ * @param user_planets_path The path to the planets file. If NULL, the
+ *        default path (/data/linux_m13000p17000.441) will be used.
+ * @param user_asteroids_path The path to the asteroids file. If NULL, the
+ *        default path (/data/sb441-n16.bsp) will be used.
+ * @return ASSIST_SUCCESS if successful, otherwise an error code.
+ */
+///
+int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char *user_asteroids_path);
 
 #endif
