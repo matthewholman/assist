@@ -68,7 +68,7 @@ libassistmodule = Extension('libassist',
                     runtime_library_dirs = ["."],
                     libraries=['rebound'+suffix[:suffix.rfind('.')]],
                     define_macros=[ ('LIBASSIST', None) ],
-                    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99', '-fPIC', '-Wpointer-arith', ghash_arg],
+                    extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99', '-fPIC', '-D_GNU_SOURCE', '-Wpointer-arith', ghash_arg],
                     extra_link_args=extra_link_args,
                     )
 
