@@ -25,10 +25,6 @@
 #ifndef _ASSIST_ASSIST_H_H
 #define _ASSIST_ASSIST_H_H
 
-#ifndef M_PI 
-#define M_PI 3.1415926535879323846
-#endif
-
 #include <stdint.h>
 #include <limits.h>
 #include "rebound.h"
