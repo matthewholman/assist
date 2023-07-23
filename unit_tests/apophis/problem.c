@@ -70,6 +70,7 @@ int main(int argc, char* argv[]){
     double diff = reb_particle_distance(&p_final, &r->particles[0]) * au2meter; // in meter
 
     // Ensure accuracy is better than 250m
+    printf("Difference: %.2f m\n",diff);
     assert(diff < 250); 
 
     assist_free(ax);
