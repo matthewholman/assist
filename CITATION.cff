@@ -1,0 +1,19 @@
+@ARTICLE{2023PSJ.....4...69H,
+       author = {{Holman}, Matthew J. and {Akmal}, Arya and {Farnocchia}, Davide and {Rein}, Hanno and {Payne}, Matthew J. and {Weryk}, Robert and {Tamayo}, Daniel and {Hernandez}, David M.},
+        title = "{ASSIST: An Ephemeris-quality Test-particle Integrator}",
+      journal = {\psj},
+     keywords = {Ephemerides, N-body simulations, Asteroid dynamics, Comet dynamics, 464, 1083, 2210, 2213, Astrophysics - Earth and Planetary Astrophysics, Astrophysics - Instrumentation and Methods for Astrophysics},
+         year = 2023,
+        month = apr,
+       volume = {4},
+       number = {4},
+          eid = {69},
+        pages = {69},
+          doi = {10.3847/PSJ/acc9a9},
+archivePrefix = {arXiv},
+       eprint = {2303.16246},
+ primaryClass = {astro-ph.EP},
+       adsurl = {https://ui.adsabs.harvard.edu/abs/2023PSJ.....4...69H},
+      adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
