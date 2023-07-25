@@ -13,8 +13,8 @@ The following code removes the higher order gravitational harmonics of the Earth
     ```python
     extras = assist.Extras(sim, ephem)
     forces = extras.forces
-    forces.remove("EARTH_HARMOMNICS")
-    forces.remove("SUN_HARMOMNICS")
+    forces.remove("EARTH_HARMONICS")
+    forces.remove("SUN_HARMONICS")
     extras.forces = forces
     ```
     
