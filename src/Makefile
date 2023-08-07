@@ -5,7 +5,7 @@ REB_DIR=../../rebound
 endif
 
 ifneq ($(wildcard ../../../rebound/.*),) # Check for ASSIST being inside the REBOUND directory
-REB_DIR=../../
+REB_DIR=../..
 endif
 
 endif
