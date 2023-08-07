@@ -60,7 +60,7 @@ For some of the examples, you will also need the planet ephemeris file with an e
 
 Next, go to one of the example directories and compile the problem file. This will also trigger the installation of the REBOUND and ASSIST shared libraries.
 
-    cd assist/examples/plain_interface
+    cd assist/examples/asteroid
     make
 
 Now, you're ready to run the example with:
