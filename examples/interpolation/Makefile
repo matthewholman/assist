@@ -3,7 +3,7 @@ ifneq ($(wildcard ../../../rebound/.*),) # Check for REBOUND in default location
 REB_DIR=../../../rebound
 endif
 ifneq ($(wildcard ../../../../rebound/.*),) # Check for ASSIST being inside REBOUND directory
-REB_DIR=../../../
+REB_DIR=../../..
 endif
 endif
 ifndef REB_DIR # REBOUND is not in default location and REB_DIR is not set
