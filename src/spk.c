@@ -58,13 +58,6 @@ static double inline _jul(double eph)
 
 
 #define record_length 1024
-// check for any non-7bit ascii characters
-static int _com(const char *record) {
-	for (int n = 0; n < record_length; n++)
-		{ if (record[n] < 0) return 0; }
-
-	return 1;
-}
 
 struct spk_s * assist_spk_init(const char *path) {
     // For file format information, see https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/daf.html
@@ -90,10 +83,14 @@ struct spk_s * assist_spk_init(const char *path) {
             double nsum;    // Number of summaries in this record
             struct sum_s s[25]; // Summaries (25 is the maximum)
         } summary;          // Summary record
+        // See: https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/FORTRAN/req/daf.html#The%20File%20Record
         struct {
             char locidw[8]; // An identification word
             int nd;         // The number of double precision components in each array summary.
             int ni;         // The number of integer components in each array summary.
+            char locifn[60];// The internal name or description of the array file.
+            int fward;      // The record number of the initial summary record in the file.
+            int bward;      // The record number of the final summary record in the file.
         } file;             // File record
     } record;
 
@@ -104,7 +101,7 @@ struct spk_s * assist_spk_init(const char *path) {
     }
 
 	// Read the file record. 
-    read(fd, &record, 1024);
+    read(fd, &record, record_length);
     // Check if the file is a valid Double Precision Array File
 	if (strncmp(record.file.locidw, "DAF/SPK", 7) != 0) {
         fprintf(stderr,"Error parsing DAF/SPK file. Incorrect header.\n");
@@ -120,10 +117,10 @@ struct spk_s * assist_spk_init(const char *path) {
 		return NULL;
 	}
     
-    // Continue reading file until we find a non-ascii record.
-    do {
-		read(fd, record.buf, 1024);
-    } while (_com(record.buf) > 0);
+    // Seek until the first summary record using the file record's fward pointer.
+    // Record numbers start from 1 not 0 so we subtract 1 to get to the correct record.
+    lseek(fd, (record.file.fward - 1) * record_length, SEEK_SET);
+    read(fd, record.buf, record_length);
 
 	// We are at the first summary block, validate
 	if ((int64_t)record.buf[8] != 0) {
@@ -172,8 +169,8 @@ struct spk_s * assist_spk_init(const char *path) {
             break;
         }else{
             // Find and read next record
-            lseek(fd, n * 1024, SEEK_SET);
-            read(fd, record.buf, 1024);
+            lseek(fd, n * record_length, SEEK_SET);
+            read(fd, record.buf, record_length);
         }
     }
 
