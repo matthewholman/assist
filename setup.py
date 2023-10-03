@@ -44,13 +44,25 @@ class build_ext(_build_ext):
         rebdirsp = get_python_lib()+'/'#[p for p in sys.path if p.endswith('site-packages')][0]+'/'
         self.include_dirs.append(rebdir)
         sources = [ 'src/assist.c', 'src/spk.c', 'src/planets.c', 'src/forces.c'],
-        self.library_dirs.append(rebdir+'/../')
-        self.library_dirs.append(rebdirsp)
-        for ext in self.extensions:
-            ext.runtime_library_dirs.append(rebdir+'/../')
-            ext.extra_link_args.append('-Wl,-rpath,'+rebdir+'/../')
-            ext.runtime_library_dirs.append(rebdirsp)
-            ext.extra_link_args.append('-Wl,-rpath,'+rebdirsp)
+
+        if not "CONDA_BUILD_CROSS_COMPILATION" in os.environ:
+            self.library_dirs.append(rebdir+'/../')
+            self.library_dirs.append(rebdirsp)
+            for ext in self.extensions:
+                ext.runtime_library_dirs.append(rebdir+'/../')
+                ext.extra_link_args.append('-Wl,-rpath,'+rebdir+'/../')
+                ext.runtime_library_dirs.append(rebdirsp)
+                ext.extra_link_args.append('-Wl,-rpath,'+rebdirsp)
+                print(extra_link_args)
+            print(rebdir+'/../')
+            print(rebdirsp)
+        else:
+            # For conda-forge cross-compile builds
+            rebdir=get_python_lib(prefix=os.environ["PREFIX"])
+            self.library_dirs.append(rebdir)
+            for ext in self.extensions:
+                ext.extra_link_args.append('-Wl,-rpath,'+rebdir)
+                print(ext.extra_link_args)
 
 from distutils.version import LooseVersion
 
@@ -77,7 +89,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='assist',
-    version='1.1.3',
+    version='1.1.5',
     description='A library high accuracy ephemeris in REBOUND',
     long_description=long_description,
     long_description_content_type="text/markdown",
