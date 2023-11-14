@@ -360,7 +360,7 @@ void assist_error(struct assist_extras* assist, const char* const msg){
     if (assist->sim == NULL){
         fprintf(stderr, "(ASSIST) Error: A Simulation is no longer attached to the ASSIST extras instance. Most likely the Simulation has been freed.\n");
     } else{
-        reb_error(assist->sim, msg);
+        reb_simulation_error(assist->sim, msg);
     }
 }
 

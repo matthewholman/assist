@@ -76,7 +76,7 @@ void assist_additional_forces(struct reb_simulation* sim){
 	// The offset position is used to adjust the particle positions.
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, ASSIST_BODY_EARTH, t, &GM, &xo, &yo, &zo, &vxo, &vyo, &vzo, &axo, &ayo, &azo);
 	if(flag != ASSIST_SUCCESS){
-        reb_error(sim, assist_error_messages[flag]);
+        reb_simulation_error(sim, assist_error_messages[flag]);
 	}
     }else{
 	// barycentric
@@ -314,7 +314,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
         int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
 
         if(flag != ASSIST_SUCCESS){
-            reb_error(sim, assist_error_messages[flag]);
+            reb_simulation_error(sim, assist_error_messages[flag]);
         }
 
         // Loop over test particles
@@ -358,7 +358,7 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 	int flag = assist_all_ephem(ephem, assist->ephem_cache, i, t, &GM, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
 
 	if(flag != ASSIST_SUCCESS){
-        reb_error(sim, assist_error_messages[flag]);
+        reb_simulation_error(sim, assist_error_messages[flag]);
 	}
 
     // Skip remainder of calculation if variational particles are not used
