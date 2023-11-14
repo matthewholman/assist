@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
     }
     ephem->jd_ref = 2451545.0; // Reference JD. This line can be commented out as this is the default.
     
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct assist_extras* ax = assist_attach(r, ephem);
     r->t = 8446.5;
 

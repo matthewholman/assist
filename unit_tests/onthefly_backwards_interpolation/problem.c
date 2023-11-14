@@ -14,7 +14,7 @@ int main(int argc, char* argv[]){
     }
    
     // Create two copies of the initial simulation
-    struct reb_simulation* r1 = reb_create_simulation();
+    struct reb_simulation* r1 = reb_simulation_create();
     r1->t = 8416.5;
     reb_add_fmt(r1, "x y z vx vy vz",
         -2.724183384883979E+00, -3.523994546329214E-02, 9.036596202793466E-02, 

@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
         exit(1);
     }
     
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct assist_extras* ax = assist_attach(r, ephem);
     r->t = 8416.5;
 

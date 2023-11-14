@@ -11,7 +11,7 @@
 
 int main(int argc, char* argv[]){
     // Create a REBOUND simulation.
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
 
     // Load the ephemeris data.
     struct assist_ephem* ephem = assist_ephem_create(

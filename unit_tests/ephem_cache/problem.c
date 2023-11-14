@@ -8,7 +8,7 @@
 #include "assist.h"
 
 struct reb_particle integrate(struct assist_ephem* ephem, int cache_on, int direction){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct assist_extras* ax = assist_attach(r, ephem);
     if (cache_on == 0){
         ax->ephem_cache = NULL;

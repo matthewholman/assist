@@ -450,12 +450,12 @@ struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulati
     
     //Very hackish solutions. Should be improved!
     enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    struct reb_simulation* r2 = reb_create_simulation();
-    reb_create_simulation_from_simulationarchive_with_messages(r2, sa, blob-1, &warnings);
+    struct reb_simulation* r2 = reb_simulation_create();
+    reb_simulation_create_from_simulationarchive_with_messages(r2, sa, blob-1, &warnings);
     // r2 = reb_input_process_warnings(r2, warnings); Ignoring warnings for now
     
-    struct reb_simulation* r3 = reb_create_simulation();
-    reb_create_simulation_from_simulationarchive_with_messages(r3, sa, blob, &warnings);
+    struct reb_simulation* r3 = reb_simulation_create();
+    reb_simulation_create_from_simulationarchive_with_messages(r3, sa, blob, &warnings);
     // r3 = reb_input_process_warnings(r3, warnings);
     
     double h = (t - r2->t)/(r3->dt_last_done);

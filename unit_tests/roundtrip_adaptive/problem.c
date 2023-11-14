@@ -10,7 +10,7 @@
 const double au2meter = 149597870700;
 
 double roundtrip(struct assist_ephem* ephem, double trange){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct assist_extras* ax = assist_attach(r, ephem);
     double t0 = 2458849.5-ephem->jd_ref;
     double x0 = 3.3388753502614090e+00;
