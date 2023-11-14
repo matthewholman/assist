@@ -42,7 +42,7 @@ double roundtrip(struct assist_ephem* ephem, double trange){
     }
    
     assist_free(ax);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
     return d/N;
 }
 

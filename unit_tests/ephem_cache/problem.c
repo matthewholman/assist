@@ -27,7 +27,7 @@ struct reb_particle integrate(struct assist_ephem* ephem, int cache_on, int dire
 
     struct reb_particle p = r->particles[0];
     assist_free(ax);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
     return p;
 }
 

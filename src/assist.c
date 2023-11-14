@@ -460,7 +460,7 @@ struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulati
     
     double h = (t - r2->t)/(r3->dt_last_done);
     assist_interpolate_simulation(r2, r3, h);
-    reb_free_simulation(r3);
+    reb_simulation_free(r3);
     return r2;
 }
 

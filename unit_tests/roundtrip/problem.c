@@ -50,7 +50,7 @@ double roundtrip(struct assist_ephem* ephem, double trange){
     double d = sqrt(dx*dx + dy*dy + dz*dz)*au2meter;
    
     assist_free(ax);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
     return d;
 }
 

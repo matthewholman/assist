@@ -60,8 +60,8 @@ int main(int argc, char* argv[]){
     // Cleanup rebound and assist structures
     assist_free(ax1);
     assist_free(ax2);
-    reb_free_simulation(r1);
-    reb_free_simulation(r2);
+    reb_simulation_free(r1);
+    reb_simulation_free(r2);
     assist_ephem_free(ephem);
 
         

@@ -83,6 +83,6 @@ int main(int argc, char* argv[]){
     // Clean up memory
     assist_free(ax);
     assist_ephem_free(ephem);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 }
 

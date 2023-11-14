@@ -37,7 +37,7 @@ int main(int argc, char* argv[]){
     // Cleanup rebound and assist structures
     assist_free(ax);
     assist_ephem_free(ephem);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 
 
     // Create an interpolated simulation from the archive 
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]){
     
     // Get particle position from simulation
     struct reb_particle p = r_interpolated->particles[0];
-    reb_free_simulation(r_interpolated);
+    reb_simulation_free(r_interpolated);
    
     // Final data from NASA Horizons
     struct reb_particle ph = {.x= -2.710320457933958E+00, 
