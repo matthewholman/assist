@@ -449,7 +449,7 @@ struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulati
     }
     
     //Very hackish solutions. Should be improved!
-    enum reb_simulation_binary_error_codes warnings = REB_INPUT_BINARY_WARNING_NONE;
+    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
     struct reb_simulation* r2 = reb_simulation_create();
     reb_simulation_create_from_simulationarchive_with_messages(r2, sa, blob-1, &warnings);
     // r2 = reb_input_process_warnings(r2, warnings); Ignoring warnings for now
