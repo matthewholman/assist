@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
     reb_simulation_add(r, p0);
 
     // Add variational particle
-    int var = reb_simulation_add_var_1st_order(r, 0); // create a variational particle corresponding to particle with index 0
+    int var = reb_simulation_add_variation_1st_order(r, 0); // create a variational particle corresponding to particle with index 0
     r->particles[var].x = 1.;
    
     // Integratr for 1 day
