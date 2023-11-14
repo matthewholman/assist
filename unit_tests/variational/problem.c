@@ -19,7 +19,7 @@ int main(int argc, char* argv[]){
         exit(1);
     }
     
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct assist_extras* ax = assist_attach(r, ephem);
     r->t = 8416.5;
     
@@ -31,19 +31,19 @@ int main(int argc, char* argv[]){
         .vx = -1.374545432301129E-04, 
         .vy = -1.027075301472321E-02, 
         .vz = -4.195690627695180E-03}; 
-    reb_add(r, p0);
+    reb_simulation_add(r, p0);
 
     // Add perturbed particle
     double dx = 10.0/au2meter; // 10 meter
     p0.x += dx;
-    reb_add(r, p0);
+    reb_simulation_add(r, p0);
 
     // Add variational particle
-    int var = reb_add_var_1st_order(r, 0); // create a variational particle corresponding to particle with index 0
+    int var = reb_simulation_add_variation_1st_order(r, 0); // create a variational particle corresponding to particle with index 0
     r->particles[var].x = 1.;
    
     // Integratr for 1 day
-    reb_integrate(r, r->t + 1.0);
+    reb_simulation_integrate(r, r->t + 1.0);
 
     // Compare outputs
     {
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
     }
     
     // Integratr for 100 days
-    reb_integrate(r, r->t + 100.0);
+    reb_simulation_integrate(r, r->t + 100.0);
     // Compare outputs
     {
         double diff_1 = r->particles[1].x-r->particles[0].x;
@@ -68,6 +68,6 @@ int main(int argc, char* argv[]){
         
     assist_free(ax);
     assist_ephem_free(ephem);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 }
 

@@ -10,7 +10,7 @@
 const double au2meter = 149597870700;
 
 double roundtrip(struct assist_ephem* ephem, double trange){
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct assist_extras* ax = assist_attach(r, ephem);
     double t0 = 2458849.5-ephem->jd_ref;
     double x0 = 3.3388753502614090e+00;
@@ -24,11 +24,11 @@ double roundtrip(struct assist_ephem* ephem, double trange){
     // Using 3 particles to achieve a smoother timestep. 
     const int N = 3;
     for (int i=0; i<N; i++){
-        reb_add_fmt(r, "x y z vx vy vz", x0, y0, z0, vx0 +(double)i/1e4, vy0, vz0);
+        reb_simulation_add_fmt(r, "x y z vx vy vz", x0, y0, z0, vx0 +(double)i/1e4, vy0, vz0);
     }
    
-    reb_integrate(r,  t0 + trange);
-    reb_integrate(r,  t0);
+    reb_simulation_integrate(r,  t0 + trange);
+    reb_simulation_integrate(r,  t0);
 
     assert(r->t == t0);
 
@@ -42,7 +42,7 @@ double roundtrip(struct assist_ephem* ephem, double trange){
     }
    
     assist_free(ax);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
     return d/N;
 }
 

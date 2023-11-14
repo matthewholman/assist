@@ -12,7 +12,7 @@
 
 int main(int argc, char* argv[]){
     // Create a REBOUND simulation
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
 
 
     // Load the ephemeris data
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]){
 
     // Add a particle to the REBOUND simulation.
     // These are the barycentric coordinates of asteroid Holman.
-    reb_add_fmt(r, "x y z vx vy vz",
+    reb_simulation_add_fmt(r, "x y z vx vy vz",
         3.3388753502614090e+00,   // x in AU
         -9.1765182678903168e-01,  // y
         -5.0385906775843303e-01,  // z
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
     struct reb_particle sun = assist_get_particle(ephem, ASSIST_BODY_SUN, r->t);
     
     // Add another test particle using orbital parameters relative to the sun
-    reb_add_fmt(r, "a e omega primary",
+    reb_simulation_add_fmt(r, "a e omega primary",
         2.4,   // semi-major axis in AU
         0.1,   // eccentricity 
         0.4,   // periastron in radians
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]){
     printf("%f %f %f \n", earth.x, earth.y, earth.z);
     
     // Add another test particle in orbit around the Earth
-    reb_add_fmt(r, "a primary",
+    reb_simulation_add_fmt(r, "a primary",
         0.0002,   // in AU. This roughly corresponds to a geostationary orbit.
         earth);
 
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]){
     // Integrate until we reach tend or an error occurs
     while (r->t < tend && r->status <= 0){
        // Generate output every 20 days
-       reb_integrate(r, r->t + 20.0);
+       reb_simulation_integrate(r, r->t + 20.0);
 
        // Output test particle positions
        printf("t = %.1f\n", r->t + ephem->jd_ref);
@@ -91,6 +91,6 @@ int main(int argc, char* argv[]){
     // Clean up memory
     assist_free(ax);
     assist_ephem_free(ephem);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 }
 
