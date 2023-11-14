@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
     // Integrate to each time directly.
     double* x_direct = malloc(sizeof(double)*Noutput);
     for (int i=0; i<Noutput; i++){
-        reb_integrate(r1, ts[i]);
+        reb_simulation_integrate(r1, ts[i]);
         x_direct[i] = r1->particles[0].x; // store output 
     }   
     

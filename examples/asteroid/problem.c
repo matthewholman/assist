@@ -78,7 +78,7 @@ int main(int argc, char* argv[]){
     // Integrate until we reach tend or an error occurs
     while (r->t < tend && r->status <= 0){
        // Generate output every 20 days
-       reb_integrate(r, r->t + 20.0);
+       reb_simulation_integrate(r, r->t + 20.0);
 
        // Output test particle positions
        printf("t = %.1f\n", r->t + ephem->jd_ref);

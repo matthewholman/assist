@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
     reb_simulationarchive_automate_step(r, "out.bin", 1);
    
     // Integrate past required output time
-    reb_integrate(r, 9000.0);
+    reb_simulation_integrate(r, 9000.0);
     
     // Cleanup rebound and assist structures
     assist_free(ax);

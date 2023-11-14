@@ -43,7 +43,7 @@ int main(int argc, char* argv[]){
     r->particles[var].x = 1.;
    
     // Integratr for 1 day
-    reb_integrate(r, r->t + 1.0);
+    reb_simulation_integrate(r, r->t + 1.0);
 
     // Compare outputs
     {
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]){
     }
     
     // Integratr for 100 days
-    reb_integrate(r, r->t + 100.0);
+    reb_simulation_integrate(r, r->t + 100.0);
     // Compare outputs
     {
         double diff_1 = r->particles[1].x-r->particles[0].x;

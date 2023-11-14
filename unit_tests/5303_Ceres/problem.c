@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
         -2.232847879711731E+00, 1.574146331186095E+00, 8.329414259670296E-01,
         -6.247432571575564E-03, -7.431073424167182E-03, -3.231725223736132E-03);
    
-    reb_integrate(r, 2453371.5 - ephem->jd_ref);
+    reb_simulation_integrate(r, 2453371.5 - ephem->jd_ref);
    
     // Final data from NASA Horizons
     reb_simulation_add_fmt(r, "x y z vx vy vz",

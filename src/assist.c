@@ -487,7 +487,7 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
     double dts = copysign(1., sim->dt_last_done);
     if ( !(dts*(sim->t-sim->dt_last_done)  <  dts*t &&  dts*t < dts*sim->t) ){
         // Integrate if requested time not in interval of last timestep
-        reb_integrate(sim, t);
+        reb_simulation_integrate(sim, t);
     }
     double h = 1.0-(sim->t -t) / sim->dt_last_done; 
     if (sim->t - t==0.){

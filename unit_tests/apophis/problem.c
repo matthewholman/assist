@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
     // Do the actual integration   
     r->ri_ias15.min_dt = 0.001; // in days (prevent timestep getting very small during encounter)
     double t_final = 2.4625030372426095E+06 -ephem->jd_ref; // 1 year later
-    reb_integrate(r, t_final);
+    reb_simulation_integrate(r, t_final);
 
     // Final data from JPL small body code
     struct reb_particle p_final = {

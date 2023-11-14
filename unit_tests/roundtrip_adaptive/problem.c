@@ -27,8 +27,8 @@ double roundtrip(struct assist_ephem* ephem, double trange){
         reb_simulation_add_fmt(r, "x y z vx vy vz", x0, y0, z0, vx0 +(double)i/1e4, vy0, vz0);
     }
    
-    reb_integrate(r,  t0 + trange);
-    reb_integrate(r,  t0);
+    reb_simulation_integrate(r,  t0 + trange);
+    reb_simulation_integrate(r,  t0);
 
     assert(r->t == t0);
 

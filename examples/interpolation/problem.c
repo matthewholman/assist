@@ -34,11 +34,11 @@ int main(int argc, char* argv[]){
     reb_simulation_add_fmt(r, "x y z vx vy vz", 3.3388753502614090e+00, -9.1765182678903168e-01, -5.0385906775843303e-01, 2.8056633153049852e-03, 7.5504086883996860e-03, 2.9800282074358684e-03);
 
 
-    // To integrate forward in time, we can use the reb_integrate()
+    // To integrate forward in time, we can use the reb_simulation_integrate()
     // function. By default REBOUND has the exact_finish_time parameter
     // set to 1:
     r->exact_finish_time = 1;
-    reb_integrate(r, r->t + 200.0);
+    reb_simulation_integrate(r, r->t + 200.0);
     
     // So by default, REBOUND integrates to the exact finish time that
     // we've requested, here 200.0 days into the future. The IAS15
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
     // target of 7704.5 Julian Days. However, the final timestep
     // can remain larger.
     r->exact_finish_time = 0;
-    reb_integrate(r, r->t + 200.0);
+    reb_simulation_integrate(r, r->t + 200.0);
     printf("Time: %f JD\nTimestep: %f days\n", r->t, r->dt_last_done);
 
     // If you need many outputs with a short cadence, you might not

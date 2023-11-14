@@ -32,7 +32,7 @@ double runtime(){
     
     gettimeofday(&time_beginning,NULL);
 
-    reb_integrate(r, r->t + 10*365.25); // 10 years
+    reb_simulation_integrate(r, r->t + 10*365.25); // 10 years
     
     gettimeofday(&time_end,NULL);
     

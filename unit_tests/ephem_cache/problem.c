@@ -22,7 +22,7 @@ struct reb_particle integrate(struct assist_ephem* ephem, int cache_on, int dire
         3.3388753502614090e+00, -9.1765182678903168e-01, -5.0385906775843303e-01,
         2.8056633153049852e-03,  7.5504086883996860e-03,  2.9800282074358684e-03);
    
-    reb_integrate(r,  t0 + direction*1000);
+    reb_simulation_integrate(r,  t0 + direction*1000);
     assert(r->t == t0+direction*1000);
 
     struct reb_particle p = r->particles[0];
