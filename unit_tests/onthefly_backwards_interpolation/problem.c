@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
         -2.724183384883979E+00, -3.523994546329214E-02, 9.036596202793466E-02, 
         -1.374545432301129E-04, -1.027075301472321E-02, -4.195690627695180E-03); 
     
-    struct reb_simulation* r2 = reb_copy_simulation(r1);
+    struct reb_simulation* r2 = reb_simulation_copy(r1);
    
     // Attach assist 
     struct assist_extras* ax1 = assist_attach(r1, ephem);
