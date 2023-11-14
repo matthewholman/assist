@@ -44,7 +44,7 @@ int main(int argc, char* argv[]){
     struct reb_simulationarchive* sa = reb_open_simulationarchive("out.bin");
     double tend = 8446.5;
     struct reb_simulation* r_interpolated = assist_create_interpolated_simulation(sa, tend);
-    reb_close_simulationarchive(sa);
+    reb_simulationarchive_free(sa);
     
     // Get particle position from simulation
     struct reb_particle p = r_interpolated->particles[0];
