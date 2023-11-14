@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
         -2.724183384883979E+00, -3.523994546329214E-02, 9.036596202793466E-02, 
         -1.374545432301129E-04, -1.027075301472321E-02, -4.195690627695180E-03); 
 
-    reb_simulationarchive_automate_step(r, "out.bin", 1);
+    reb_simulation_save_to_file_step(r, "out.bin", 1);
    
     // Integrate past required output time
     reb_simulation_integrate(r, 9000.0);
