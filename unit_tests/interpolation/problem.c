@@ -41,7 +41,7 @@ int main(int argc, char* argv[]){
 
 
     // Create an interpolated simulation from the archive 
-    struct reb_simulationarchive* sa = reb_simulationarchive_from_file("out.bin");
+    struct reb_simulationarchive* sa = reb_simulationarchive_create_from_file("out.bin");
     double tend = 8446.5;
     struct reb_simulation* r_interpolated = assist_create_interpolated_simulation(sa, tend);
     reb_simulationarchive_free(sa);
