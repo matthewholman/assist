@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/assist-v1.1.7-green.svg?style=flat)](https://assist.readthedocs.org)
+[![Version](https://img.shields.io/badge/assist-v1.1.6-green.svg?style=flat)](https://assist.readthedocs.org)
 [![GPL](https://img.shields.io/badge/license-GPL-green.svg?style=flat)](https://github.com/matthewholman/blob/main/LICENSE)
 [![Python unit tests)](https://github.com/matthewholman/assist/actions/workflows/python.yml/badge.svg)](https://github.com/matthewholman/assist/actions/workflows/python.yml)
 [![C unit tests](https://github.com/matthewholman/assist/actions/workflows/c.yml/badge.svg)](https://github.com/matthewholman/assist/actions/workflows/c.yml)
