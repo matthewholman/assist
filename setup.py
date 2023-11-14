@@ -22,7 +22,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DASSISTGITHASH="+ghash
 except:
-    ghash_arg = "-DASSISTGITHASH=d0dc84c53f69111c9469f053ab642a85ad61d65f" #GITHASHAUTOUPDATE
+    ghash_arg = "-DASSISTGITHASH=5773c211d2bcbf63e5420ddd0e7b15e2d6d19a9b" #GITHASHAUTOUPDATE
 
 class build_ext(_build_ext):
     def finalize_options(self):
@@ -77,7 +77,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='assist',
-    version='1.1.6',
+    version='1.1.7',
     description='A library high accuracy ephemeris in REBOUND',
     long_description=long_description,
     long_description_content_type="text/markdown",
