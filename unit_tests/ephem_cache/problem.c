@@ -18,7 +18,7 @@ struct reb_particle integrate(struct assist_ephem* ephem, int cache_on, int dire
     r->t = t0; 
 
     // Initial conditions of asteroid Holman
-    reb_add_fmt(r, "x y z vx vy vz",
+    reb_simulation_add_fmt(r, "x y z vx vy vz",
         3.3388753502614090e+00, -9.1765182678903168e-01, -5.0385906775843303e-01,
         2.8056633153049852e-03,  7.5504086883996860e-03,  2.9800282074358684e-03);
    

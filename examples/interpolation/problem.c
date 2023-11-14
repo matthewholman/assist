@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
     r->t = 7304.5;
 
     // Add a particle to the REBOUND simulation (this is asteroid Holman).
-    reb_add_fmt(r, "x y z vx vy vz", 3.3388753502614090e+00, -9.1765182678903168e-01, -5.0385906775843303e-01, 2.8056633153049852e-03, 7.5504086883996860e-03, 2.9800282074358684e-03);
+    reb_simulation_add_fmt(r, "x y z vx vy vz", 3.3388753502614090e+00, -9.1765182678903168e-01, -5.0385906775843303e-01, 2.8056633153049852e-03, 7.5504086883996860e-03, 2.9800282074358684e-03);
 
 
     // To integrate forward in time, we can use the reb_integrate()

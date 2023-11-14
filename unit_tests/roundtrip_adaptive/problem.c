@@ -24,7 +24,7 @@ double roundtrip(struct assist_ephem* ephem, double trange){
     // Using 3 particles to achieve a smoother timestep. 
     const int N = 3;
     for (int i=0; i<N; i++){
-        reb_add_fmt(r, "x y z vx vy vz", x0, y0, z0, vx0 +(double)i/1e4, vy0, vz0);
+        reb_simulation_add_fmt(r, "x y z vx vy vz", x0, y0, z0, vx0 +(double)i/1e4, vy0, vz0);
     }
    
     reb_integrate(r,  t0 + trange);

@@ -22,7 +22,7 @@ double runtime(){
 
     // Asteroid Holman with slightly different initial conditions
     for (int i=0; i<10; i++){
-        reb_add_fmt(r, "x y z vx vy vz",
+        reb_simulation_add_fmt(r, "x y z vx vy vz",
                 -2.724183384883979E+00+i/1e-10, -3.523994546329214E-02, 9.036596202793466E-02, 
                 -1.374545432301129E-04, -1.027075301472321E-02, -4.195690627695180E-03); 
     }

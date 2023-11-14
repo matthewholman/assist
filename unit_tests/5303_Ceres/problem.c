@@ -31,20 +31,20 @@ int main(int argc, char* argv[]){
     ax->gr_eih_sources = ASSIST_BODY_NPLANETS;
 
     // Initial conditions of asteroid (5303) Parijskij
-    reb_add_fmt(r, "x y z vx vy vz",
+    reb_simulation_add_fmt(r, "x y z vx vy vz",
         -2.232847879711731E+00, 1.574146331186095E+00, 8.329414259670296E-01,
         -6.247432571575564E-03, -7.431073424167182E-03, -3.231725223736132E-03);
    
     reb_integrate(r, 2453371.5 - ephem->jd_ref);
    
     // Final data from NASA Horizons
-    reb_add_fmt(r, "x y z vx vy vz",
+    reb_simulation_add_fmt(r, "x y z vx vy vz",
             -2.656522667009432E+00, 8.168437454347069E-01, 4.947270505430544E-01,
             -3.333217972311964E-03, -8.880226801086633E-03, -4.036456444328579E-03);
 
     // Final data from JPL Small body code
     struct reb_particle sun = assist_get_particle(ephem, 0, r->t);
-    reb_add_fmt(r, "x y z",
+    reb_simulation_add_fmt(r, "x y z",
         -398052983.0882521/au2meter*1e3+sun.x, 
         122233037.4686653/au2meter*1e3+sun.y, 
         74042102.86177272/au2meter*1e3+sun.z);

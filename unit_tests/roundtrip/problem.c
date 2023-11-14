@@ -24,7 +24,7 @@ double roundtrip(struct assist_ephem* ephem, double trange){
     r->ri_ias15.epsilon = 0;
 
     // Initial conditions of asteroid Holman
-    reb_add_fmt(r, "x y z vx vy vz",
+    reb_simulation_add_fmt(r, "x y z vx vy vz",
         x0, y0, z0,
         2.8056633153049852e-03,  7.5504086883996860e-03,  2.9800282074358684e-03);
    
