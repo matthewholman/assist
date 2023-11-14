@@ -576,7 +576,7 @@ int assist_interpolate_simulation(struct reb_simulation* sim1, struct reb_simula
 
 static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     struct assist_extras* assist = sim->extras;
-    reb_update_acceleration(sim); // This will later be recalculated. Could be optimized.
+    reb_simulation_update_acceleration(sim); // This will later be recalculated. Could be optimized.
     memcpy(assist->last_state, sim->particles, sizeof(struct reb_particle)*sim->N);
 }
 
