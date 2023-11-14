@@ -44,7 +44,7 @@ const int reb_max_messages_N = 10;
 #define str(s) #s
 
 const char* assist_build_str = __DATE__ " " __TIME__;   // Date and time build string. 
-const char* assist_version_str = "1.1.6";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* assist_version_str = "1.1.7";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets updated automatically. Do not edit manually.
 
 
@@ -360,7 +360,7 @@ void assist_error(struct assist_extras* assist, const char* const msg){
     if (assist->sim == NULL){
         fprintf(stderr, "(ASSIST) Error: A Simulation is no longer attached to the ASSIST extras instance. Most likely the Simulation has been freed.\n");
     } else{
-        reb_error(assist->sim, msg);
+        reb_simulation_error(assist->sim, msg);
     }
 }
 
@@ -449,18 +449,18 @@ struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulati
     }
     
     //Very hackish solutions. Should be improved!
-    enum reb_input_binary_messages warnings = REB_INPUT_BINARY_WARNING_NONE;
-    struct reb_simulation* r2 = reb_create_simulation();
-    reb_create_simulation_from_simulationarchive_with_messages(r2, sa, blob-1, &warnings);
+    enum reb_simulation_binary_error_codes warnings = REB_SIMULATION_BINARY_WARNING_NONE;
+    struct reb_simulation* r2 = reb_simulation_create();
+    reb_simulation_create_from_simulationarchive_with_messages(r2, sa, blob-1, &warnings);
     // r2 = reb_input_process_warnings(r2, warnings); Ignoring warnings for now
     
-    struct reb_simulation* r3 = reb_create_simulation();
-    reb_create_simulation_from_simulationarchive_with_messages(r3, sa, blob, &warnings);
+    struct reb_simulation* r3 = reb_simulation_create();
+    reb_simulation_create_from_simulationarchive_with_messages(r3, sa, blob, &warnings);
     // r3 = reb_input_process_warnings(r3, warnings);
     
     double h = (t - r2->t)/(r3->dt_last_done);
     assist_interpolate_simulation(r2, r3, h);
-    reb_free_simulation(r3);
+    reb_simulation_free(r3);
     return r2;
 }
 
@@ -487,7 +487,7 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
     double dts = copysign(1., sim->dt_last_done);
     if ( !(dts*(sim->t-sim->dt_last_done)  <  dts*t &&  dts*t < dts*sim->t) ){
         // Integrate if requested time not in interval of last timestep
-        reb_integrate(sim, t);
+        reb_simulation_integrate(sim, t);
     }
     double h = 1.0-(sim->t -t) / sim->dt_last_done; 
     if (sim->t - t==0.){
@@ -576,7 +576,7 @@ int assist_interpolate_simulation(struct reb_simulation* sim1, struct reb_simula
 
 static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     struct assist_extras* assist = sim->extras;
-    reb_update_acceleration(sim); // This will later be recalculated. Could be optimized.
+    reb_simulation_update_acceleration(sim); // This will later be recalculated. Could be optimized.
     memcpy(assist->last_state, sim->particles, sizeof(struct reb_particle)*sim->N);
 }
 

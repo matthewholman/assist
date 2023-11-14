@@ -22,7 +22,7 @@ try:
     ghash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode("ascii")
     ghash_arg = "-DASSISTGITHASH="+ghash
 except:
-    ghash_arg = "-DASSISTGITHASH=3e39b38836470d0d4846cb5f949eeb3e73255c81" #GITHASHAUTOUPDATE
+    ghash_arg = "-DASSISTGITHASH=3e560af1462aedc404160820356ddddd6b914957" #GITHASHAUTOUPDATE
 
 class build_ext(_build_ext):
     def finalize_options(self):
@@ -89,7 +89,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='assist',
-    version='1.1.6',
+    version='1.1.7',
     description='A library high accuracy ephemeris in REBOUND',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -121,8 +121,8 @@ setup(name='assist',
     packages=['assist'],
     package_data={"assist": ["assist.h", "py.typed"]},
     cmdclass={'build_ext':build_ext},
-    setup_requires=['rebound>=3.10.0', 'numpy'],
-    install_requires=['rebound>=3.10.0', 'numpy'],
+    setup_requires=['rebound>=4.0.1', 'numpy'],
+    install_requires=['rebound>=4.0.1', 'numpy'],
     tests_require=["numpy","matplotlib","rebound"],
     test_suite="assist.test",
     ext_modules = [libassistmodule],

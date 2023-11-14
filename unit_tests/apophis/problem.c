@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){
         exit(1);
     }
     
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct assist_extras* ax = assist_attach(r, ephem);
 
     // Turn on GR from all planets
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]){
     reb_particle_iadd(&p_initial, &sun_initial);
 
     // Add particle to simulation
-    reb_add(r, p_initial);
+    reb_simulation_add(r, p_initial);
 
     // Define non-gravitational parameters A1, A2, A3
     double params[] = {4.999999873689E-13, -2.901085508711E-14, 0.0}; 
@@ -50,7 +50,7 @@ int main(int argc, char* argv[]){
     // Do the actual integration   
     r->ri_ias15.min_dt = 0.001; // in days (prevent timestep getting very small during encounter)
     double t_final = 2.4625030372426095E+06 -ephem->jd_ref; // 1 year later
-    reb_integrate(r, t_final);
+    reb_simulation_integrate(r, t_final);
 
     // Final data from JPL small body code
     struct reb_particle p_final = {
@@ -75,6 +75,6 @@ int main(int argc, char* argv[]){
 
     assist_free(ax);
     assist_ephem_free(ephem);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 }
 

@@ -18,19 +18,19 @@ int main(int argc, char* argv[]){
     }
     ephem->jd_ref = 2451545.0; // Reference JD. This line can be commented out as this is the default.
     
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct assist_extras* ax = assist_attach(r, ephem);
     r->t = 8446.5;
 
     // Initial conditions of asteroid Holman
-    reb_add_fmt(r, "x y z vx vy vz",
+    reb_simulation_add_fmt(r, "x y z vx vy vz",
         -2.710320457933958E+00, -3.424507930535848E-01, -3.582442972611413E-02,
         1.059255302926290E-03, -1.018748422976772E-02, -4.207712906489264E-03);
    
-    reb_integrate(r, 8416.5);
+    reb_simulation_integrate(r, 8416.5);
    
     // Final data from NASA Horizons
-    reb_add_fmt(r, "x y z vx vy vz",
+    reb_simulation_add_fmt(r, "x y z vx vy vz",
         -2.724183384883979E+00, -3.523994546329214E-02, 9.036596202793466E-02, 
         -1.374545432301129E-04, -1.027075301472321E-02, -4.195690627695180E-03); 
     
@@ -52,6 +52,6 @@ int main(int argc, char* argv[]){
         
     assist_free(ax);
     assist_ephem_free(ephem);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 }
 

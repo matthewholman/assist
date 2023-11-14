@@ -20,35 +20,35 @@ int main(int argc, char* argv[]){
         exit(1);
     }
     
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct assist_extras* ax = assist_attach(r, ephem);
     r->t = 8416.5;
 
     // Initial conditions of asteroid Holman
-    reb_add_fmt(r, "x y z vx vy vz",
+    reb_simulation_add_fmt(r, "x y z vx vy vz",
         -2.724183384883979E+00, -3.523994546329214E-02, 9.036596202793466E-02, 
         -1.374545432301129E-04, -1.027075301472321E-02, -4.195690627695180E-03); 
 
-    reb_simulationarchive_automate_step(r, "out.bin", 1);
+    reb_simulation_save_to_file_step(r, "out.bin", 1);
    
     // Integrate past required output time
-    reb_integrate(r, 9000.0);
+    reb_simulation_integrate(r, 9000.0);
     
     // Cleanup rebound and assist structures
     assist_free(ax);
     assist_ephem_free(ephem);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 
 
     // Create an interpolated simulation from the archive 
-    struct reb_simulationarchive* sa = reb_open_simulationarchive("out.bin");
+    struct reb_simulationarchive* sa = reb_simulationarchive_create_from_file("out.bin");
     double tend = 8446.5;
     struct reb_simulation* r_interpolated = assist_create_interpolated_simulation(sa, tend);
-    reb_close_simulationarchive(sa);
+    reb_simulationarchive_free(sa);
     
     // Get particle position from simulation
     struct reb_particle p = r_interpolated->particles[0];
-    reb_free_simulation(r_interpolated);
+    reb_simulation_free(r_interpolated);
    
     // Final data from NASA Horizons
     struct reb_particle ph = {.x= -2.710320457933958E+00, 

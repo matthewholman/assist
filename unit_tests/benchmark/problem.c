@@ -16,13 +16,13 @@ double runtime(){
         fprintf(stderr,"Error initializing assist_ephem.\n");
         exit(1);
     }
-    struct reb_simulation* r = reb_create_simulation();
+    struct reb_simulation* r = reb_simulation_create();
     struct assist_extras* ax = assist_attach(r, ephem);
     r->t = 8416.5;
 
     // Asteroid Holman with slightly different initial conditions
     for (int i=0; i<10; i++){
-        reb_add_fmt(r, "x y z vx vy vz",
+        reb_simulation_add_fmt(r, "x y z vx vy vz",
                 -2.724183384883979E+00+i/1e-10, -3.523994546329214E-02, 9.036596202793466E-02, 
                 -1.374545432301129E-04, -1.027075301472321E-02, -4.195690627695180E-03); 
     }
@@ -32,13 +32,13 @@ double runtime(){
     
     gettimeofday(&time_beginning,NULL);
 
-    reb_integrate(r, r->t + 10*365.25); // 10 years
+    reb_simulation_integrate(r, r->t + 10*365.25); // 10 years
     
     gettimeofday(&time_end,NULL);
     
     assist_free(ax);
     assist_ephem_free(ephem);
-    reb_free_simulation(r);
+    reb_simulation_free(r);
 
     return time_end.tv_sec-time_beginning.tv_sec+(time_end.tv_usec-time_beginning.tv_usec)/1e6;
 }

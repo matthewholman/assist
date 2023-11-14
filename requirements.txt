@@ -1,2 +1,2 @@
-rebound
+rebound>=4.0.1
 numpy
