@@ -31,14 +31,14 @@ double roundtrip(struct assist_ephem* ephem, double trange){
     // Out..
     long count = 0;
     while (r->t < t0 + trange){
-        reb_step(r);
+        reb_simulation_step(r);
         count++;
     }
 
     // ..and back
     r->dt *= -1; 
     for (long i=0;i<count;i++){
-        reb_step(r);
+        reb_simulation_step(r);
     }
     
     assert(r->t == t0);
