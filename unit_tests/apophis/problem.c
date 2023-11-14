@@ -41,7 +41,7 @@ int main(int argc, char* argv[]){
     reb_particle_iadd(&p_initial, &sun_initial);
 
     // Add particle to simulation
-    reb_add(r, p_initial);
+    reb_simulation_add(r, p_initial);
 
     // Define non-gravitational parameters A1, A2, A3
     double params[] = {4.999999873689E-13, -2.901085508711E-14, 0.0}; 
