@@ -37,9 +37,6 @@
 #include "planets.h"
 #include "forces.h"
 
-const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
-const int reb_max_messages_N = 10;
-
 #define STRINGIFY(s) str(s)
 #define str(s) #s
 
