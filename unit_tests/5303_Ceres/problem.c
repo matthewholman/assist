@@ -18,7 +18,6 @@ int main(int argc, char* argv[]){
     }
     
     struct reb_simulation* r = reb_simulation_create();
-    r->ri_ias15.adaptive_mode = 1; // Use legacy IAS15 timestepping mode
     struct assist_extras* ax = assist_attach(r, ephem);
     r->t = 2449718.50 - ephem->jd_ref;
     
