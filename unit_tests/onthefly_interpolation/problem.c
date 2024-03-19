@@ -15,14 +15,12 @@ int main(int argc, char* argv[]){
    
     // Create two copies of the initial simulation
     struct reb_simulation* r1 = reb_simulation_create();
-    r1->ri_ias15.adaptive_mode = 1; // Use legacy IAS15 timestepping mode
     r1->t = 8416.5;
     reb_simulation_add_fmt(r1, "x y z vx vy vz",
         -2.724183384883979E+00, -3.523994546329214E-02, 9.036596202793466E-02, 
         -1.374545432301129E-04, -1.027075301472321E-02, -4.195690627695180E-03); 
     
     struct reb_simulation* r2 = reb_simulation_copy(r1);
-    r2->ri_ias15.adaptive_mode = 1; // Use legacy IAS15 timestepping mode
    
     // Attach assist 
     struct assist_extras* ax1 = assist_attach(r1, ephem);
