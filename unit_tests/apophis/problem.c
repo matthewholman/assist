@@ -49,7 +49,6 @@ int main(int argc, char* argv[]){
     
     // Do the actual integration   
     r->ri_ias15.min_dt = 0.001; // in days (prevent timestep getting very small during encounter)
-    r->ri_ias15.adaptive_mode = 1; // Use legacy IAS15 timestepping mode
     double t_final = 2.4625030372426095E+06 -ephem->jd_ref; // 1 year later
     reb_simulation_integrate(r, t_final);
 
