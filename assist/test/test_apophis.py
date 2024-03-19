@@ -26,7 +26,6 @@ class TestAssist(unittest.TestCase):
         sim.add(apophis_initial)
         sim.t = t_initial
         sim.ri_ias15.min_dt = 0.001
-        sim.ri_ias15.adaptive_mode = 1
         extras = assist.Extras(sim, ephem)
         extras.gr_eih_sources = 11
 
