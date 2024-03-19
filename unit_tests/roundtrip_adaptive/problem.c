@@ -11,6 +11,7 @@ const double au2meter = 149597870700;
 
 double roundtrip(struct assist_ephem* ephem, double trange){
     struct reb_simulation* r = reb_simulation_create();
+    r->ri_ias15.adaptive_mode = 1; // Use legacy IAS15 timestepping mode
     struct assist_extras* ax = assist_attach(r, ephem);
     double t0 = 2458849.5-ephem->jd_ref;
     double x0 = 3.3388753502614090e+00;
