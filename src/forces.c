@@ -1993,6 +1993,7 @@ static void assist_additional_force_eih_GR(struct reb_simulation* sim,
     }
 }
 
+#if 0
 static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
 	    int eih_loop_limit,
 	    double xo, double yo, double zo,
@@ -2506,3 +2507,4 @@ static void assist_additional_force_eih_GR_orig(struct reb_simulation* sim,
 	}
     }
 }
+#endif
