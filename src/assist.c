@@ -37,9 +37,6 @@
 #include "planets.h"
 #include "forces.h"
 
-const int reb_max_messages_length = 1024;   // needs to be constant expression for array size
-const int reb_max_messages_N = 10;
-
 #define STRINGIFY(s) str(s)
 #define str(s) #s
 
@@ -308,6 +305,7 @@ void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struc
     sim->extras_cleanup = assist_extras_cleanup;
     sim->additional_forces = assist_additional_forces;
     sim->force_is_velocity_dependent = 1;
+    sim->ri_ias15.adaptive_mode = 1; // Use legacy IAS15 timestepping mode
 }
 
 void assist_free_pointers(struct assist_extras* assist){
