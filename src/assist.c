@@ -484,6 +484,7 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
 
     double dts = copysign(1., sim->dt_last_done);
     double h = 1.0-(sim->t -t) / sim->dt_last_done; 
+    // KK: this seems to be causing issues for us, I think it needs to be !(isnormal(h))
     if ( !(dts*(sim->t-sim->dt_last_done)  <  dts*t &&  dts*t < dts*sim->t) && isnormal(h) ){
         // Integrate if requested time not in interval of last timestep
         reb_simulation_integrate(sim, t);
