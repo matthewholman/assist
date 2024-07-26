@@ -88,8 +88,10 @@ enum ASSIST_BODY {
 
 struct assist_ephem {
     double jd_ref;
-    struct jpl_s* jpl;
-    struct spk_s* spl;
+    struct jpl_s* jpl_planets;
+    struct spk_global* spk_global;
+    struct spk_s* spk_planets;
+    struct spk_s* spk_asteroids;
 };
 
 struct assist_cache_item {
@@ -181,6 +183,7 @@ struct reb_particle assist_get_particle_with_error(struct assist_ephem* ephem, c
 // Functions called from python:
 void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struct assist_ephem* ephem);
 void assist_free_pointers(struct assist_extras* assist);
+void assist_ephem_free_pointers(struct assist_ephem* ephem);
 
 
 void test_vary(struct reb_simulation* sim, FILE *vfile);
@@ -201,5 +204,6 @@ struct assist_ephem* assist_ephem_create(char *planets_file_name, char *asteroid
  */
 ///
 int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char *user_asteroids_path);
-
+double assist_get_constant(struct assist_ephem* ephem, const char* name);
+double truncate_double(double value, int precision);
 #endif

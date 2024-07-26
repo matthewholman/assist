@@ -25,18 +25,36 @@ Now we can install numpy, REBOUND, and ASSIST:
     pip install rebound 
     pip install assist
 
-To use use ASSIST, you also need to download ephemeris data files. One file for planet ephemeris and another suplementary file for asteroid ephemeris. The following commands download these files with curl. You can also manually download them using your browser. Note that these are large files, almost 1GB in size.
+To use use ASSIST, you also need to download ephemeris data files. One file for planet ephemeris and another suplementary file for asteroid ephemeris. You can do this with Python packages or by downloading files directly.  Note that these are large files, almost 1GB in size.
+
+    pip install naif-de440
+    pip install jpl-small-bodies-de441-n16
+
+
+You can initialize the ephemeris data from the packages like so:
+
+    python3
+
+    >>> import assist
+    >>> from naif_de440 import de440
+    >>> from jpl_small_bodies_de441_n16 import de441_n16
+    >>> ephem = assist.Ephem(de440, de441_n16)
+
+The variables to the ephemeris files are simply path strings to the files. Alternatively, you can download these files with curl. You can also manually download them using your browser.
 
     mkdir data
     curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de440/linux_p1550p2650.440 -o data/linux_p1550p2650.440
     curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp -o data/sb441-n16.bsp
 
-Now you can try out if assist works.
+Now you can point assist to those files directly, like so:
 
     python3
 
     >>> import assist
     >>> ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
+
+Once you've initialized the ephemeris data, you can test that assist is working by running the following commands:
+
     >>> print(ephem.jd_ref)
     >>> ephem.get_particle("Earth", 0)
 

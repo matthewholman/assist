@@ -23,7 +23,6 @@
  *      niv - number of intervals / sets of coefficients
  *
  */
-
 void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1, double *u, double *v, double *w)
 {
         double T[24], S[24];
@@ -51,17 +50,20 @@ void assist_jpl_work(double *P, int ncm, int ncf, int niv, double t0, double t1,
                 U[p] = 2.0 * t0 * U[p-1] + 4.0 * S[p-1] - U[p-2];
         }
 
+
         // compute the position/velocity
         for (m = 0; m < ncm; m++) {
                 u[m] = v[m] = w[m] = 0.0;
                 n = ncf * (m + b * ncm);
-
                 for (p = 0; p < ncf; p++) {
-                        u[m] += T[p] * P[n+p];
-                        v[m] += S[p] * P[n+p] * c;
-                        w[m] += U[p] * P[n+p] * c * c;
+                        double truncated_val = truncate_double(P[n+p], 40);
+                        u[m] += T[p] * truncated_val;
+                        v[m] += S[p] * truncated_val * c;
+                        w[m] += U[p] * truncated_val * c * c;
                 }
         }
+
+
 }
  
 /*
@@ -185,9 +187,7 @@ struct jpl_s * assist_jpl_init(char *str)
     lseek(fd, jpl->rec, SEEK_SET); // Starts at offset of 1 block size
     for (int p = 0; p < jpl->num; p++){
         read(fd, &jpl->con[p], sizeof(double));
-        //printf("%6d  %s   %.5e\n",p,jpl->str[p],jpl->con[p]);
     }
-
 
     // Find masses
     jpl->mass[0] = getConstant(jpl, "GMS   ");  // Sun 
@@ -290,33 +290,38 @@ enum ASSIST_STATUS assist_jpl_calc(struct jpl_s *jpl, double jd_ref, double jd_r
             case ASSIST_BODY_EARTH:
                 {
                     struct mpos_s emb, lun;
+                    const double cem = jpl->cem;
+                    const double earth_mass_offset = -1.0 / (1.0 + cem);
                     assist_jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, emb.u, emb.v, emb.w); // earth moon barycenter
                     assist_jpl_work(&z[jpl->off[JPL_LUN]], jpl->ncm[JPL_LUN], jpl->ncf[JPL_LUN], jpl->niv[JPL_LUN], t, jpl->inc, lun.u, lun.v, lun.w);
-
                     vecpos_set(pos.u, emb.u);
-                    vecpos_off(pos.u, lun.u, -1.0 / (1.0 + jpl->cem));
+                    vecpos_off(pos.u, lun.u, earth_mass_offset);
 
                     vecpos_set(pos.v, emb.v);
-                    vecpos_off(pos.v, lun.v, -1.0 / (1.0 + jpl->cem));
+                    vecpos_off(pos.v, lun.v, earth_mass_offset);
 
                     vecpos_set(pos.w, emb.w);
-                    vecpos_off(pos.w, lun.w, -1.0 / (1.0 + jpl->cem));
+                    vecpos_off(pos.w, lun.w, earth_mass_offset);
                 }
                 break;
             case ASSIST_BODY_MOON: 
                 {
                     struct mpos_s emb, lun;
+                    const double cem = jpl->cem;
+                    const double moon_mass_offset = cem / (1.0 + cem);
+
                     assist_jpl_work(&z[jpl->off[JPL_EMB]], jpl->ncm[JPL_EMB], jpl->ncf[JPL_EMB], jpl->niv[JPL_EMB], t, jpl->inc, emb.u, emb.v, emb.w);
                     assist_jpl_work(&z[jpl->off[JPL_LUN]], jpl->ncm[JPL_LUN], jpl->ncf[JPL_LUN], jpl->niv[JPL_LUN], t, jpl->inc, lun.u, lun.v, lun.w);
 
                     vecpos_set(pos.u, emb.u);
-                    vecpos_off(pos.u, lun.u, jpl->cem / (1.0 + jpl->cem));
+                    vecpos_off(pos.u, lun.u, moon_mass_offset);
 
                     vecpos_set(pos.v, emb.v);
-                    vecpos_off(pos.v, lun.v, jpl->cem / (1.0 + jpl->cem));
+                    vecpos_off(pos.v, lun.v, moon_mass_offset);
 
                     vecpos_set(pos.w, emb.w);
-                    vecpos_off(pos.w, lun.w, jpl->cem / (1.0 + jpl->cem));
+                    vecpos_off(pos.w, lun.w, moon_mass_offset);
+
                 }
                 break;
             case ASSIST_BODY_MARS:

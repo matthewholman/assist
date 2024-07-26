@@ -1,10 +1,13 @@
+import warnings
+from ctypes import (CFUNCTYPE, POINTER, Structure, byref, c_char, c_char_p,
+                    c_double, c_int, c_long, c_uint, c_uint32, c_ulong,
+                    c_void_p, cast)
 from typing import Optional, Union
 
-from . import clibassist, assist_error_messages
-from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref, c_uint32, c_uint, cast, c_char
-import rebound
 import assist
-import warnings
+import rebound
+
+from . import assist_error_messages, clibassist
 
 ASSIST_BODY_IDS = {
         0: "Sun",
@@ -82,8 +85,11 @@ class Ephem(Structure):
     def __del__(self) -> None:
         clibassist.assist_ephem_free_pointers(byref(self))
 
-    _fields_ =  [("jd_ref", c_double),
-                 ("_pl", c_void_p),
-                 ("_spl", c_void_p),
-            ]
+    _fields_ = [
+        ("jd_ref", c_double),
+        ("jpl_planets", c_void_p),
+        ("spk_global", c_void_p),
+        ("spk_planets", c_void_p),
+        ("spk_asteroids", c_void_p),
+    ]
 
