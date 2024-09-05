@@ -20,6 +20,7 @@ void assert_constants_exist(struct spk_global *sg) {
         assert(sg->masses.names[i] != NULL);
         assert(sg->masses.values[i] != 0.0);
     }
+    printf("All constants exist.\n");
 }
 
 int main(int argc, char *argv[]) {

@@ -4,8 +4,9 @@ from ctypes import (CFUNCTYPE, POINTER, Structure, byref, c_char, c_char_p,
                     c_void_p, cast)
 from typing import Optional, Union
 
-import assist
 import rebound
+
+import assist
 
 from . import assist_error_messages, clibassist
 
@@ -87,7 +88,6 @@ class Ephem(Structure):
 
     _fields_ = [
         ("jd_ref", c_double),
-        ("jpl_planets", c_void_p),
         ("spk_global", c_void_p),
         ("spk_planets", c_void_p),
         ("spk_asteroids", c_void_p),
