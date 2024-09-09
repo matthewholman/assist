@@ -40,10 +40,10 @@ You can initialize the ephemeris data from the packages like so:
     >>> from jpl_small_bodies_de441_n16 import de441_n16
     >>> ephem = assist.Ephem(de440, de441_n16)
 
-The variables to the ephemeris files are simply path strings to the files. Alternatively, you can download these files with curl. You can also manually download them using your browser.
+The variables to the ephemeris files are simply path strings to the files. Alternatively, you can download these files with curl or your browser.
 
     mkdir data
-    curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de440/linux_p1550p2650.440 -o data/linux_p1550p2650.440
+    curl https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440.bsp -o data/de440.bsp
     curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp -o data/sb441-n16.bsp
 
 Now you can point assist to those files directly, like so:
@@ -51,7 +51,7 @@ Now you can point assist to those files directly, like so:
     python3
 
     >>> import assist
-    >>> ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
+    >>> ephem = assist.Ephem("data/de440.bsp", "data/sb441-n16.bsp")
 
 Once you've initialized the ephemeris data, you can test that assist is working by running the following commands:
 
@@ -69,12 +69,12 @@ To install the C version of ASSIST, first clone the REBOUND and then the ASSIST 
 
 To use use ASSIST, you also need to download ephemeris data files. One file for planet ephemeris and another suplementary file for asteroid ephemeris. The following commands download these files with curl. You can also manually download them using your browser. Note that these are large files, almost 1GB in size.
 
-    curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de440/linux_p1550p2650.440 -o assist/data/linux_p1550p2650.440
+    curl https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440.bsp -o assist/data/de440.bsp
     curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp -o assist/data/sb441-n16.bsp
 
 For some of the examples, you will also need the planet ephemeris file with an extended coverage. Note that this file is 2.6GB in size.
 
-    curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de441/linux_m13000p17000.441 -o assist/data/linux_m13000p17000.441
+    curl https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de441.bsp -o assist/data/de441.bsp
 
 Next, go to one of the example directories and compile the problem file. This will also trigger the installation of the REBOUND and ASSIST shared libraries.
 
@@ -99,5 +99,6 @@ ASSIST is open source, freely distributed under the [GNU General Public license,
 * Robert Weryk, University of Western Ontario
 * Dan Tamayo, Harvey Mudd College, <dtamayo@hmc.edu>
 * David M. Hernandez, Center for Astrophysics | Harvard & Smithsonian 
+* Alec Koumjian, Asteroid Institute | B612 Foundation, <alec@b612foundation.org>
 
 

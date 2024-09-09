@@ -33,7 +33,6 @@
 #include "assist.h"
 #include "rebound.h"
 #include "spk.h"
-#include "planets.h"
 #include "forces.h"
 
 
@@ -200,45 +199,40 @@ int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* ephe
 
     // Get position and mass of massive body i.
     if(i < ASSIST_BODY_NPLANETS){
-        // If we are using linux binary file
-        if (ephem->jpl_planets){
-            // Get position and mass of planet i
-            int flag = assist_jpl_calc(ephem->jpl_planets, jd_ref, t, i,  GM, x, y, z, vx, vy, vz, ax, ay, az);
-            if(flag != ASSIST_SUCCESS) return(flag);
-        }else if (ephem->spk_planets){
-            // Get position and mass of planet i
-            // Map the assist body enum to the SPK target code
-            struct {
-                int code;
-                int assist_code;
-            } spk_assist_planet_map[] = {
-                {10, ASSIST_BODY_SUN}, // Sun
-                {1, ASSIST_BODY_MERCURY}, // Mercury
-                {2, ASSIST_BODY_VENUS}, // Venus
-                {399, ASSIST_BODY_EARTH}, // Earth
-                {301, ASSIST_BODY_MOON}, // Moon
-                {4, ASSIST_BODY_MARS}, // Mars
-                {5, ASSIST_BODY_JUPITER}, // Jupiter
-                {6, ASSIST_BODY_SATURN}, // Saturn
-                {7, ASSIST_BODY_URANUS}, // Uranus
-                {8, ASSIST_BODY_NEPTUNE}, // Neptune
-                {9, ASSIST_BODY_PLUTO} // Pluto
-            };
+		if (ephem->spk_planets){
+			// Get position and mass of planet i
+			// Map the assist body enum to the SPK target code
+			struct {
+				int code;
+				int assist_code;
+			} spk_assist_planet_map[] = {
+				{10, ASSIST_BODY_SUN}, // Sun
+				{1, ASSIST_BODY_MERCURY}, // Mercury
+				{2, ASSIST_BODY_VENUS}, // Venus
+				{399, ASSIST_BODY_EARTH}, // Earth
+				{301, ASSIST_BODY_MOON}, // Moon
+				{4, ASSIST_BODY_MARS}, // Mars
+				{5, ASSIST_BODY_JUPITER}, // Jupiter
+				{6, ASSIST_BODY_SATURN}, // Saturn
+				{7, ASSIST_BODY_URANUS}, // Uranus
+				{8, ASSIST_BODY_NEPTUNE}, // Neptune
+				{9, ASSIST_BODY_PLUTO} // Pluto
+			};
 
-            int code = -1;
-            int array_size = sizeof(spk_assist_planet_map) / sizeof(spk_assist_planet_map[0]);
-            for (int j = 0; j < array_size; j++) {
-                if (spk_assist_planet_map[j].assist_code == i) {
-                    code = spk_assist_planet_map[i].code;
-                    break;
-                }
-            }
-            if (code == -1) {
-                return(ASSIST_ERROR_NEPHEM);
-            }
+			int code = -1;
+			int array_size = sizeof(spk_assist_planet_map) / sizeof(spk_assist_planet_map[0]);
+			for (int j = 0; j < array_size; j++) {
+				if (spk_assist_planet_map[j].assist_code == i) {
+					code = spk_assist_planet_map[i].code;
+					break;
+				}
+			}
+			if (code == -1) {
+				return(ASSIST_ERROR_NEPHEM);
+			}
 
-            int flag = assist_spk_calc_planets(ephem, jd_ref, t, code, GM, x, y, z, vx, vy, vz, ax, ay, az);
-        if(flag != ASSIST_SUCCESS) return(flag);
+			int flag = assist_spk_calc_planets(ephem, jd_ref, t, code, GM, x, y, z, vx, vy, vz, ax, ay, az);
+			if(flag != ASSIST_SUCCESS) return(flag);
 
         }else{
             return(ASSIST_ERROR_NEPHEM);

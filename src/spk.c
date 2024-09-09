@@ -20,15 +20,19 @@
 #include "spk.h"
 
 
-static inline void vecpos_off(double *u, const double *v, const double w)
-        { u[0] += v[0] * w; u[1] += v[1] * w; u[2] += v[2] * w; }
-static inline void vecpos_set(double *u, const double *v)
-        { u[0] = v[0]; u[1] = v[1]; u[2] = v[2]; }
-static inline void vecpos_nul(double *u)
-        { u[0] = u[1] = u[2] = 0.0; }
-static inline void vecpos_div(double *u, double v)
-        { u[0] /= v; u[1] /= v; u[2] /= v; }
+// double truncate_double(double value, int precision) {
+//     union {
+//         double d;
+//         uint64_t u;
+//     } u;
+//     u.d = value;
 
+//     // Mask to keep only the desired precision bits
+//     uint64_t mask = ~((1ULL << (52 - precision)) - 1);
+//     u.u &= mask;
+
+//     return u.d;
+// }
 
 
 /*
@@ -604,10 +608,11 @@ struct mpos_s assist_spk_target_pos(struct spk_s *pl, struct spk_target* target,
 
         // sum interpolation stuff
         for (p = 0; p < P; p++) {
-            double truncated_val = truncate_double(val[b + p], 40);
-            pos.u[n] += truncated_val * T[p];
-            pos.v[n] += truncated_val * S[p] * c;
-            pos.w[n] += truncated_val * U[p] * c * c;
+            // double coeff = truncate_double(val[b + p], 40);
+            double coeff = val[b + p];
+            pos.u[n] += coeff * T[p];
+            pos.v[n] += coeff * S[p] * c;
+            pos.w[n] += coeff * U[p] * c * c;
         }
     }
 

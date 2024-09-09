@@ -88,7 +88,6 @@ enum ASSIST_BODY {
 
 struct assist_ephem {
     double jd_ref;
-    struct jpl_s* jpl_planets;
     struct spk_global* spk_global;
     struct spk_s* spk_planets;
     struct spk_s* spk_asteroids;
@@ -197,7 +196,7 @@ struct assist_ephem* assist_ephem_create(char *planets_file_name, char *asteroid
  * @details This function prepares an ASSIST ephemeris structure for use.
  * @param ephem The assist_ephem pointer to initialize.
  * @param user_planets_path The path to the planets file. If NULL, the
- *        default path (/data/linux_m13000p17000.441) will be used.
+ *        default path (/data/de441.bsp) will be used.
  * @param user_asteroids_path The path to the asteroids file. If NULL, the
  *        default path (/data/sb441-n16.bsp) will be used.
  * @return ASSIST_SUCCESS if successful, otherwise an error code.
@@ -205,5 +204,4 @@ struct assist_ephem* assist_ephem_create(char *planets_file_name, char *asteroid
 ///
 int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char *user_asteroids_path);
 double assist_get_constant(struct assist_ephem* ephem, const char* name);
-double truncate_double(double value, int precision);
 #endif

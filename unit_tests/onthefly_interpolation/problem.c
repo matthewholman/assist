@@ -6,7 +6,7 @@
 
 int main(int argc, char* argv[]){
     struct assist_ephem* ephem = assist_ephem_create(
-            "../../data/linux_p1550p2650.440",
+            "../../data/de440.bsp",
             "../../data/sb441-n16.bsp");
     if (ephem == NULL){
         fprintf(stderr,"Error initializing assist_ephem.\n");
@@ -37,6 +37,7 @@ int main(int argc, char* argv[]){
     
     // Integrate to each time directly.
     double* x_direct = malloc(sizeof(double)*Noutput);
+    fprintf(stderr, "sim->t %f\n",r1->t);
     for (int i=0; i<Noutput; i++){
         reb_simulation_integrate(r1, ts[i]);
         x_direct[i] = r1->particles[0].x; // store output 
@@ -44,6 +45,7 @@ int main(int argc, char* argv[]){
     
     // Integrate or interpolate to each time.
     double* x_interpolate = malloc(sizeof(double)*Noutput);
+    fprintf(stderr, "sim->t %f\n",r2->t);
     for (int i=0; i<Noutput; i++){
         assist_integrate_or_interpolate(ax2, ts[i]);
         x_interpolate[i] = r2->particles[0].x; 
@@ -51,6 +53,7 @@ int main(int argc, char* argv[]){
     
     // Compare results
     for (int i=0; i<Noutput; i++){
+        fprintf(stderr, "residual %e\n",fabs(x_direct[i]-x_interpolate[i]));
         assert(fabs(x_direct[i]-x_interpolate[i]) < 1e-13); // Check that results agree
     }
     
