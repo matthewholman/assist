@@ -416,17 +416,14 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
     if ( !(dts*(sim->t-sim->dt_last_done)  <  dts*t &&  dts*t < dts*sim->t) ){
         // Integrate if requested time not in interval of last timestep
         
-        // reb_simulation_integrate(sim, t);
+        reb_simulation_integrate(sim, t);
 
-        // Use reb_simulation_step(r) until t is reached
-        while (sim->t < t){
-            reb_simulation_step(sim);
-            fprintf(stderr, "sim->t: %.17e\n", sim->t);
-            fprintf(stderr, "dt: %.17e\n", sim->dt);
-            fprintf(stderr, "dt_last_done: %.17e\n", sim->dt_last_done);
-        }
     }
 
+    fprintf(stderr, "sim->t: %.17e\n", sim->t);
+    fprintf(stderr, "dt: %.17e\n", sim->dt);
+    fprintf(stderr, "dt_last_done: %.17e\n", sim->dt_last_done);
+    fprintf(stderr, "t: %.17e\n", t);
     double h = 1.0-(sim->t -t) / sim->dt_last_done; 
     if (sim->t - t==0.){
         memcpy(ax->current_state, sim->particles, sizeof(struct reb_particle)*sim->N);
