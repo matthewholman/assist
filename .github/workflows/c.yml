@@ -4,6 +4,7 @@ on: [push, pull_request]
 
 env:
   JPL_PLANET_EPHEM: ../../data/de440.bsp
+  OPT: $OPT -ffp-contract=off
 
 jobs:
   build:

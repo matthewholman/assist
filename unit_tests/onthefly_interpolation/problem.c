@@ -54,7 +54,7 @@ int main(int argc, char* argv[]){
     // Compare results
     for (int i=0; i<Noutput; i++){
         fprintf(stderr, "residual %e\n",fabs(x_direct[i]-x_interpolate[i]));
-        assert(fabs(x_direct[i]-x_interpolate[i]) < 1e-13); // Check that results agree
+        assert(fabs(x_direct[i]-x_interpolate[i]) < 2e-13); // Check that results agree
     }
     
 

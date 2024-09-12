@@ -20,21 +20,6 @@
 #include "spk.h"
 
 
-// double truncate_double(double value, int precision) {
-//     union {
-//         double d;
-//         uint64_t u;
-//     } u;
-//     u.d = value;
-
-//     // Mask to keep only the desired precision bits
-//     uint64_t mask = ~((1ULL << (52 - precision)) - 1);
-//     u.u &= mask;
-
-//     return u.d;
-// }
-
-
 /*
  *  spk_free
  *
@@ -608,7 +593,6 @@ struct mpos_s assist_spk_target_pos(struct spk_s *pl, struct spk_target* target,
 
         // sum interpolation stuff
         for (p = 0; p < P; p++) {
-            // double coeff = truncate_double(val[b + p], 40);
             double coeff = val[b + p];
             pos.u[n] += coeff * T[p];
             pos.v[n] += coeff * S[p] * c;
