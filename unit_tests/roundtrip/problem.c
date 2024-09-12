@@ -20,7 +20,7 @@ double roundtrip(struct assist_ephem* ephem, double trange){
     r->t = t0; 
 
     // Fixed timestep for this test
-    r->dt = 10;
+    r->dt = 100;
     r->ri_ias15.epsilon = 0;
 
     // Initial conditions of asteroid Holman
@@ -41,6 +41,8 @@ double roundtrip(struct assist_ephem* ephem, double trange){
         reb_simulation_step(r);
     }
     
+    fprintf(stderr, "r->t %f\n",r->t);
+    fprintf(stderr, "t0 %f\n",t0);
     assert(r->t == t0);
 
     double dx = r->particles[0].x - x0;
