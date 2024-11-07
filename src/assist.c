@@ -299,6 +299,12 @@ void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struc
                      | ASSIST_FORCE_GR_EIH;
     assist->last_state = NULL; 
     assist->current_state = NULL; 
+    // Default values for non-gravitational parameters
+	assist->alpha = 1.0;
+	assist->nk = 0.0;
+	assist->nm = 2.0;
+	assist->nn = 5.093;
+	assist->r0 = 1.0;
     sim->integrator = REB_INTEGRATOR_IAS15;
     sim->gravity = REB_GRAVITY_NONE;
     sim->extras = assist;

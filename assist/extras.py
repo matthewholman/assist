@@ -88,6 +88,11 @@ class Extras(Structure):
                  ("steps_done", c_int),
                  ("_forces", c_int),
                  ("gr_eih_sources", c_int),
+	             ("alpha", c_double),
+	             ("nk", c_double),
+	             ("nm", c_double), 
+	             ("nn", c_double),
+	             ("r0", c_double),
         ]
 
 # avoid circular imports

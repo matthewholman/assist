@@ -126,6 +126,12 @@ struct assist_extras {
     int steps_done;
     int forces;
     int gr_eih_sources;
+    // Parameters for non-gravitational forces. See forces.c
+	double alpha;
+	double nk;
+	double nm;
+	double nn;
+	double r0;
 };
 
 /**
