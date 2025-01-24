@@ -40,14 +40,11 @@ def assist_error_messages(e: int) -> str:
         raise RuntimeError("assist_error_messages is missing from libassist. Please report this issue on GitHub.")
     return message.decode("ascii")
 
-try:
-    import pkg_resources
-    moduleversion = pkg_resources.require("assist")[0].version
-    libassistversion = __version__
-    if moduleversion != libassistversion:
-        print("WARNING: python module and libassist have different version numbers: ", moduleversion, libassistversion)
-except:
-    pass    # this check fails in python 3. Problem with setuptools
+# Do not change the following line. Will be updated automatically with update_version.py
+moduleversion = '1.1.9'
+libassistversion = __version__
+if moduleversion != libassistversion:
+    print("WARNING: python module and libassist have different version numbers: ", moduleversion, libassistversion)
 
 from .ephem import Ephem
 from .extras import Extras

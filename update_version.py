@@ -51,6 +51,15 @@ with open("setup.py") as f:
     with open("setup.py", "w") as f:
         f.writelines(setuplines)
 
+with open("assist/__init__.py") as f:
+    lines = f.readlines()
+    for i,l in enumerate(lines):
+        if "moduleversion = " in l:
+            lines[i]= "moduleversion = '"+assistversion+"'\n"
+
+    with open("assist/__init__.py", "w") as f:
+        f.writelines(lines)
+
 #shortversion = assistversion
 #while shortversion[-1] != '.':
 #    shortversion = shortversion[:-1]
