@@ -840,6 +840,19 @@ static void assist_additional_force_non_gravitational(struct reb_simulation* sim
 	//printf(" A123: %le %le %le\n", A1, A2, A3);
 	//fflush(stdout);
 	
+	// 'Oumuamua
+	//double alpha = 0.04083733261;
+	//double nk = 2.6;
+	//double nm = 2.0;
+	//double nn = 3.0;
+	//double r0 = 5.0;
+
+	// Standard --> r^-2
+	double alpha = assist->alpha;
+	double nk = assist->nk;
+	double nm = assist->nm;
+	double nn = assist->nn;
+	double r0 = assist->r0;
 
 	// If A1, A2, and A3 are zero, skip.
 	if(A1==0. && A2==0. && A3==0.)
@@ -853,24 +866,6 @@ static void assist_additional_force_non_gravitational(struct reb_simulation* sim
         const double r2 = dx*dx + dy*dy + dz*dz;
         const double r = sqrt(r2);
 
-	// We may need to make this more general.
-	//const double g = 1.0/r2;
-
-	// Need to make these more flexible
-
-	// 'Oumuamua
-	//double alpha = 0.04083733261;
-	//double nk = 2.6;
-	//double nm = 2.0;
-	//double nn = 3.0;
-	//double r0 = 5.0;
-
-	// Standard --> r^-2
-	double alpha = 1.0;
-	double nk = 0.0;
-	double nm = 2.0;
-	double nn = 5.093;
-	double r0 = 1.0;
 	
 	const double g = alpha*pow(r/r0, -nm)*pow(1.0+pow(r/r0, nn), -nk);
 	//const double g = 1.0/r2;	
