@@ -15,6 +15,7 @@ nav:
     - jupyter_examples/VariationalEquations.ipynb
     - jupyter_examples/Apophis.ipynb
     - jupyter_examples/5303_Ceres.ipynb
+    - "jupyter_examples/2024 YR4.ipynb"
 
 theme:
   name: material
