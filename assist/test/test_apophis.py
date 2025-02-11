@@ -1,8 +1,11 @@
-import rebound
-import assist
-import unittest
 import math
+import unittest
+
 import numpy as np
+
+import assist
+import rebound
+
 
 class TestAssist(unittest.TestCase):
     def test_apophis(self):

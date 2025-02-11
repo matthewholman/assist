@@ -29,6 +29,7 @@ jobs:
         working-directory: ./data/
         run: |
           #wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de441/linux_m13000p17000.441  
+          wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440.bsp
           wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de440/linux_p1550p2650.440
           wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp
       - name: Reproduce Holman trajectory
@@ -88,6 +89,41 @@ jobs:
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Run benchmark
         working-directory: ./unit_tests/benchmark
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Compare Linux Binary and BSP DE440 Ephem
+        working-directory: ./unit_tests/de440_compare_ephem/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Compare Linux Binary and BSP DE440 Constants
+        working-directory: ./unit_tests/de440_compare_constants/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test Loading Spice Kernels
+        working-directory: ./unit_tests/spk_init/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test Loading Constants from Planet SPK
+        working-directory: ./unit_tests/spk_load_constants/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test Joining Mass Data from SPK
+        working-directory: ./unit_tests/spk_join_masses/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Reproduce Apophis Encounter with bsp 
+        working-directory: ./unit_tests/apophis_bsp/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Reproduce Ceres-5303 encounter with bsp
+        working-directory: ./unit_tests/5303_Ceres_bsp/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound

@@ -1,7 +1,10 @@
-import rebound
-import assist
-import unittest
 import math
+import unittest
+
+import rebound
+
+import assist
+
 
 class TestAssist(unittest.TestCase):
     def test_rebound(self):
@@ -15,11 +18,11 @@ class TestAssist(unittest.TestCase):
         ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
         self.assertEqual(ephem.jd_ref, 2451545.0)
         p = ephem.get_particle(0,0) # Sun
-        self.assertEqual(p.x, -0.007137179161607906)
+        self.assertEqual(p.x, -0.0071371791616045835)
         p = ephem.get_particle(1,100) # planet
-        self.assertEqual(p.x, 0.12906301685045435)
+        self.assertEqual(p.x, 0.12906301685043747)
         p = ephem.get_particle(20,200) #asteroid
-        self.assertEqual(p.x, -2.62956381075119)
+        self.assertEqual(p.x, -2.629563810751188)
         del ephem
     
     def test_ephem_names(self):
