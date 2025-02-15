@@ -88,8 +88,9 @@ enum ASSIST_BODY {
 
 struct assist_ephem {
     double jd_ref;
-    struct jpl_s* jpl;
-    struct spk_s* spl;
+    struct spk_global* spk_global;
+    struct spk_s* spk_planets;
+    struct spk_s* spk_asteroids;
 };
 
 struct assist_cache_item {
@@ -187,6 +188,7 @@ struct reb_particle assist_get_particle_with_error(struct assist_ephem* ephem, c
 // Functions called from python:
 void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struct assist_ephem* ephem);
 void assist_free_pointers(struct assist_extras* assist);
+void assist_ephem_free_pointers(struct assist_ephem* ephem);
 
 
 void test_vary(struct reb_simulation* sim, FILE *vfile);
@@ -200,12 +202,12 @@ struct assist_ephem* assist_ephem_create(char *planets_file_name, char *asteroid
  * @details This function prepares an ASSIST ephemeris structure for use.
  * @param ephem The assist_ephem pointer to initialize.
  * @param user_planets_path The path to the planets file. If NULL, the
- *        default path (/data/linux_m13000p17000.441) will be used.
+ *        default path (/data/de441.bsp) will be used.
  * @param user_asteroids_path The path to the asteroids file. If NULL, the
  *        default path (/data/sb441-n16.bsp) will be used.
  * @return ASSIST_SUCCESS if successful, otherwise an error code.
  */
 ///
 int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char *user_asteroids_path);
-
+double assist_get_constant(struct assist_ephem* ephem, const char* name);
 #endif

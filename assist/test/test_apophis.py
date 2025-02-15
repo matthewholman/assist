@@ -1,13 +1,16 @@
-import rebound
-import assist
-import unittest
 import math
+import unittest
+
 import numpy as np
+import rebound
+
+import assist
+
 
 class TestAssist(unittest.TestCase):
     def test_apophis(self):
 
-        ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
+        ephem = assist.Ephem("data/de440.bsp", "data/sb441-n16.bsp")
 
         t_initial = 2.4621385359989386E+06 - ephem.jd_ref # Julian Days relative to jd_ref
 

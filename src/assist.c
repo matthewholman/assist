@@ -34,7 +34,6 @@
 #include "rebound.h"
 
 #include "spk.h"
-#include "planets.h"
 #include "forces.h"
 
 #define STRINGIFY(s) str(s)
@@ -91,7 +90,7 @@ static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
 
 int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char *user_asteroids_path){
 
-    char default_planets_path[] = "/data/linux_m13000p17000.441";
+    char default_planets_path[] = "/data/de441.bsp";
     char default_asteroids_path[] = "/data/sb441-n16.bsp";
 
     ephem->jd_ref = 2451545.0; // Default jd_ref
@@ -114,9 +113,9 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
         strncpy(planets_path, user_planets_path, FNAMESIZE-1);	
     }
 
-    if ((ephem->jpl = assist_jpl_init(planets_path)) == NULL) {
-        return ASSIST_ERROR_EPHEM_FILE;	  
-    }
+    ephem->spk_planets = assist_spk_init(planets_path);
+    ephem->spk_global = assist_load_spk_constants(planets_path);
+    assist_spk_join_masses(ephem->spk_planets, ephem->spk_global);
 
     int asteroids_path_not_found = 0;
 
@@ -132,87 +131,14 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
     }
 
     if (asteroids_path_not_found != 1){
-        if ((ephem->spl = assist_spk_init(asteroids_path)) == NULL) {
+        if ((ephem->spk_asteroids = assist_spk_init(asteroids_path)) == NULL) {
             asteroids_path_not_found = 1;
         }
     }
             
+    // Join the mass data from whichever planets file we are using.
     if (asteroids_path_not_found != 1){
-        // Try to find masses of bodies in spk file in ephemeris constants
-        for(int n=0; n<ephem->spl->num; n++){ // loop over all asteroids
-            int found = 0;
-            for(int c=0; c<ephem->jpl->num; c++){ // loop over all constants
-                if (strncmp(ephem->jpl->str[c], "MA", 2) == 0) {
-                    int cid = atoi(ephem->jpl->str[c]+2);
-                    int offset = 2000000;
-                    if (cid==ephem->spl->targets[n].code-offset){
-                        ephem->spl->targets[n].mass = ephem->jpl->con[c];
-                        found = 1;
-                        break;
-                    }
-                }
-            }
-            // Use lookup table for new KBO objects in DE440/441
-            // Source: https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/README.txt
-            int massmap[] = {
-                // ID, SPK_ID
-                8001,  2136199,
-                8002,  2136108,
-                8003,  2090377,
-                8004,  2136472,
-                8005,  2050000,
-                8006,  2084522,
-                8007,  2090482,
-                8008,  2020000,
-                8009,  2055637,
-                8010,  2028978,
-                8011,  2307261,
-                8012,  2174567,
-                8013,  3361580,
-                8014,  3308265,
-                8015,  2055565,
-                8016,  2145452,
-                8017,  2090568,
-                8018,  2208996,
-                8019,  2225088,
-                8020,  2019521,
-                8021,  2120347,
-                8022,  2278361,
-                8023,  3525142,
-                8024,  2230965,
-                8025,  2042301,
-                8026,  2455502,
-                8027,  3545742,
-                8028,  2523639,
-                8029,  2528381,
-                8030,  3515022,
-            };
-            if (found==0){
-                int mapped = -1;
-                for (int m=0; m<sizeof(massmap); m+=2){
-                    if (massmap[m+1]==ephem->spl->targets[n].code){
-                        mapped = massmap[m];
-                        break;
-                    }
-                }
-                if (mapped != -1){
-                    for(int c=0; c<ephem->jpl->num; c++){ // loop over all constants (again)
-                        if (strncmp(ephem->jpl->str[c], "MA", 2) == 0) {
-                            int cid = atoi(ephem->jpl->str[c]+2);
-                            if (cid==mapped){
-                                ephem->spl->targets[n].mass = ephem->jpl->con[c];
-                                found = 1;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            if (found==0){
-                fprintf(stderr,"WARNING: Cannot find mass for asteroid %d (NAIF ID Number %d).\n", n, ephem->spl->targets[n].code );
-            }
-
-        }
+        assist_spk_join_masses(ephem->spk_asteroids, ephem->spk_global);
     }else{
         fprintf(stderr, "(ASSIST) %s\n", assist_error_messages[ASSIST_ERROR_AST_FILE]);
     }
@@ -233,13 +159,17 @@ struct assist_ephem* assist_ephem_create(char *user_planets_path, char *user_ast
 }
 
 void assist_ephem_free_pointers(struct assist_ephem* ephem){
-    if (ephem->jpl){
-        assist_jpl_free(ephem->jpl);
+    if (ephem->spk_planets != NULL){
+        assist_spk_free(ephem->spk_planets);
     }
-    if (ephem->spl){
-        assist_spk_free(ephem->spl);
+    if (ephem->spk_asteroids != NULL){
+        assist_spk_free(ephem->spk_asteroids);
+    }
+    if (ephem->spk_global != NULL){
+        assist_free_spk_constants(ephem->spk_global);
     }
 }
+
 void assist_ephem_free(struct assist_ephem* ephem){
     assist_ephem_free_pointers(ephem);
     free(ephem);
@@ -278,8 +208,8 @@ void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struc
     assist->sim = sim;
     assist->ephem_cache = calloc(1, sizeof(struct assist_ephem_cache));
     int N_total = ASSIST_BODY_NPLANETS;
-    if (ephem->spl){
-        N_total += ephem->spl->num;
+    if (ephem->spk_asteroids){
+        N_total += ephem->spk_asteroids->num;
     }
     assist->gr_eih_sources = 1; // Only include Sun by default
     assist->ephem_cache->items = calloc(N_total*7, sizeof(struct assist_cache_item));
@@ -491,8 +421,11 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
     double dts = copysign(1., sim->dt_last_done);
     if ( !(dts*(sim->t-sim->dt_last_done)  <  dts*t &&  dts*t < dts*sim->t) ){
         // Integrate if requested time not in interval of last timestep
+        
         reb_simulation_integrate(sim, t);
+
     }
+
     double h = 1.0-(sim->t -t) / sim->dt_last_done; 
     if (sim->t - t==0.){
         memcpy(ax->current_state, sim->particles, sizeof(struct reb_particle)*sim->N);
@@ -584,3 +517,17 @@ static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     memcpy(assist->last_state, sim->particles, sizeof(struct reb_particle)*sim->N);
 }
 
+double assist_get_constant(struct assist_ephem* ephem, const char* constant_name) {
+    struct spk_constants* con = &ephem->spk_global->con;
+    if (strcmp(constant_name, "AU") == 0) return con->AU;
+    if (strcmp(constant_name, "EMRAT") == 0) return con->EMRAT;
+    if (strcmp(constant_name, "J2E") == 0) return con->J2E;
+    if (strcmp(constant_name, "J3E") == 0) return con->J3E;
+    if (strcmp(constant_name, "J4E") == 0) return con->J4E;
+    if (strcmp(constant_name, "J2SUN") == 0) return con->J2SUN;
+    if (strcmp(constant_name, "RE") == 0) return con->RE;
+    if (strcmp(constant_name, "CLIGHT") == 0) return con->CLIGHT;
+    if (strcmp(constant_name, "ASUN") == 0) return con->ASUN;
+    // If the constant is not found, return some error value (NaN)
+    return NAN;
+}

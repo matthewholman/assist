@@ -11,7 +11,7 @@
 int main(int argc, char* argv[]){
 
     struct assist_ephem* ephem = assist_ephem_create(
-            "../../data/linux_p1550p2650.440",
+            "../../data/de440.bsp",
             "../../data/sb441-n16.bsp");
     if (ephem == NULL){
         fprintf(stderr,"Error initializing assist_ephem.\n");
@@ -70,8 +70,8 @@ int main(int argc, char* argv[]){
     double diff = reb_particle_distance(&p_final, &r->particles[0]) * au2meter; // in meter
 
     // Ensure accuracy is better than 250m
-    printf("Difference: %.2f m\n",diff);
-    assert(diff < 250); 
+    fprintf(stderr,"diff to JPL Small Body code %fm\n",diff);
+    assert(diff < 200); 
 
     assist_free(ax);
     assist_ephem_free(ephem);

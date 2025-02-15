@@ -31,14 +31,14 @@ To use ASSIST, you also need to download ephemeris data files. One file for plan
 
 ```bash
 mkdir data
-curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de440/linux_p1550p2650.440 -o data/linux_p1550p2650.440
+curl https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440.bsp -o data/de440.bsp
 curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp -o data/sb441-n16.bsp
 ```
 
 For some of the examples, you will also need the planet ephemeris file with an extended coverage.
 
 ```bash
-curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de441/linux_m13000p17000.441 -o assist/data/linux_m13000p17000.441
+curl https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de441.bsp -o assist/data/de441.bsp
 ```
 
 !!! Info 
@@ -62,7 +62,7 @@ You can now verify that your installation of assist works.
     Then run the following code:
     ```python
     import assist
-    ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
+    ephem = assist.Ephem("data/de440.bsp", "data/sb441-n16.bsp")
     print(ephem.jd_ref)
     ephem.get_particle("Earth", 0)
     ```

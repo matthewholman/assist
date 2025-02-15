@@ -1,12 +1,12 @@
-from codecs import open
-import os
 import inspect
-import sys 
+import os
+import sys
+from codecs import open
 from distutils import sysconfig
-from distutils.sysconfig import get_python_lib 
+from distutils.sysconfig import get_python_lib
 
 try:
-    from setuptools import setup, Extension
+    from setuptools import Extension, setup
     from setuptools.command.build_ext import build_ext as _build_ext
 except ImportError:
     print("Installing ASSIST requires setuptools.  Do 'pip install setuptools'.")
@@ -43,7 +43,7 @@ class build_ext(_build_ext):
         # get site-packages dir to add to paths in case REBOUND & ASSIST installed simul in tmp dir
         rebdirsp = get_python_lib()+'/'#[p for p in sys.path if p.endswith('site-packages')][0]+'/'
         self.include_dirs.append(rebdir)
-        sources = [ 'src/assist.c', 'src/spk.c', 'src/planets.c', 'src/forces.c'],
+        sources = [ 'src/assist.c', 'src/spk.c', 'src/forces.c'],
 
         if not "CONDA_BUILD_CROSS_COMPILATION" in os.environ:
             self.library_dirs.append(rebdir+'/../')
@@ -74,7 +74,7 @@ if sys.platform == 'darwin':
     extra_link_args.append('-Wl,-install_name,@rpath/libassist'+suffix)
 
 libassistmodule = Extension('libassist',
-                  sources = [ 'src/assist.c','src/spk.c', 'src/planets.c', 'src/forces.c'],
+                  sources = [ 'src/assist.c','src/spk.c', 'src/forces.c'],
                     include_dirs = ['src'],
                     library_dirs = [],
                     runtime_library_dirs = ["."],
