@@ -47,7 +47,7 @@ if moduleversion != libassistversion:
     print("WARNING: python module and libassist have different version numbers: ", moduleversion, libassistversion)
 
 from .ephem import Ephem
-from .extras import Extras
+from .extras import Extras, convert_to_rebound
 
 
 __all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Extras", "Ephem"]
