@@ -584,37 +584,3 @@ static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     memcpy(assist->last_state, sim->particles, sizeof(struct reb_particle)*sim->N);
 }
 
-// This function returns a new rebound simulation with all particles added. 
-// Return simulation must be freed by caller.
-// if merge_moon = 1, then the Earth and Moon are added as a single particle.
-struct reb_simulation* assist_convert_to_rebound(struct reb_simulation* r, struct assist_ephem* ephem, int merge_moon){  
-    struct reb_simulation* r2 = reb_simulation_create();
-    r2->t = r->t;
-    for (int i=0; i<11; i++){
-        if (!merge_moon || i!=ASSIST_BODY_EARTH || i!=ASSIST_BODY_MOON){
-            int error=0;
-            struct reb_particle p = assist_get_particle_with_error(ephem, i, r->t,&error);
-            if (error != ASSIST_SUCCESS){
-                fprintf(stderr, "(ASSIST) An error occured while trying to initialize particle from ephemeris data.\n");
-            }else{
-                reb_simulation_add(r2, p);
-            }
-        }
-    }
-    if (merge_moon){
-        int error =0;
-        struct reb_particle p1 = assist_get_particle_with_error(ephem, ASSIST_BODY_EARTH, r->t,&error);
-        struct reb_particle p2 = assist_get_particle_with_error(ephem, ASSIST_BODY_MOON, r->t,&error);
-        if (error != ASSIST_SUCCESS){
-            fprintf(stderr, "(ASSIST) An error occured while trying to initialize particle from ephemeris data.\n");
-        }else{
-            struct reb_particle p = reb_particle_com_of_pair(p1, p2);
-            reb_simulation_add(r2, p);
-        }
-    }
-    r2->N_active = r2->N;
-    for (int i=0; i<r->N; i++){
-        reb_simulation_add(r2, r->particles[i]);
-    }
-    return r2;
-}

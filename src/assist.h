@@ -208,4 +208,18 @@ struct assist_ephem* assist_ephem_create(char *planets_file_name, char *asteroid
 ///
 int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char *user_asteroids_path);
 
+
+/**
+ * @brief Converts an ASSIST supported simulation to a pure REBOUND simulation. 
+ * @details This function returns a new REBOUND simulation that contains the sun, the planets and all particles
+ *          particles present in the original simulation. This can then be used to integrate the simulation
+ *          without the need for ASSIST and ephemeris data. Note that the accuracy will be reduced. Also, no
+ *          additional forces are included.
+ * @param r REBOUND simulation to be converted.
+ * @param ephem The ASSIST ephemeris structure used to find planet positions.
+ * @param merge_moon Flag that determines if the Earth and Moon particles should be merged. (1=merge)
+ * @return A new REBOUND simulation. Needs to be freed by the caller.
+ */
+///
+struct reb_simulation* assist_convert_to_rebound(struct reb_simulation* r, struct assist_ephem* ephem, int merge_moon);
 #endif
