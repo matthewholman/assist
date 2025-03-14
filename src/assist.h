@@ -221,5 +221,5 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
  * @return A new REBOUND simulation. Needs to be freed by the caller.
  */
 ///
-struct reb_simulation* assist_convert_to_rebound(struct reb_simulation* r, struct assist_ephem* ephem, int merge_moon);
+struct reb_simulation* assist_simulation_convert_to_rebound(struct reb_simulation* r, struct assist_ephem* ephem, int merge_moon);
 #endif
