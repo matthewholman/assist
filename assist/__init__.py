@@ -48,6 +48,7 @@ if moduleversion != libassistversion:
 
 from .ephem import Ephem
 from .extras import Extras
+from .tools import simulation_convert_to_rebound
 
 
 __all__ = ["__libpath__", "__version__", "__build__", "__githash__", "Extras", "Ephem"]

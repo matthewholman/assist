@@ -86,6 +86,11 @@ jobs:
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Convert to REBOUND
+        working-directory: ./unit_tests/convert_simulation/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Run benchmark
         working-directory: ./unit_tests/benchmark
         run: |
