@@ -482,8 +482,11 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
     sim->exact_finish_time = 0;
 
     if (ax->current_state==NULL){
-        ax->current_state = malloc(sizeof(struct reb_particle)*6*sim->N);
-        ax->last_state = malloc(sizeof(struct reb_particle)*6*sim->N);
+        ax->current_state = malloc(sizeof(struct reb_particle)*sim->N);
+        ax->last_state = malloc(sizeof(struct reb_particle)*sim->N);
+        // Initialize new arrays with sim->particles (sets mass, radius, hash, if users use those) 
+        memcpy(ax->current_state, sim->particles, sizeof(struct reb_particle)*sim->N);
+        memcpy(ax->last_state, sim->particles, sizeof(struct reb_particle)*sim->N);
     }else{
         assist_swap_particles(sim);
     }
