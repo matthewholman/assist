@@ -71,18 +71,20 @@ void assist_additional_forces(struct reb_simulation* sim){
     // We might consider adding the heliocenter.
 
     if(geo == 1){
-	// geocentric
-	// Get mass, position, velocity, and acceleration of the Earth for later use.
-	// The offset position is used to adjust the particle positions.
-	int flag = assist_all_ephem(ephem, assist->ephem_cache, ASSIST_BODY_EARTH, t, &GM, &xo, &yo, &zo, &vxo, &vyo, &vzo, &axo, &ayo, &azo);
-	if(flag != ASSIST_SUCCESS){
-        reb_simulation_error(sim, assist_error_messages[flag]);
-	}
+        // geocentric
+        // Get mass, position, velocity, and acceleration of the Earth for later use.
+        // The offset position is used to adjust the particle positions.
+        int flag = assist_all_ephem(ephem, assist->ephem_cache, ASSIST_BODY_EARTH, t, &GM, &xo, &yo, &zo, &vxo, &vyo, &vzo, &axo, &ayo, &azo);
+        if(flag != ASSIST_SUCCESS){
+            reb_simulation_error(sim, assist_error_messages[flag]);
+            sim->status = REB_STATUS_GENERIC_ERROR;
+            return;
+        }
     }else{
-	// barycentric
-	xo = 0.0;  yo = 0.0;  zo = 0.0;
-	vxo = 0.0; vyo = 0.0; vzo = 0.0;
-	axo = 0.0; ayo = 0.0; azo = 0.0;	
+        // barycentric
+        xo = 0.0;  yo = 0.0;  zo = 0.0;
+        vxo = 0.0; vyo = 0.0; vzo = 0.0;
+        axo = 0.0; ayo = 0.0; azo = 0.0;	
     }
 
     // TODO: eliminate the output files after testing
@@ -315,6 +317,8 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 
         if(flag != ASSIST_SUCCESS){
             reb_simulation_error(sim, assist_error_messages[flag]);
+            sim->status = REB_STATUS_GENERIC_ERROR;
+            return;
         }
 
         // Loop over test particles
@@ -359,6 +363,8 @@ static void assist_additional_force_direct(struct reb_simulation* sim, double xo
 
 	if(flag != ASSIST_SUCCESS){
         reb_simulation_error(sim, assist_error_messages[flag]);
+        sim->status = REB_STATUS_GENERIC_ERROR;
+        return;
 	}
 
     // Skip remainder of calculation if variational particles are not used
