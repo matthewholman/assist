@@ -492,11 +492,14 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
     }
 
     double dts = copysign(1., sim->dt_last_done);
-    if ( !(dts*(sim->t-sim->dt_last_done)  <  dts*t &&  dts*t < dts*sim->t) ){
+    double h = 1.0-(sim->t -t) / sim->dt_last_done; 
+    // KK: this seems to be causing issues for us, I think it needs to be !(isnormal(h))
+    if ( !(dts*(sim->t-sim->dt_last_done)  <  dts*t &&  dts*t < dts*sim->t) && isnormal(h) ){
         // Integrate if requested time not in interval of last timestep
         reb_simulation_integrate(sim, t);
     }
-    double h = 1.0-(sim->t -t) / sim->dt_last_done; 
+    
+    h = 1.0-(sim->t -t) / sim->dt_last_done; 
     if (sim->t - t==0.){
         memcpy(ax->current_state, sim->particles, sizeof(struct reb_particle)*sim->N);
     }else if (h<0.0 || h>=1.0 || !isnormal(h)){
@@ -586,4 +589,5 @@ static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     reb_simulation_update_acceleration(sim); // This will later be recalculated. Could be optimized.
     memcpy(assist->last_state, sim->particles, sizeof(struct reb_particle)*sim->N);
 }
+
 
