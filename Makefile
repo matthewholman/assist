@@ -7,14 +7,36 @@ all: libassist
 
 clean:
 	$(MAKE) -C src clean
-	$(MAKE) -C doc clean
+	@if [ -d doc ] && [ -f doc/Makefile ]; then $(MAKE) -C doc clean; fi
 	@-rm -f *.so
-	@pip uninstall -y assist
-	@python setup.py clean --all
+	@pip uninstall -y assist 2>/dev/null || true
+	@python setup.py clean --all 2>/dev/null || true
 	@rm -rf assist.*
 
 .PHONY: doc
 doc: 
-	cd doc/doxygen && doxygen
-	$(MAKE) -C doc html
+	@if [ -d doc/doxygen ]; then cd doc/doxygen && doxygen; fi
+	@if [ -d doc ] && [ -f doc/Makefile ]; then $(MAKE) -C doc html; fi
 		
+
+# Iterate through each directory in the unit_tests directory and compile the test files
+# then run them
+test:
+	@echo "Running tests ..."
+	@set -e; \
+	for dir in $(wildcard unit_tests/*); do \
+		if [ -d $$dir ]; then \
+			echo "Entering directory $$dir"; \
+			if $(MAKE) -C $$dir; then \
+				if [ -f "$$dir/rebound" ]; then \
+					(cd $$dir && LD_LIBRARY_PATH=$(REB_DIR):. ./rebound); \
+				else \
+					echo "No rebound executable found in $$dir"; \
+					exit 1; \
+				fi \
+			else \
+				echo "Make failed in $$dir"; \
+				exit 1; \
+			fi \
+		fi \
+	done

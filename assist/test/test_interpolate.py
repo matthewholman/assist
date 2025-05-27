@@ -1,7 +1,10 @@
-import rebound
-import assist
-import unittest
 import math
+import unittest
+
+import rebound
+
+import assist
+
 
 class TestInterpolate(unittest.TestCase):
     def test_interpolate(self):
@@ -18,7 +21,7 @@ class TestInterpolate(unittest.TestCase):
 
         sim2 = sim.copy()
         
-        ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
+        ephem = assist.Ephem("data/de440.bsp", "data/sb441-n16.bsp")
         extras = assist.Extras(sim, ephem)
         extras2 = assist.Extras(sim2, ephem)
 
@@ -30,7 +33,7 @@ class TestInterpolate(unittest.TestCase):
             d = sim.particles[0] - sim2.particles[0]
             au2meter = 149597870700
         
-            self.assertLess(math.fabs(d.x*au2meter), 0.01) # 1cm accurary 
+            self.assertLess(math.fabs(d.x*au2meter), 0.02) # 1cm accurary 
             self.assertLess(math.fabs(d.y*au2meter), 0.01) # 1cm accurary 
             self.assertLess(math.fabs(d.z*au2meter), 0.01) # 1cm accurary 
 

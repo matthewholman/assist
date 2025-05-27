@@ -3,7 +3,7 @@ name: ASSIST Unit Tests (C)
 on: [push, pull_request]
 
 env:
-  JPL_PLANET_EPHEM: ../../data/linux_p1550p2650.440
+  JPL_PLANET_EPHEM: ../../data/de440.bsp
 
 jobs:
   build:
@@ -17,19 +17,11 @@ jobs:
         run: | 
           pwd
           git clone https://github.com/hannorein/rebound.git
-          #- name: Compile REBOUND
-          #  working-directory: ../rebound
-          #  run: | 
-          #    pwd
-          #    make
-          #- name: Compile ASSIST
-          #  run: | 
-          #    make
       - name: Download DE441 dataset
         working-directory: ./data/
         run: |
-          #wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de441/linux_m13000p17000.441  
-          wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de440/linux_p1550p2650.440
+          #wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de441.bsp
+          wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440.bsp
           wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp
       - name: Reproduce Holman trajectory
         working-directory: ./unit_tests/holman/
@@ -93,6 +85,21 @@ jobs:
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Run benchmark
         working-directory: ./unit_tests/benchmark
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test Loading Spice Kernels
+        working-directory: ./unit_tests/spk_init/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test Loading Constants from Planet SPK
+        working-directory: ./unit_tests/spk_load_constants/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test Joining Mass Data from SPK
+        working-directory: ./unit_tests/spk_join_masses/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound

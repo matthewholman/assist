@@ -31,7 +31,7 @@
 int main(int argc, char* argv[]){
 
     struct assist_ephem* ephem = assist_ephem_create(
-            "../../data/linux_p1550p2650.440",
+            "../../data/de440.bsp",
             "../../data/sb441-n16.bsp");
     if (ephem == NULL){
         fprintf(stderr,"Error initializing assist_ephem.\n");
