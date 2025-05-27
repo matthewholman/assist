@@ -22,7 +22,7 @@ ifndef ASSISTGITHASH
 	PREDEF+= -DASSISTGITHASH=$(ASSISTGITHASH)
 endif
 
-SOURCES=assist.c spk.c planets.c forces.c tools.c
+SOURCES=assist.c spk.c forces.c tools.c
 OBJECTS=$(SOURCES:.c=.o)
 HEADERS=$(SOURCES:.c=.h)
 

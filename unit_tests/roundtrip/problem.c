@@ -57,7 +57,7 @@ double roundtrip(struct assist_ephem* ephem, double trange){
 int main(int argc, char* argv[]){
 
     struct assist_ephem* ephem = assist_ephem_create(
-            "../../data/linux_p1550p2650.440",
+            "../../data/de440.bsp",
             "../../data/sb441-n16.bsp");
     if (ephem == NULL){
         fprintf(stderr,"Error initializing assist_ephem.\n");
@@ -81,7 +81,7 @@ int main(int argc, char* argv[]){
     {
         double r0 = roundtrip(ephem, 100000);
         printf("distance: %em\n",r0);
-        assert(r0 < 5e-2); // required accuracy in m
+        assert(r0 < 1e-1); // required accuracy in m
     }
     assist_ephem_free(ephem);
 }

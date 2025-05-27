@@ -88,8 +88,24 @@ enum ASSIST_BODY {
 
 struct assist_ephem {
     double jd_ref;
-    struct jpl_s* jpl;
-    struct spk_s* spl;
+    struct spk_s* spk_planets;
+    struct spk_s* spk_asteroids;
+    // SPK constants moved directly into assist_ephem
+    double AU;                     // definition of AU
+    double EMRAT;                  // Earth/Moon mass ratio
+    double J2E;                    // Other constant names follow JPL
+    double J3E;
+    double J4E;
+    double J2SUN;
+    double RE;
+    double CLIGHT;
+    double ASUN;
+    // Derived constants calculated from base constants
+    double Re_eq;                  // Earth radius in AU
+    double Rs_eq;                  // Sun radius in AU  
+    double c_AU_per_day;           // Speed of light in AU/day
+    double c_squared;              // Speed of light squared in (AU/day)^2
+    double over_c_squared;         // 1/c^2 in (day/AU)^2
 };
 
 struct assist_cache_item {
@@ -172,7 +188,7 @@ struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulati
 void assist_integrate_or_interpolate(struct assist_extras* ax, double t);
 
 // Find particle position and velocity based on ephemeris data
-struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t);
+struct reb_particle assist_get_particle(const struct assist_ephem* ephem, const int particle_id, const double t);
 
 /**
  * @brief Find particle position and velocity based on ephemeris data.
@@ -182,11 +198,12 @@ struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int pa
  * @param t The time at which to find the particle.
  * @param error Pointer to an integer to store the error code.
  */
-struct reb_particle assist_get_particle_with_error(struct assist_ephem* ephem, const int particle_id, const double t, int* error);
+struct reb_particle assist_get_particle_with_error(const struct assist_ephem* ephem, const int particle_id, const double t, int* error);
 
 // Functions called from python:
 void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struct assist_ephem* ephem);
 void assist_free_pointers(struct assist_extras* assist);
+void assist_ephem_free_pointers(struct assist_ephem* ephem);
 
 
 void test_vary(struct reb_simulation* sim, FILE *vfile);
@@ -200,14 +217,13 @@ struct assist_ephem* assist_ephem_create(char *planets_file_name, char *asteroid
  * @details This function prepares an ASSIST ephemeris structure for use.
  * @param ephem The assist_ephem pointer to initialize.
  * @param user_planets_path The path to the planets file. If NULL, the
- *        default path (/data/linux_m13000p17000.441) will be used.
+ *        default path (/data/de441.bsp) will be used.
  * @param user_asteroids_path The path to the asteroids file. If NULL, the
  *        default path (/data/sb441-n16.bsp) will be used.
  * @return ASSIST_SUCCESS if successful, otherwise an error code.
  */
 ///
 int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char *user_asteroids_path);
-
 
 /**
  * @brief Converts an ASSIST supported simulation to a pure REBOUND simulation. 
@@ -221,5 +237,5 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
  * @return A new REBOUND simulation. Needs to be freed by the caller.
  */
 ///
-struct reb_simulation* assist_simulation_convert_to_rebound(struct reb_simulation* r, struct assist_ephem* ephem, int merge_moon);
+struct reb_simulation* assist_simulation_convert_to_rebound(const struct reb_simulation* r, const struct assist_ephem* ephem, int merge_moon);
 #endif
