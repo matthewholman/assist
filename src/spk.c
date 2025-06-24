@@ -261,6 +261,28 @@ union record_t * assist_load_spk_file_record(int fd) {
     return record;
 }
 
+// Check if file is an ASCII source file that needs conversion
+static int is_ascii_source_file(int fd) {
+    char buf[1024];
+    ssize_t bytes_read;
+    
+    // Read first chunk of file
+    lseek(fd, 0, SEEK_SET);
+    bytes_read = read(fd, buf, sizeof(buf));
+    if (bytes_read <= 0) {
+        return 0;
+    }
+    
+    // Check for ASCII source file markers
+    // These files typically contain header information about the ephemeris
+    // and start with comment blocks
+    if (strstr(buf, "JPL") && strstr(buf, "EPHEMERIS") && 
+        (strstr(buf, "ASCII") || strstr(buf, "ascii"))) {
+        return 1;
+    }
+    
+    return 0;
+}
 
 // Initialize the targets of a single spk file
 // Note that target masses will not be populated until assist_spk_join_masses
@@ -272,8 +294,23 @@ struct spk_s * assist_spk_init(const char *path) {
         return NULL;
     }
 
+    // Check for ASCII source file
+    if (is_ascii_source_file(fd)) {
+        fprintf(stderr, "(ASSIST) Error: ASCII source file format detected. This file needs to be converted to binary SPK (.bsp) format.\n");
+        fprintf(stderr, "(ASSIST) Please download the pre-converted binary SPK files from:\n");
+        fprintf(stderr, "(ASSIST) https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/\n");
+        fprintf(stderr, "(ASSIST) and https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/asteroids/\n");
+        fprintf(stderr, "(ASSIST) Look for files with .bsp extension (e.g., de440.bsp, sb441-n16.bsp)\n");
+        close(fd);
+        return NULL;
+    }
+
     // Load the file record
     union record_t * record = assist_load_spk_file_record(fd);
+    if (!record) {
+        close(fd);
+        return NULL;
+    }
 
     // Seek until the first summary record using the file record's fward pointer.
     // Record numbers start from 1 not 0 so we subtract 1 to get to the correct record.
