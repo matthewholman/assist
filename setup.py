@@ -53,6 +53,13 @@ class build_ext(_build_ext):
                 ext.extra_link_args.append('-Wl,-rpath,'+rebdir+'/../')
                 ext.runtime_library_dirs.append(rebdirsp)
                 ext.extra_link_args.append('-Wl,-rpath,'+rebdirsp)
+                
+                # Add loader-relative paths for virtual environments where site-packages gets moved
+                if sys.platform == 'darwin':
+                    ext.extra_link_args.append('-Wl,-rpath,@loader_path')
+                elif sys.platform.startswith('linux'):
+                    ext.extra_link_args.append('-Wl,-rpath,$ORIGIN')
+                
                 print(extra_link_args)
             print(rebdir+'/../')
             print(rebdirsp)
@@ -72,6 +79,11 @@ if sys.platform == 'darwin':
     vars = sysconfig.get_config_vars()
     vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
     extra_link_args.append('-Wl,-install_name,@rpath/libassist'+suffix)
+    # Add additional linker flags for better compatibility with virtual environments
+    extra_link_args.append('-Wl,-rpath,@loader_path')
+elif sys.platform.startswith('linux'):
+    # Add Linux equivalent for virtual environment compatibility
+    extra_link_args.append('-Wl,-rpath,$ORIGIN')
 
 libassistmodule = Extension('libassist',
                   sources = [ 'src/assist.c','src/spk.c', 'src/forces.c', 'src/tools.c'],
