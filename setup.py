@@ -46,30 +46,34 @@ class build_ext(_build_ext):
         sources = [ 'src/assist.c', 'src/spk.c', 'src/forces.c', 'src/tools.c'],
 
         if not "CONDA_BUILD_CROSS_COMPILATION" in os.environ:
+            # Add library directories for build-time linking
             self.library_dirs.append(rebdir+'/../')
             self.library_dirs.append(rebdirsp)
+            
             for ext in self.extensions:
-                ext.runtime_library_dirs.append(rebdir+'/../')
-                ext.extra_link_args.append('-Wl,-rpath,'+rebdir+'/../')
-                ext.runtime_library_dirs.append(rebdirsp)
-                ext.extra_link_args.append('-Wl,-rpath,'+rebdirsp)
+                # Clear any existing runtime_library_dirs to avoid conflicts
+                ext.runtime_library_dirs = []
                 
-                # Add loader-relative paths for virtual environments where site-packages gets moved
+                # Use loader-relative paths for runtime linking
                 if sys.platform == 'darwin':
+                    # Primary path: same directory as the loading library
                     ext.extra_link_args.append('-Wl,-rpath,@loader_path')
+                    # Backup path: current directory (for compatibility)
+                    ext.extra_link_args.append('-Wl,-rpath,@loader_path/.')
                 elif sys.platform.startswith('linux'):
+                    # Linux equivalent of @loader_path
                     ext.extra_link_args.append('-Wl,-rpath,$ORIGIN')
+                    ext.extra_link_args.append('-Wl,-rpath,$ORIGIN/.')
                 
-                print(extra_link_args)
-            print(rebdir+'/../')
-            print(rebdirsp)
+                print("Library directories:", self.library_dirs)
+                print("Extra link args:", ext.extra_link_args)
         else:
             # For conda-forge cross-compile builds
             rebdir=get_python_lib(prefix=os.environ["PREFIX"])
             self.library_dirs.append(rebdir)
             for ext in self.extensions:
                 ext.extra_link_args.append('-Wl,-rpath,'+rebdir)
-                print(ext.extra_link_args)
+                print("Cross-compile extra link args:", ext.extra_link_args)
 
 from distutils.version import LooseVersion
 
@@ -79,17 +83,15 @@ if sys.platform == 'darwin':
     vars = sysconfig.get_config_vars()
     vars['LDSHARED'] = vars['LDSHARED'].replace('-bundle', '-shared')
     extra_link_args.append('-Wl,-install_name,@rpath/libassist'+suffix)
-    # Add additional linker flags for better compatibility with virtual environments
-    extra_link_args.append('-Wl,-rpath,@loader_path')
 elif sys.platform.startswith('linux'):
-    # Add Linux equivalent for virtual environment compatibility
-    extra_link_args.append('-Wl,-rpath,$ORIGIN')
+    # Linux doesn't need install_name, but we can add other flags if needed
+    pass
 
 libassistmodule = Extension('libassist',
                   sources = [ 'src/assist.c','src/spk.c', 'src/forces.c', 'src/tools.c'],
                     include_dirs = ['src'],
                     library_dirs = [],
-                    runtime_library_dirs = ["."],
+                    runtime_library_dirs = [],  # Will be set by build_ext.finalize_options
                     libraries=['rebound'+suffix[:suffix.rfind('.')]],
                     define_macros=[ ('LIBASSIST', None) ],
                     extra_compile_args=['-fstrict-aliasing', '-O3','-std=c99', '-fPIC', '-D_GNU_SOURCE', '-Wpointer-arith', ghash_arg],
@@ -138,4 +140,4 @@ setup(name='assist',
     tests_require=["numpy","matplotlib","rebound"],
     test_suite="assist.test",
     ext_modules = [libassistmodule],
-    zip_safe=False)
+    zip_safe=False) 
