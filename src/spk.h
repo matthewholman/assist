@@ -41,6 +41,14 @@ struct spk_constants_and_masses {
     struct mass_data masses;
 };
 
+// Ephemeris file format detection
+typedef enum {
+    FILE_FORMAT_VALID_BSP = 0,          // Valid .bsp SPK file
+    FILE_FORMAT_ASCII_SOURCE = 1,       // ASCII source file (needs conversion)
+    FILE_FORMAT_BINARY_LEGACY = 2,     // Binary legacy format (.440, .441, etc.)
+    FILE_FORMAT_UNKNOWN = 3             // Unknown/unsupported format
+} ephemeris_file_format_t;
+
 // Represents available data for a target in a SPK file
 struct spk_target {
     int code;       // Target code
@@ -113,6 +121,10 @@ enum ASSIST_STATUS assist_spk_calc(const struct spk_s *pl, double jde, double re
 enum ASSIST_STATUS assist_spk_calc_planets(const struct assist_ephem* ephem, double jde, double rel, int m, double* GM, double* x, double* y, double* z, double* vx, double* vy, double* vz, double* ax, double* ay, double* az);
 struct spk_target* assist_spk_find_target(const struct spk_s *pl, int code);
 struct mpos_s assist_spk_target_pos(const struct spk_s *pl, const struct spk_target* target, double jde, double rel);
+
+// File format detection functions
+int assist_detect_legacy_binary_signature(int fd);
+ephemeris_file_format_t assist_detect_ephemeris_file_format(int fd);
 
 #endif // _SPK_H
 

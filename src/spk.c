@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
@@ -261,8 +262,57 @@ union record_t * assist_load_spk_file_record(int fd) {
     return record;
 }
 
-// Check if file is an ASCII source file that needs conversion
-static int is_ascii_source_file(int fd) {
+// Detect legacy ephemeris file formats and provide helpful error messages
+// (enum ephemeris_file_format_t is now defined in spk.h)
+
+// Simple signature check for legacy binary format
+int assist_detect_legacy_binary_signature(int fd) {
+    // Legacy binary files have constant names at offset 0x00FC (252 bytes)
+    // Check for typical ephemeris constant names like "GMS   ", "GM1   ", etc.
+    
+    char const_names[6 * 3];  // Read first 3 constant names (6 chars each)
+    if (lseek(fd, 0x00FC, SEEK_SET) != 0x00FC) {
+        return 0;  // Can't seek to expected position
+    }
+    
+    if (read(fd, const_names, sizeof(const_names)) != sizeof(const_names)) {
+        return 0;  // Can't read constant names
+    }
+    
+    // Check if names look like typical ephemeris constants
+    // They should be printable ASCII with trailing spaces, like "GMS   ", "GM1   "
+    int valid_names = 0;
+    for (int i = 0; i < 3; i++) {
+        char* name = &const_names[i * 6];
+        
+        // Check if it looks like a constant name: starts with letters, may have trailing spaces
+        if ((name[0] >= 'A' && name[0] <= 'Z') || (name[0] >= 'a' && name[0] <= 'z')) {
+            int has_letters = 0;
+            int has_spaces = 0;
+            for (int j = 0; j < 6; j++) {
+                if ((name[j] >= 'A' && name[j] <= 'Z') || (name[j] >= 'a' && name[j] <= 'z') || 
+                    (name[j] >= '0' && name[j] <= '9')) {
+                    has_letters++;
+                } else if (name[j] == ' ') {
+                    has_spaces++;
+                } else if (name[j] == '\0') {
+                    // Null termination is ok
+                    break;
+                }
+            }
+            
+            // Valid constant name should have at least 2 letters and some spaces for padding
+            if (has_letters >= 2 && (has_spaces > 0 || strlen(name) < 6)) {
+                valid_names++;
+            }
+        }
+    }
+    
+    // If at least 2 out of 3 names look like ephemeris constants, it's likely a legacy file
+    return (valid_names >= 2);
+}
+
+ephemeris_file_format_t assist_detect_ephemeris_file_format(int fd) {
     char buf[1024];
     ssize_t bytes_read;
     
@@ -270,7 +320,19 @@ static int is_ascii_source_file(int fd) {
     lseek(fd, 0, SEEK_SET);
     bytes_read = read(fd, buf, sizeof(buf));
     if (bytes_read <= 0) {
-        return 0;
+        return FILE_FORMAT_UNKNOWN;
+    }
+    
+    // Check for valid .bsp SPK file (DAF/SPK header) first
+    if (bytes_read >= 8 && strncmp(buf, "DAF/SPK ", 8) == 0) {
+        return FILE_FORMAT_VALID_BSP;
+    }
+    
+    // Check for legacy binary format signature
+    if (assist_detect_legacy_binary_signature(fd)) {
+        // Reset file position after signature check
+        lseek(fd, 0, SEEK_SET);
+        return FILE_FORMAT_BINARY_LEGACY;
     }
     
     // Check for ASCII source file markers
@@ -278,10 +340,27 @@ static int is_ascii_source_file(int fd) {
     // and start with comment blocks
     if (strstr(buf, "JPL") && strstr(buf, "EPHEMERIS") && 
         (strstr(buf, "ASCII") || strstr(buf, "ascii"))) {
-        return 1;
+        return FILE_FORMAT_ASCII_SOURCE;
     }
     
-    return 0;
+    return FILE_FORMAT_UNKNOWN;
+}
+
+static void print_legacy_format_error(ephemeris_file_format_t format, const char* filepath) {
+    if (format == FILE_FORMAT_ASCII_SOURCE) {
+        fprintf(stderr, "(ASSIST) Error: ASCII ephemeris source file detected. ASSIST requires binary SPK (.bsp) format.\n");
+    } else if (format == FILE_FORMAT_BINARY_LEGACY) {
+        fprintf(stderr, "(ASSIST) Error: Legacy binary ephemeris file detected. ASSIST requires binary SPK (.bsp) format.\n");
+    } else {
+        fprintf(stderr, "(ASSIST) Error: Unsupported ephemeris file format. ASSIST requires binary SPK (.bsp) format.\n");
+    }
+    
+    fprintf(stderr, "(ASSIST) Download from: https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440.bsp\n");
+    
+    // Check if we're running in Python environment
+    if (getenv("PYTHONPATH") || getenv("VIRTUAL_ENV") || getenv("CONDA_DEFAULT_ENV")) {
+        fprintf(stderr, "(ASSIST) Or install via: pip install naif-de440 jpl-small-bodies-de441-n16\n");
+    }
 }
 
 // Initialize the targets of a single spk file
@@ -294,13 +373,10 @@ struct spk_s * assist_spk_init(const char *path) {
         return NULL;
     }
 
-    // Check for ASCII source file
-    if (is_ascii_source_file(fd)) {
-        fprintf(stderr, "(ASSIST) Error: ASCII source file format detected. This file needs to be converted to binary SPK (.bsp) format.\n");
-        fprintf(stderr, "(ASSIST) Please download the pre-converted binary SPK files from:\n");
-        fprintf(stderr, "(ASSIST) https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/\n");
-        fprintf(stderr, "(ASSIST) and https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/asteroids/\n");
-        fprintf(stderr, "(ASSIST) Look for files with .bsp extension (e.g., de440.bsp, sb441-n16.bsp)\n");
+    // Check for legacy ephemeris file formats
+    ephemeris_file_format_t format = assist_detect_ephemeris_file_format(fd);
+    if (format != FILE_FORMAT_VALID_BSP) {
+        print_legacy_format_error(format, path);
         close(fd);
         return NULL;
     }
