@@ -1,12 +1,15 @@
-import rebound
-import assist
-import unittest
 import math
+import unittest
+from _data_paths import data_path
+
+import rebound
+
+import assist
 
 class TestForces(unittest.TestCase):
     def test_errors(self):
         sim = rebound.Simulation()
-        ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
+        ephem = assist.Ephem(data_path("de440.bsp"), data_path("sb441-n16.bsp"))
         extras = assist.Extras(sim, ephem)
         
         with self.assertRaises(AttributeError) as context:
@@ -32,8 +35,7 @@ class TestForces(unittest.TestCase):
                 vz= -4.195690627695180E-03)
 
         sim2 = sim.copy()
-        
-        ephem = assist.Ephem("data/linux_p1550p2650.440", "data/sb441-n16.bsp")
+        ephem = assist.Ephem(data_path("de440.bsp"), data_path("sb441-n16.bsp"))
         extras = assist.Extras(sim, ephem)
         extras2 = assist.Extras(sim2, ephem)
 

@@ -29,7 +29,7 @@
 // It includes all forces, including gravity.
 void assist_additional_forces(struct reb_simulation* sim);
 
-int assist_all_ephem(struct assist_ephem* ephem, struct assist_ephem_cache* cache, const int i, const double t, double* const GM,
+int assist_all_ephem(const struct assist_ephem* ephem, struct assist_ephem_cache* cache, const int i, const double t, double* const GM,
 		      double* const x, double* const y, double* const z,
 		      double* const vx, double* const vy, double* const vz,
 		      double* const ax, double* const ay, double* const az

@@ -30,12 +30,14 @@
 #include <math.h>
 #include <limits.h>
 #include <float.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "assist.h"
 #include "rebound.h"
 
 #include "spk.h"
-#include "planets.h"
 #include "forces.h"
+#include "ascii_ephem.h"
 
 #define STRINGIFY(s) str(s)
 #define str(s) #s
@@ -56,6 +58,100 @@ const char* assist_error_messages[] = {
     "The requested time is outside the coverage provided by the ephemeris file.", // ASSIST_ERROR_COVERAGE
 };
 const int assist_error_messages_N = ASSIST_ERROR_N;
+
+// -----------------------------
+// Ephemeris format + discovery
+// -----------------------------
+
+int assist_detect_ascii_bin_signature(int fd) {
+    // ASCII-derived binary ephemeris files have constant names at offset 0x00FC (252 bytes).
+    // We check whether the first few 6-byte constant names look plausible.
+
+    char const_names[6 * 3];  // Read first 3 constant names (6 chars each)
+    if (lseek(fd, 0x00FC, SEEK_SET) != 0x00FC) {
+        return 0;
+    }
+
+    if (read(fd, const_names, sizeof(const_names)) != (ssize_t)sizeof(const_names)) {
+        return 0;
+    }
+
+    int valid_names = 0;
+    for (int i = 0; i < 3; i++) {
+        const char* name = &const_names[i * 6];
+
+        // Names should start with a letter and contain at least 2 alphanumerics,
+        // with the remainder being spaces or (rarely) null padding.
+        if ((name[0] >= 'A' && name[0] <= 'Z') || (name[0] >= 'a' && name[0] <= 'z')) {
+            int has_letters_or_digits = 0;
+            int has_only_valid_chars = 1;
+            for (int j = 0; j < 6; j++) {
+                unsigned char c = (unsigned char)name[j];
+                if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+                    (c >= '0' && c <= '9')) {
+                    has_letters_or_digits++;
+                } else if (c == ' ' || c == '\0') {
+                    // padding is fine
+                } else {
+                    has_only_valid_chars = 0;
+                    break;
+                }
+            }
+
+            if (has_only_valid_chars && has_letters_or_digits >= 2) {
+                valid_names++;
+            }
+        }
+    }
+
+    // If at least 2 out of 3 names look like ephemeris constants, it's likely a .440/.441.
+    return (valid_names >= 2);
+}
+
+ephemeris_file_format_t assist_detect_ephemeris_file_format(int fd) {
+    char buf[1024];
+    ssize_t bytes_read;
+
+    // Read first chunk of file
+    lseek(fd, 0, SEEK_SET);
+    bytes_read = read(fd, buf, sizeof(buf));
+    if (bytes_read <= 0) {
+        return FILE_FORMAT_UNKNOWN;
+    }
+
+    // Check for valid .bsp SPK file (DAF/SPK header) first
+    if (bytes_read >= 8 && strncmp(buf, "DAF/SPK ", 8) == 0) {
+        return FILE_FORMAT_VALID_BSP;
+    }
+
+    // Check for ASCII-derived binary ephemeris format signature
+    if (assist_detect_ascii_bin_signature(fd)) {
+        // Reset file position after signature check
+        lseek(fd, 0, SEEK_SET);
+        return FILE_FORMAT_ASCII_BIN;
+    }
+
+    return FILE_FORMAT_UNKNOWN;
+}
+
+int assist_discover_planets_path(char* out_path, size_t out_path_size, const char* assist_dir) {
+    if (out_path == NULL || out_path_size == 0 || assist_dir == NULL) {
+        return 0;
+    }
+    const char* candidates[] = {
+        "/data/de441.bsp",
+        "/data/de440.bsp",
+        "/data/linux_m13000p17000.441",
+        "/data/linux_p1550p2650.440",
+    };
+    for (int c = 0; c < 4; c++) {
+        snprintf(out_path, out_path_size, "%s%s", assist_dir, candidates[c]);
+        if (access(out_path, R_OK) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
     
 // Forward function declarations
@@ -91,7 +187,7 @@ static struct reb_dpconst7 dpcast(struct reb_dp7 dp){
 
 int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char *user_asteroids_path){
 
-    char default_planets_path[] = "/data/linux_m13000p17000.441";
+    char default_planets_path[] = "/data/de441.bsp";
     char default_asteroids_path[] = "/data/sb441-n16.bsp";
 
     ephem->jd_ref = 2451545.0; // Default jd_ref
@@ -109,17 +205,33 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
     }
 
     if(user_planets_path == NULL){
-        sprintf(planets_path, "%s%s", getenv("ASSIST_DIR"), default_planets_path);
+        // Implement discovery order under ASSIST_DIR
+        const char* base = getenv("ASSIST_DIR");
+        if (base){
+            if (!assist_discover_planets_path(planets_path, FNAMESIZE, base)){
+                // fall back to default path (de441.bsp) for error path consistency
+                snprintf(planets_path, FNAMESIZE, "%s%s", base, default_planets_path);
+            }
+        }else{
+            return ASSIST_ERROR_EPHEM_FILE;
+        }
     }else{
         strncpy(planets_path, user_planets_path, FNAMESIZE-1);	
     }
 
-    if ((ephem->jpl = assist_jpl_init(planets_path)) == NULL) {
-        return ASSIST_ERROR_EPHEM_FILE;	  
+    // Detect planets file format and load appropriate kernel
+    ephem->spk_planets = NULL;
+    ephem->ascii_planets = NULL;
+    ephemeris_file_format_t planets_format = FILE_FORMAT_UNKNOWN;
+    {
+        int fd = open(planets_path, O_RDONLY);
+        if (fd >= 0){
+            planets_format = assist_detect_ephemeris_file_format(fd);
+            close(fd);
+        }
     }
 
     int asteroids_path_not_found = 0;
-
 
     if(user_asteroids_path == NULL){
         if(getenv("ASSIST_DIR")==NULL){
@@ -132,88 +244,103 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
     }
 
     if (asteroids_path_not_found != 1){
-        if ((ephem->spl = assist_spk_init(asteroids_path)) == NULL) {
+        if ((ephem->spk_asteroids = assist_spk_init(asteroids_path)) == NULL) {
             asteroids_path_not_found = 1;
         }
     }
-            
-    if (asteroids_path_not_found != 1){
-        // Try to find masses of bodies in spk file in ephemeris constants
-        for(int n=0; n<ephem->spl->num; n++){ // loop over all asteroids
-            int found = 0;
-            for(int c=0; c<ephem->jpl->num; c++){ // loop over all constants
-                if (strncmp(ephem->jpl->str[c], "MA", 2) == 0) {
-                    int cid = atoi(ephem->jpl->str[c]+2);
-                    int offset = 2000000;
-                    if (cid==ephem->spl->targets[n].code-offset){
-                        ephem->spl->targets[n].mass = ephem->jpl->con[c];
-                        found = 1;
-                        break;
+    
+    if (planets_format == FILE_FORMAT_VALID_BSP){
+        // SPK planets path
+        ephem->spk_planets = assist_spk_init(planets_path);
+        if (ephem->spk_planets == NULL){
+            return ASSIST_ERROR_EPHEM_FILE;
+        }
+        ephem->planets_source = FILE_FORMAT_VALID_BSP;
+        // Precompute SPK planet indices
+        for (int k=0; k<ASSIST_BODY_NPLANETS; k++) ephem->spk_target_index[k] = -1;
+        ephem->spk_emb_index = -1;
+        // Match the NAIF target codes used by `assist_spk_calc_planets_by_assist` (and the
+        // ASCII-derived (.440/.441) ephemeris column meanings): planet *barycenters* for all planets except
+        // that Earth/Moon are handled explicitly via 399/301 + EMB=3.
+        static const int naif_by_assist[] = { 10, 1, 2, 399, 301, 4, 5, 6, 7, 8, 9 };
+        for (int k=0; k<ASSIST_BODY_NPLANETS; k++){
+            struct spk_target* t = assist_spk_find_target(ephem->spk_planets, naif_by_assist[k]);
+            if (t){
+                ephem->spk_target_index[k] = (int)(t - ephem->spk_planets->targets);
+            }
+        }
+        // EMB index
+        {
+            struct spk_target* emb = assist_spk_find_target(ephem->spk_planets, 3);
+            if (emb){ ephem->spk_emb_index = (int)(emb - ephem->spk_planets->targets); }
+        }
+        // SPK planets path: load constants/masses from SPK comments and join
+        struct spk_constants_and_masses data = assist_load_spk_constants_and_masses(planets_path);
+        assist_apply_spk_constants(ephem, &data);
+        if (ephem->spk_planets) {
+            assist_spk_join_masses(ephem->spk_planets, &data.masses, ephem->EMRAT);
+        }
+        if (ephem->spk_asteroids) {
+            assist_spk_join_masses(ephem->spk_asteroids, &data.masses, ephem->EMRAT);
+        }
+        assist_free_spk_constants_and_masses(&data);
+        ephem->planets_calc = assist_spk_calc_planets_by_assist;
+    }else if (planets_format == FILE_FORMAT_ASCII_BIN){
+        // Try ASCII-derived binary ephemeris (.440/.441)
+        ephem->ascii_planets = assist_ascii_init(planets_path);
+        if (ephem->ascii_planets == NULL){
+            return ASSIST_ERROR_EPHEM_FILE;
+        }
+        ephem->planets_source = FILE_FORMAT_ASCII_BIN;
+        // Copy constants from the ASCII-derived binary ephemeris
+        ephem->J2E = ephem->ascii_planets->J2E;
+        ephem->J3E = ephem->ascii_planets->J3E;
+        ephem->J4E = ephem->ascii_planets->J4E;
+        ephem->J2SUN = ephem->ascii_planets->J2SUN;
+        ephem->AU = ephem->ascii_planets->AU;
+        ephem->RE = ephem->ascii_planets->RE;
+        ephem->CLIGHT = ephem->ascii_planets->CLIGHT;
+        ephem->ASUN = ephem->ascii_planets->ASUN;
+        ephem->EMRAT = ephem->ascii_planets->cem;
+        ephem->Re_eq = ephem->RE / ephem->AU;
+        ephem->Rs_eq = ephem->ASUN / ephem->AU;
+        ephem->c_AU_per_day = (ephem->CLIGHT / ephem->AU) * 86400.0;
+        ephem->c_squared = ephem->c_AU_per_day * ephem->c_AU_per_day;
+        ephem->over_c_squared = 1.0 / ephem->c_squared;
+        ephem->planets_calc = assist_ascii_calc_from_ephem;
+        // If asteroids SPK loaded, set asteroid masses from JPL constants
+        if (ephem->spk_asteroids){
+            for (int n=0; n<ephem->spk_asteroids->num; n++){
+                int code = ephem->spk_asteroids->targets[n].code;
+                // Asteroid SPK targets use NAIF codes like 2000000 + (asteroid number).
+                // Map to MAxxxx constants in the .440/.441 constants table.
+                if (code >= 2000000){
+                    char key[7];
+                    snprintf(key, sizeof(key), "MA%04d", code - 2000000);
+                    double gm = 0.0;
+                    if (assist_ascii_find_constant(ephem->ascii_planets, key, &gm)){
+                        ephem->spk_asteroids->targets[n].mass = gm;
                     }
+                } else if (code == 399) {
+                    // (Unlikely in sb*.bsp, but keep consistent if present.)
+                    ephem->spk_asteroids->targets[n].mass = ephem->ascii_planets->mass[ASSIST_BODY_EARTH];
+                } else if (code == 301) {
+                    ephem->spk_asteroids->targets[n].mass = ephem->ascii_planets->mass[ASSIST_BODY_MOON];
+                } else if (code == 10) {
+                    ephem->spk_asteroids->targets[n].mass = ephem->ascii_planets->mass[ASSIST_BODY_SUN];
                 }
             }
-            // Use lookup table for new KBO objects in DE440/441
-            // Source: https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/README.txt
-            int massmap[] = {
-                // ID, SPK_ID
-                8001,  2136199,
-                8002,  2136108,
-                8003,  2090377,
-                8004,  2136472,
-                8005,  2050000,
-                8006,  2084522,
-                8007,  2090482,
-                8008,  2020000,
-                8009,  2055637,
-                8010,  2028978,
-                8011,  2307261,
-                8012,  2174567,
-                8013,  3361580,
-                8014,  3308265,
-                8015,  2055565,
-                8016,  2145452,
-                8017,  2090568,
-                8018,  2208996,
-                8019,  2225088,
-                8020,  2019521,
-                8021,  2120347,
-                8022,  2278361,
-                8023,  3525142,
-                8024,  2230965,
-                8025,  2042301,
-                8026,  2455502,
-                8027,  3545742,
-                8028,  2523639,
-                8029,  2528381,
-                8030,  3515022,
-            };
-            if (found==0){
-                int mapped = -1;
-                for (int m=0; m<sizeof(massmap); m+=2){
-                    if (massmap[m+1]==ephem->spl->targets[n].code){
-                        mapped = massmap[m];
-                        break;
-                    }
-                }
-                if (mapped != -1){
-                    for(int c=0; c<ephem->jpl->num; c++){ // loop over all constants (again)
-                        if (strncmp(ephem->jpl->str[c], "MA", 2) == 0) {
-                            int cid = atoi(ephem->jpl->str[c]+2);
-                            if (cid==mapped){
-                                ephem->spl->targets[n].mass = ephem->jpl->con[c];
-                                found = 1;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            if (found==0){
-                fprintf(stderr,"WARNING: Cannot find mass for asteroid %d (NAIF ID Number %d).\n", n, ephem->spl->targets[n].code );
-            }
-
         }
     }else{
+        // Provide a helpful error message describing what went wrong and how to fix it.
+        // We deliberately do not try to interpret ASCII source or unknown formats for planets.
+        fprintf(stderr, "(ASSIST) Error: Failed to initialize planets ephemeris from '%s'.\n", planets_path);
+        fprintf(stderr, "(ASSIST) ASSIST supports NAIF SPK kernels (.bsp, e.g. de440.bsp) and JPL binary ephemerides (.440/.441, e.g. linux_p1550p2650.440).\n");
+        fprintf(stderr, "(ASSIST) See the README section 'Planet ephemeris formats (DE440)' for download instructions.\n");
+        return ASSIST_ERROR_EPHEM_FILE;
+    }
+            
+    if (asteroids_path_not_found == 1){
         fprintf(stderr, "(ASSIST) %s\n", assist_error_messages[ASSIST_ERROR_AST_FILE]);
     }
 
@@ -233,13 +360,17 @@ struct assist_ephem* assist_ephem_create(char *user_planets_path, char *user_ast
 }
 
 void assist_ephem_free_pointers(struct assist_ephem* ephem){
-    if (ephem->jpl){
-        assist_jpl_free(ephem->jpl);
+    if (ephem->spk_planets != NULL){
+        assist_spk_free(ephem->spk_planets);
     }
-    if (ephem->spl){
-        assist_spk_free(ephem->spl);
+    if (ephem->spk_asteroids != NULL){
+        assist_spk_free(ephem->spk_asteroids);
+    }
+    if (ephem->ascii_planets != NULL){
+        assist_ascii_free(ephem->ascii_planets);
     }
 }
+
 void assist_ephem_free(struct assist_ephem* ephem){
     assist_ephem_free_pointers(ephem);
     free(ephem);
@@ -278,8 +409,8 @@ void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struc
     assist->sim = sim;
     assist->ephem_cache = calloc(1, sizeof(struct assist_ephem_cache));
     int N_total = ASSIST_BODY_NPLANETS;
-    if (ephem->spl){
-        N_total += ephem->spl->num;
+    if (ephem->spk_asteroids){
+        N_total += ephem->spk_asteroids->num;
     }
     assist->gr_eih_sources = 1; // Only include Sun by default
     assist->ephem_cache->items = calloc(N_total*7, sizeof(struct assist_cache_item));
@@ -305,6 +436,7 @@ void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struc
 	assist->nm = 2.0;
 	assist->nn = 5.093;
 	assist->r0 = 1.0;
+
     sim->integrator = REB_INTEGRATOR_IAS15;
     sim->gravity = REB_GRAVITY_NONE;
     sim->extras = assist;
@@ -369,7 +501,7 @@ void assist_error(struct assist_extras* assist, const char* const msg){
 }
 
 
-struct reb_particle assist_get_particle_with_error(struct assist_ephem* ephem, const int particle_id, const double t, int* error){
+struct reb_particle assist_get_particle_with_error(const struct assist_ephem* ephem, const int particle_id, const double t, int* error){
     struct reb_particle p = {0};
     double GM = 0;
     int flag = assist_all_ephem(ephem, NULL, particle_id, t, &GM, &p.x, &p.y, &p.z, &p.vx, &p.vy, &p.vz, &p.ax, &p.ay, &p.az);
@@ -379,7 +511,7 @@ struct reb_particle assist_get_particle_with_error(struct assist_ephem* ephem, c
 }
 
 
-struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t){
+struct reb_particle assist_get_particle(const struct assist_ephem* ephem, const int particle_id, const double t){
     int error = 0;
     struct reb_particle p = assist_get_particle_with_error(ephem, particle_id, t, &error);
     if (error != ASSIST_SUCCESS){
@@ -494,8 +626,11 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
     double dts = copysign(1., sim->dt_last_done);
     if ( !(dts*(sim->t-sim->dt_last_done)  <  dts*t &&  dts*t < dts*sim->t) ){
         // Integrate if requested time not in interval of last timestep
+        
         reb_simulation_integrate(sim, t);
+
     }
+
     double h = 1.0-(sim->t -t) / sim->dt_last_done; 
     if (sim->t - t==0.){
         memcpy(ax->current_state, sim->particles, sizeof(struct reb_particle)*sim->N);
@@ -586,4 +721,5 @@ static void assist_pre_timestep_modifications(struct reb_simulation* sim){
     reb_simulation_update_acceleration(sim); // This will later be recalculated. Could be optimized.
     memcpy(assist->last_state, sim->particles, sizeof(struct reb_particle)*sim->N);
 }
+
 

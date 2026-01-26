@@ -1,13 +1,13 @@
 include src/assist.c
 include src/forces.c
 include src/tools.c
-include src/planets.c
 include src/spk.c
+include src/ascii_ephem.c
 include src/assist.h
 include src/forces.h
 include src/tools.h
-include src/planets.h
 include src/spk.h
+include src/ascii_ephem.h
 include README.md
 include LICENSE
 include version.txt

@@ -10,7 +10,35 @@
 
 ASSIST is a software package for ephemeris-quality integrations of test particles. ASSIST is an extension of the [REBOUND framework](https://github.com/hannorein/rebound) and makes use of its [IAS15 integrator](https://ui.adsabs.harvard.edu/abs/2015MNRAS.446.1424R/abstract) to integrate test particle trajectories in the field of the Sun, Moon, planets, and 16 massive asteroids, with the positions of the masses coming from the JPL DE441 ephemeris and its associated asteroid perturber file. The package incorporates the most significant gravitational harmonics and general relativistic corrections. ASSIST also accounts for position- and velocity-dependent non-gravitational effects according to the [Marsden (1973) model](https://ui.adsabs.harvard.edu/abs/1973AJ.....78..211M/abstract). All components in the equations of motion have been verified to machine precision in a term-by-term comparison with output from JPL's small body integrator. The first order variational equations are included for all terms to support orbit fitting and covariance mapping. This framework is meant to provide an open-source package written in a modern language to enable high-precision orbital analysis and science by the small body community.
 
+## Planet ephemeris formats (DE440)
 
+ASSIST supports both ASCII-derived binary ephemerides (e.g., `linux_p1550p2650.440` / `.441`) and NAIF SPK `.bsp` kernels (e.g., `de440.bsp`) for planets:
+
+- If you pass a planets file, ASSIST auto-detects its format at init and uses the matching provider.
+- If you omit the planets path and set `ASSIST_DIR`, ASSIST will try (in order):
+  - `ASSIST_DIR/de441.bsp`
+  - `ASSIST_DIR/de440.bsp`
+  - `ASSIST_DIR/linux_m13000p17000.441`
+  - `ASSIST_DIR/linux_p1550p2650.440`
+
+Asteroids continue to use SPK (`sb441-n16.bsp` by default), and their masses are joined from the selected planets ephemeris constants.
+
+Constants (AU, EMRAT, J2E, J3E, J4E, J2SUN, RE, CLIGHT, ASUN) are unified onto the ephemeris object and used consistently across force models. Only the required kernel is loaded in memory.
+
+### Recommended downloads
+
+```bash
+# Planets (SPK)
+curl https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440.bsp -o assist/data/de440.bsp
+# Asteroids (SPK)
+curl https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp -o assist/data/sb441-n16.bsp
+```
+
+ASCII-derived binary planets file (smaller coverage) is also supported:
+
+```bash
+curl https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de440/linux_p1550p2650.440 -o assist/data/linux_p1550p2650.440
+```
 
 ## Installation (Python)
 
