@@ -1,0 +1,117 @@
+# Common Makefile logic for building/running ASSIST C unit tests.
+#
+# Supports two modes:
+# 1) **Source REBOUND checkout** (set `REB_DIR` or place a `rebound/` checkout
+#    adjacent to this repo): uses `$(REB_DIR)/src/Makefile.defs`.
+# 2) **Python REBOUND package fallback** (default): uses the installed `rebound`
+#    Python package for `rebound.h` and the `librebound*` shared library.
+#
+# This makes `make test` work in a standalone ASSIST checkout (no REBOUND source
+# checkout required) as long as a Python environment with `rebound` is available.
+
+ASSIST_DIR ?= ../../
+
+# Try to locate a REBOUND checkout if REB_DIR is not set.
+ifndef REB_DIR
+ifneq ($(wildcard ../../../rebound/src/Makefile.defs),) # REBOUND adjacent to ASSIST
+REB_DIR := ../../../rebound
+endif
+ifneq ($(wildcard ../../../../rebound/src/Makefile.defs),) # ASSIST inside REBOUND
+REB_DIR := ../../../
+endif
+endif
+
+REB_DEFS := $(wildcard $(REB_DIR)/src/Makefile.defs)
+
+# Default to the repo venv if present; otherwise fall back to python3.
+PYTHON ?= $(ASSIST_DIR)/.venv/bin/python
+NO_REB_DIR ?= /__no_rebound_source__
+
+ifeq ($(strip $(REB_DEFS)),)
+# --------------------------
+# Python-package REBOUND mode
+# --------------------------
+CC ?= cc
+OPT ?= -O3 -std=c99
+PREDEF ?=
+LIB ?= -lm
+
+# If the repo venv doesn't exist, use whatever python3 is on PATH.
+ifeq ($(wildcard $(PYTHON)),)
+PYTHON := python3
+endif
+
+REB_PY_DIR := $(shell $(PYTHON) -c "import rebound, pathlib; print(pathlib.Path(rebound.__file__).resolve().parent)" 2>/dev/null)
+REB_LIB_PATH := $(shell $(PYTHON) -c "import rebound, pathlib; site=pathlib.Path(rebound.__file__).resolve().parent.parent; c=[]; [c.extend(sorted(site.glob(pat))) for pat in ('librebound*.so','librebound*.dylib','librebound*.dll')]; print(str(c[0]) if c else '')" 2>/dev/null)
+REB_ALT_LIB_BASENAME := $(notdir $(REB_LIB_PATH))
+
+ifeq ($(strip $(REB_PY_DIR)),)
+$(error Could not import the Python package 'rebound' using PYTHON='$(PYTHON)'. Install it (e.g. 'pip install rebound') or set REB_DIR to a REBOUND source checkout.)
+endif
+
+ifeq ($(strip $(REB_LIB_PATH)),)
+$(error Could not locate a 'librebound*' shared library next to the Python package 'rebound' (searched sibling dir of $(REB_PY_DIR)). Install the wheel that bundles the library or set REB_DIR.)
+endif
+
+REB_INC := -I$(REB_PY_DIR)
+ASSIST_REB_DIR_FOR_SRC := $(NO_REB_DIR)
+
+else
+# -----------------------
+# Source REBOUND checkout
+# -----------------------
+include $(REB_DIR)/src/Makefile.defs
+REB_INC := -I$(REB_DIR)/src/
+REB_LIB_PATH := $(REB_DIR)/src/librebound.so
+REB_ALT_LIB_BASENAME :=
+# Pass an absolute REB_DIR down to ASSIST's src/Makefile. Unit tests are built
+# from many different working directories, so a relative REB_DIR that works
+# here may not be valid when used from `src/`.
+ASSIST_REB_DIR_FOR_SRC := $(abspath $(REB_DIR))
+endif
+
+
+all: librebound.so $(REB_ALT_LIB_BASENAME) libassist.so
+	@echo ""
+	@echo "Compiling problem file ..."
+	$(CC) -I$(ASSIST_DIR)/src/ $(REB_INC) -Wl,-rpath,./ $(OPT) $(PREDEF) problem.c -L. -lassist -lrebound $(LIB) -o rebound
+	@echo ""
+	@echo "Problem file compiled successfully."
+
+
+librebound.so:
+	@echo "Creating link for shared library librebound.so ..."
+	@-rm -f librebound.so
+ifeq ($(strip $(REB_DEFS)),)
+	@ln -s $(REB_LIB_PATH) librebound.so
+else
+	@echo "Compiling shared library librebound.so ..."
+	$(MAKE) -C $(REB_DIR)/src/
+	@ln -s $(REB_LIB_PATH) librebound.so
+endif
+
+# Some REBOUND wheels have an install_name like `@rpath/librebound.cpython-313-darwin.so`.
+# When linking against the wheel-provided shared library, make sure that exact basename
+# is available in the run directory too.
+ifneq ($(strip $(REB_ALT_LIB_BASENAME)),)
+$(REB_ALT_LIB_BASENAME):
+	@-rm -f $(REB_ALT_LIB_BASENAME)
+	@ln -s $(REB_LIB_PATH) $(REB_ALT_LIB_BASENAME)
+endif
+
+
+libassist.so: librebound.so $(ASSIST_DIR)/src/*.h $(ASSIST_DIR)/src/*.c
+	@echo "Compiling shared library libassist.so ..."
+	$(MAKE) -C $(ASSIST_DIR)/src REB_DIR="$(ASSIST_REB_DIR_FOR_SRC)" PYTHON="$(PYTHON)"
+	@echo "Creating link for shared library libassist.so ..."
+	@-rm -f libassist.so
+	@ln -s $(ASSIST_DIR)/src/libassist.so .
+
+
+clean:
+	@echo "Cleaning up local directory ..."
+	@-rm -vf rebound librebound.so libassist.so
+	@if [ -n "$(REB_DIR)" ] && [ -f "$(REB_DIR)/src/Makefile" ]; then $(MAKE) -C $(REB_DIR)/src/ clean; fi
+	@if [ -f "$(ASSIST_DIR)/src/Makefile" ]; then $(MAKE) -C $(ASSIST_DIR)/src/ clean; fi
+
+

@@ -3,7 +3,7 @@ name: ASSIST Unit Tests (C)
 on: [push, pull_request]
 
 env:
-  JPL_PLANET_EPHEM: ../../data/linux_p1550p2650.440
+  JPL_PLANET_EPHEM: ../../data/de440.bsp
 
 jobs:
   build:
@@ -17,42 +17,35 @@ jobs:
         run: | 
           pwd
           git clone https://github.com/hannorein/rebound.git
-          #- name: Compile REBOUND
-          #  working-directory: ../rebound
-          #  run: | 
-          #    pwd
-          #    make
-          #- name: Compile ASSIST
-          #  run: | 
-          #    make
       - name: Download DE441 dataset
         working-directory: ./data/
         run: |
-          #wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de441/linux_m13000p17000.441  
+          #wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de441.bsp
+          wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/bsp/de440.bsp
           wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/planets/Linux/de440/linux_p1550p2650.440
           wget --no-verbose https://ssd.jpl.nasa.gov/ftp/eph/small_bodies/asteroids_de441/sb441-n16.bsp
       - name: Reproduce Holman trajectory
-        working-directory: ./unit_tests/holman/
+        working-directory: ./unit_tests/holman_spk/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Reproduce Holman trajectory (backwards in time)
-        working-directory: ./unit_tests/holman_reverse/
+        working-directory: ./unit_tests/holman_reverse_spk/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Reproduce Apophis Encounter (non gravitational forces) 
-        working-directory: ./unit_tests/apophis/
+        working-directory: ./unit_tests/apophis_spk/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Reproduce Ceres-5303 encounter 
-        working-directory: ./unit_tests/5303_Ceres/
+        working-directory: ./unit_tests/5303_Ceres_spk/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Test interpolation 
-        working-directory: ./unit_tests/interpolation/
+        working-directory: ./unit_tests/interpolation_spk/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
@@ -72,27 +65,67 @@ jobs:
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Test variational 
-        working-directory: ./unit_tests/variational/
+        working-directory: ./unit_tests/variational_spk/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Test roundtrip
-        working-directory: ./unit_tests/roundtrip/
+        working-directory: ./unit_tests/roundtrip_spk/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Test roundtrip adaptive
-        working-directory: ./unit_tests/roundtrip_adaptive/
+        working-directory: ./unit_tests/roundtrip_adaptive_spk/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Convert to REBOUND
-        working-directory: ./unit_tests/convert_simulation/
+        working-directory: ./unit_tests/convert_simulation_spk/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
       - name: Run benchmark
         working-directory: ./unit_tests/benchmark
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test Loading Spice Kernels
+        working-directory: ./unit_tests/spk_init/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test Loading Constants from Planet SPK
+        working-directory: ./unit_tests/spk_load_constants/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test Joining Mass Data from SPK
+        working-directory: ./unit_tests/spk_join_masses/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test SPK planets position evaluation
+        working-directory: ./unit_tests/spk_planets_calc/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test ephemeris format detection
+        working-directory: ./unit_tests/format_detection/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test SPK vs ASCII-derived binary detection
+        working-directory: ./unit_tests/spk_detection/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test ASCII-derived binary init/constants
+        working-directory: ./unit_tests/ascii_init_constants/
+        run: |
+          make
+          LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
+      - name: Test ASCII source rejection
+        working-directory: ./unit_tests/ascii_reject/
         run: |
           make
           LD_LIBRARY_PATH=../../../rebound/src/ ./rebound
