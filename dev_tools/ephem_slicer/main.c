@@ -7,7 +7,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-#include "planets.h" // for jpl_s struct
+#include "ascii_ephem.h" // for ascii_s struct (ASCII-derived binary ephemeris layout)
 
 // https://gist.github.com/dgoguerra/7194777
 static const char *humanSize(uint64_t bytes) {
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    struct jpl_s* jpl = calloc(1, sizeof(struct jpl_s));
+    struct ascii_s* jpl = calloc(1, sizeof(struct ascii_s));
 
     // read header
     ret  = read(fd, &jpl->beg, sizeof(double));     // Start JD
@@ -101,12 +101,12 @@ int main(int argc, char **argv) {
     ret += read(fd, &jpl->cem, sizeof(double));     // Ratio between Earth/Moon
 
     // number of coefficients for all components
-    for (int p = 0; p < JPL_N; p++){
+    for (int p = 0; p < ASCII_N; p++){
         jpl->ncm[p] = 3;
     }
     // exceptions:
-    jpl->ncm[JPL_NUT] = 2; // nutations
-    jpl->ncm[JPL_TDB] = 1; // TT-TDB
+    jpl->ncm[ASCII_NUT] = 2; // nutations
+    jpl->ncm[ASCII_TDB] = 1; // TT-TDB
 
     for (int p = 0; p < 12; p++) {                      // Columns 1-12 of Group 1050
         ret += read(fd, &jpl->off[p], sizeof(int32_t));
@@ -143,14 +143,14 @@ int main(int argc, char **argv) {
     }
 
     // adjust for correct indexing (ie: zero based)
-    for (int p = 0; p < JPL_N; p++){
+    for (int p = 0; p < ASCII_N; p++){
         jpl->off[p] -= 1;
     }
 
     // save file size, and determine 'kernel size' or 'block size' (=8144 bytes for DE440/441)
     jpl->rec = sizeof(double) * 2;
 
-    for (int p = 0; p < JPL_N; p++){
+    for (int p = 0; p < ASCII_N; p++){
         jpl->rec += sizeof(double) * jpl->ncf[p] * jpl->niv[p] * jpl->ncm[p];
     }
 

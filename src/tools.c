@@ -33,7 +33,7 @@
 // This function returns a new rebound simulation with all particles added. 
 // Return simulation must be freed by caller.
 // if merge_moon = 1, then the Earth and Moon are added as a single particle.
-struct reb_simulation* assist_simulation_convert_to_rebound(struct reb_simulation* r, struct assist_ephem* ephem, int merge_moon){  
+struct reb_simulation* assist_simulation_convert_to_rebound(const struct reb_simulation* r, const struct assist_ephem* ephem, int merge_moon){  
     struct reb_simulation* r2 = reb_simulation_create();
     r2->t = r->t;
     r2->dt = r->dt;

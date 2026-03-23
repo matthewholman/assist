@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <limits.h>
 #include "rebound.h"
+#include <stddef.h>
 #ifndef ASSISTGITHASH
 #define ASSISTGITHASH notavailable0000000000000000000000000001 
 #endif // ASSISTGITHASH
@@ -36,11 +37,39 @@ extern const char* assist_build_str;      ///< Date and time build string.
 extern const char* assist_version_str;    ///< Version string.
 extern const char* assist_githash_str;    ///< Current git hash.
 
-typedef struct {
-    double A1;
-    double A2;
-    double A3;        
-} particle_params;
+// -----------------------------
+// Ephemeris format + discovery
+// -----------------------------
+//
+// ASSIST supports multiple planets ephemeris backends:
+// - NAIF SPK kernels (.bsp) for planets and asteroids
+// - ASCII-derived binary ephemerides (.440/.441) for planets
+//
+// These helpers live in assist.* because backend selection and file discovery
+// happen at the ephemeris "front door" (assist_ephem_init), not inside a
+// particular backend.
+
+// Ephemeris file format detection.
+typedef enum {
+    FILE_FORMAT_VALID_BSP = 0,          // Valid SPK kernel (.bsp)
+    // NOTE: Value 1 is intentionally unused/reserved.
+    FILE_FORMAT_ASCII_BIN = 2,          // ASCII-derived binary ephemeris (.440, .441, etc.)
+    FILE_FORMAT_UNKNOWN = 3             // Unknown/unsupported format
+} ephemeris_file_format_t;
+
+// Backwards-compatible alias (deprecated): old name for FILE_FORMAT_ASCII_BIN.
+#define FILE_FORMAT_BINARY_LEGACY FILE_FORMAT_ASCII_BIN
+
+// Detect whether `fd` points to an ASCII-derived binary ephemeris (.440/.441).
+// Returns 1 if it matches the expected signature, 0 otherwise.
+int assist_detect_ascii_bin_signature(int fd);
+
+// Detect ephemeris file format for an open file descriptor.
+ephemeris_file_format_t assist_detect_ephemeris_file_format(int fd);
+
+// Discover the planets ephemeris path under `assist_dir` using ASSIST's
+// documented search order. Returns 1 if a readable candidate is found, 0 if not.
+int assist_discover_planets_path(char* out_path, size_t out_path_size, const char* assist_dir);
 
 
 // ENUM to enable/disable different forces
@@ -86,10 +115,43 @@ enum ASSIST_BODY {
     ASSIST_BODY_NPLANETS    = 11,
 };
 
+// Forward declaration of ASCII-derived ephemeris struct (.440/.441)
+struct ascii_s;
+
+// Forward declarations
+struct spk_s;
+struct spk_target;
+
 struct assist_ephem {
     double jd_ref;
-    struct jpl_s* jpl;
-    struct spk_s* spl;
+    struct spk_s* spk_planets;
+    struct spk_s* spk_asteroids;
+    struct ascii_s* ascii_planets;
+    int planets_source; // FILE_FORMAT_VALID_BSP or FILE_FORMAT_ASCII_BIN
+    enum ASSIST_STATUS (*planets_calc)(const struct assist_ephem*, double, double, int,
+                                       double* const,
+                                       double* const, double* const, double* const,
+                                       double* const, double* const, double* const,
+                                       double* const, double* const, double* const);
+    // Precomputed SPK target indices for planets (ASSIST_BODY order), -1 if not found
+    int spk_target_index[ASSIST_BODY_NPLANETS];
+    int spk_emb_index; // index for Earth-Moon barycenter (NAIF=3), -1 if not found
+    // SPK constants moved directly into assist_ephem
+    double AU;                     // definition of AU
+    double EMRAT;                  // Earth/Moon mass ratio
+    double J2E;                    // Other constant names follow JPL
+    double J3E;
+    double J4E;
+    double J2SUN;
+    double RE;
+    double CLIGHT;
+    double ASUN;
+    // Derived constants calculated from base constants
+    double Re_eq;                  // Earth radius in AU
+    double Rs_eq;                  // Sun radius in AU  
+    double c_AU_per_day;           // Speed of light in AU/day
+    double c_squared;              // Speed of light squared in (AU/day)^2
+    double over_c_squared;         // 1/c^2 in (day/AU)^2
 };
 
 struct assist_cache_item {
@@ -109,7 +171,6 @@ struct assist_cache_item {
 struct assist_ephem_cache {
     double* t;
     double dt_sign;
-    int* index;
     struct assist_cache_item* items;
 };
 
@@ -121,7 +182,6 @@ struct assist_extras {
     int geocentric;
     struct reb_particle* last_state;
     struct reb_particle* current_state;
-    //particle_params* particle_params;
     double* particle_params;
     int steps_done;
     int forces;
@@ -172,7 +232,7 @@ struct reb_simulation* assist_create_interpolated_simulation(struct reb_simulati
 void assist_integrate_or_interpolate(struct assist_extras* ax, double t);
 
 // Find particle position and velocity based on ephemeris data
-struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int particle_id, const double t);
+struct reb_particle assist_get_particle(const struct assist_ephem* ephem, const int particle_id, const double t);
 
 /**
  * @brief Find particle position and velocity based on ephemeris data.
@@ -182,11 +242,12 @@ struct reb_particle assist_get_particle(struct assist_ephem* ephem, const int pa
  * @param t The time at which to find the particle.
  * @param error Pointer to an integer to store the error code.
  */
-struct reb_particle assist_get_particle_with_error(struct assist_ephem* ephem, const int particle_id, const double t, int* error);
+struct reb_particle assist_get_particle_with_error(const struct assist_ephem* ephem, const int particle_id, const double t, int* error);
 
 // Functions called from python:
 void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struct assist_ephem* ephem);
 void assist_free_pointers(struct assist_extras* assist);
+void assist_ephem_free_pointers(struct assist_ephem* ephem);
 
 
 void test_vary(struct reb_simulation* sim, FILE *vfile);
@@ -200,14 +261,16 @@ struct assist_ephem* assist_ephem_create(char *planets_file_name, char *asteroid
  * @details This function prepares an ASSIST ephemeris structure for use.
  * @param ephem The assist_ephem pointer to initialize.
  * @param user_planets_path The path to the planets file. If NULL, the
- *        default path (/data/linux_m13000p17000.441) will be used.
+ *        planets file will be discovered under the directory specified by
+ *        the ASSIST_DIR environment variable. The discovery order is:
+ *        ASSIST_DIR/data/de441.bsp, ASSIST_DIR/data/de440.bsp,
+ *        ASSIST_DIR/data/linux_m13000p17000.441, ASSIST_DIR/data/linux_p1550p2650.440.
  * @param user_asteroids_path The path to the asteroids file. If NULL, the
  *        default path (/data/sb441-n16.bsp) will be used.
  * @return ASSIST_SUCCESS if successful, otherwise an error code.
  */
 ///
 int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char *user_asteroids_path);
-
 
 /**
  * @brief Converts an ASSIST supported simulation to a pure REBOUND simulation. 
@@ -221,5 +284,5 @@ int assist_ephem_init(struct assist_ephem* ephem, char *user_planets_path, char 
  * @return A new REBOUND simulation. Needs to be freed by the caller.
  */
 ///
-struct reb_simulation* assist_simulation_convert_to_rebound(struct reb_simulation* r, struct assist_ephem* ephem, int merge_moon);
+struct reb_simulation* assist_simulation_convert_to_rebound(const struct reb_simulation* r, const struct assist_ephem* ephem, int merge_moon);
 #endif

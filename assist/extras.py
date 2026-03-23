@@ -1,12 +1,16 @@
-from typing import NoReturn, List
-
-from . import clibassist
-from ctypes import Structure, c_double, POINTER, c_int, c_uint, c_long, c_ulong, c_void_p, c_char_p, CFUNCTYPE, byref, c_uint32, c_uint, cast, c_char
-import rebound
 import warnings
-from .ephem import Ephem
+from ctypes import (CFUNCTYPE, POINTER, Structure, byref, c_char, c_char_p,
+                    c_double, c_int, c_long, c_uint, c_uint32, c_ulong,
+                    c_void_p, cast)
+from typing import List, NoReturn
+
 import numpy as np
 import numpy.typing as npt
+
+import rebound
+
+from . import clibassist
+from .ephem import Ephem
 
 ASSIST_FORCES = {
     "SUN"                : 0x01,
