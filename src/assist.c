@@ -43,7 +43,7 @@
 #define str(s) #s
 
 const char* assist_build_str = __DATE__ " " __TIME__;   // Date and time build string. 
-const char* assist_version_str = "1.1.9";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
+const char* assist_version_str = "1.2.3";         // **VERSIONLINE** This line gets updated automatically. Do not edit manually.
 const char* assist_githash_str = STRINGIFY(ASSISTGITHASH);// This line gets updated automatically. Do not edit manually.
 
 
@@ -521,6 +521,57 @@ struct reb_particle assist_get_particle(const struct assist_ephem* ephem, const 
     return p;
 }
 
+enum ASSIST_STATUS assist_ephem_time_bounds(const struct assist_ephem* ephem, double* t_beg, double* t_end){
+    // Report the interval [*t_beg, *t_end] over which every body ASSIST needs
+    // can be evaluated. This is the intersection of the spans of the planets
+    // backend (SPK or ASCII) and, if present, the small-body (asteroid) SPK
+    // file, since assist_integrate_or_interpolate must evaluate *all* of them at
+    // the requested time. Requesting a time outside this interval raises
+    // ASSIST_ERROR_COVERAGE during the integration.
+    //
+    // The bounds are returned in the SAME time convention as the `t` argument to
+    // assist_integrate_or_interpolate and assist_get_particle, i.e. relative to
+    // ephem->jd_ref, so a caller can guard directly with t_beg <= t <= t_end.
+    // (Add ephem->jd_ref to recover absolute Julian Days, TDB.)
+    if (ephem == NULL){
+        return ASSIST_ERROR_NEPHEM;
+    }
+    double beg = -INFINITY; // latest begin epoch across all required files (abs JD)
+    double end = INFINITY;  // earliest end epoch across all required files (abs JD)
+    int found = 0;
+
+    // Planets coverage: exactly one of the two backends is active.
+    if (ephem->spk_planets != NULL){
+        const struct spk_s* pl = ephem->spk_planets;
+        for (int i = 0; i < pl->num; i++){
+            if (pl->targets[i].beg > beg) beg = pl->targets[i].beg;
+            if (pl->targets[i].end < end) end = pl->targets[i].end;
+            found = 1;
+        }
+    }else if (ephem->ascii_planets != NULL){
+        if (ephem->ascii_planets->beg > beg) beg = ephem->ascii_planets->beg;
+        if (ephem->ascii_planets->end < end) end = ephem->ascii_planets->end;
+        found = 1;
+    }
+
+    // Small-body (asteroid) coverage, if asteroid forces are enabled.
+    if (ephem->spk_asteroids != NULL){
+        const struct spk_s* sb = ephem->spk_asteroids;
+        for (int i = 0; i < sb->num; i++){
+            if (sb->targets[i].beg > beg) beg = sb->targets[i].beg;
+            if (sb->targets[i].end < end) end = sb->targets[i].end;
+        }
+    }
+
+    if (!found){
+        return ASSIST_ERROR_NEPHEM;
+    }
+    // Convert from absolute JD to the ephem's relative time convention.
+    if (t_beg) *t_beg = beg - ephem->jd_ref;
+    if (t_end) *t_end = end - ephem->jd_ref;
+    return ASSIST_SUCCESS;
+}
+
 void assist_interpolate(const struct reb_particle* const last_state, const struct reb_dp7 b_coeff, double dt_last_done, double h, int N, struct reb_particle* output){
     const struct reb_dpconst7 b  = dpcast(b_coeff);
 
@@ -631,8 +682,14 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
 
     }
 
-    double h = 1.0-(sim->t -t) / sim->dt_last_done; 
-    if (sim->t - t==0.){
+    double h = 1.0-(sim->t -t) / sim->dt_last_done;
+    if (sim->status == REB_STATUS_GENERIC_ERROR){
+        // The integration failed, most commonly because the requested time is
+        // outside the span covered by the ephemeris files (ASSIST_ERROR_COVERAGE,
+        // raised in forces.c). Do not interpolate from an incomplete timestep;
+        // leave sim->status set so the caller can detect the failure and defer
+        // (e.g. fall back to a coverage-free continuation).
+    }else if (sim->t - t==0.){
         memcpy(ax->current_state, sim->particles, sizeof(struct reb_particle)*sim->N);
     }else if (h<0.0 || h>=1.0 || !isnormal(h)){
         printf("Error: cannot interpolate beyond timestep bounds (h=%e).\n",h);
