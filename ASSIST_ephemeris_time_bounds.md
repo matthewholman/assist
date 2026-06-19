@@ -184,6 +184,10 @@ Both verified against `linux_p1550p2650.440` + `sb441-n16.bsp`: bounds report
 ≈1550–2650; an in-bounds step yields `status==0`, an out-of-bounds step yields
 `status==1` with no spurious interpolation.
 
+These changes are on branch `ephem-time-bounds`, proposed in
+**PR https://github.com/matthewholman/assist/pull/130** (→ `main`, not yet
+merged at time of writing).
+
 ---
 
 *Provenance: distilled from a layup CI investigation (2026-06-18), then verified
