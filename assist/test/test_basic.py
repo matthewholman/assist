@@ -25,6 +25,12 @@ class TestAssist(unittest.TestCase):
         self.assertEqual(p.x, -2.62956381075119)
         del ephem
     
+    def test_time_bounds(self):
+        ephem = assist.Ephem(data_path("de440.bsp"), data_path("sb441-n16.bsp"))
+        t_min, t_max = ephem.time_bounds()
+        self.assertAlmostEqual(t_min, -164360.5)
+        self.assertAlmostEqual(t_max, 237431.5)
+    
     def test_ephem_names(self):
         ephem = assist.Ephem(data_path("de440.bsp"), data_path("sb441-n16.bsp"))
         p1 = ephem.get_particle(0,0) # Sun
