@@ -656,13 +656,14 @@ void assist_integrate_or_interpolate(struct assist_extras* ax, double t){
     }
 
     double dts = copysign(1., sim->dt_last_done);
-    if ( !(dts*(sim->t-sim->dt_last_done)  <  dts*t &&  dts*t < dts*sim->t) ){
-        // Integrate if requested time not in interval of last timestep
-        
+    // Do we need to integrate?
+    if ( dts*(sim->t-sim->dt_last_done)  >  dts*t   // yes, if requested time is before last timestep
+            || dts*t > dts*sim->t                   // yes, if requested time is after current time
+            || sim->dt_last_done == 0.0 ){          // yes, if this is the first timestep
         reb_simulation_integrate(sim, t);
-
     }
 
+    // If not, try to interpolate.
     double h = 1.0-(sim->t -t) / sim->dt_last_done;
     if (sim->status > 0){
         printf("Error: simulation exited with status %d.\n",sim->status);
