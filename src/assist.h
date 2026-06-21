@@ -244,6 +244,23 @@ struct reb_particle assist_get_particle(const struct assist_ephem* ephem, const 
  */
 struct reb_particle assist_get_particle_with_error(const struct assist_ephem* ephem, const int particle_id, const double t, int* error);
 
+/**
+ * @brief Report the ephemeris time coverage for an assist_ephem instance.
+ * @details Returns the interval [*t_beg, *t_end] within which
+ *          assist_integrate_or_interpolate can evaluate all required bodies. It
+ *          is the intersection of the planets backend span and the small-body
+ *          (asteroid) file span. Requesting a time outside this interval raises
+ *          ASSIST_ERROR_COVERAGE during integration. Callers can use this to
+ *          guard propagation instead of hardcoding time bounds.
+ *
+ *          The bounds are relative to ephem->jd_ref, so a caller can guard directly with
+ *          t_beg <= t <= t_end. Add ephem->jd_ref to recover absolute JD (TDB).
+ * @param ephem The ephemeris instance to query.
+ * @param t_beg Pointer to store the earliest usable time. May be NULL.
+ * @param t_end Pointer to store the latest usable time. May be NULL.
+ */
+void assist_ephem_time_bounds(const struct assist_ephem* ephem, double* t_beg, double* t_end);
+
 // Functions called from python:
 void assist_init(struct assist_extras* assist, struct reb_simulation* sim, struct assist_ephem* ephem);
 void assist_free_pointers(struct assist_extras* assist);

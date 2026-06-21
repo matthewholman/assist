@@ -18,7 +18,7 @@ from .ephem import Ephem
 from .tools import simulation_convert_to_rebound
 
 # Do not change the following line. Will be updated automatically with update_version.py
-moduleversion = '1.1.9'
+moduleversion = '1.2.0'
 libassistversion = __version__
 if moduleversion != libassistversion:
     print("WARNING: python module and libassist have different version numbers: ", moduleversion, libassistversion)

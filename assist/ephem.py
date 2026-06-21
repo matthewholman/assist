@@ -78,6 +78,19 @@ class Ephem(Structure):
             raise RuntimeError(assist_error_messages(e.value))
         return p
 
+    def time_bounds(self) -> tuple:
+        """Return the (t_beg, t_end) ephemeris coverage interval.
+
+        The bounds are relative to ``jd_ref``.
+        """
+        clibassist.assist_ephem_time_bounds.restype = c_int
+        t_beg = c_double(0.0)
+        t_end = c_double(0.0)
+        ret = clibassist.assist_ephem_time_bounds(byref(self), byref(t_beg), byref(t_end))
+        if ret != 0:
+            raise RuntimeError(assist_error_messages(ret))
+        return (t_beg.value, t_end.value)
+
     def __del__(self) -> None:
         clibassist.assist_ephem_free_pointers(byref(self))
 

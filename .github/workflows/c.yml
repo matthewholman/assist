@@ -16,7 +16,9 @@ jobs:
         working-directory: ../
         run: | 
           pwd
-          git clone https://github.com/hannorein/rebound.git
+          # Pin to the latest REBOUND 4.x; ASSIST requires rebound<5.0.0 and does
+          # not compile against REBOUND 5's restructured API (ri_ias15, reb_dp7, ...).
+          git clone --depth 1 --branch 4.6.0 https://github.com/hannorein/rebound.git
       - name: Download DE441 dataset
         working-directory: ./data/
         run: |
