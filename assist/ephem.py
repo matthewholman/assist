@@ -81,14 +81,7 @@ class Ephem(Structure):
     def time_bounds(self) -> tuple:
         """Return the (t_beg, t_end) ephemeris coverage interval.
 
-        This is the intersection of the planets and small-body file spans, i.e.
-        the interval within which an ASSIST integration can evaluate every body.
-        Requesting a time outside this interval raises a coverage error during
-        integration, so callers can use these bounds to guard propagation.
-
-        The bounds are in the same time convention as the ``t`` passed to
-        ``integrate_or_interpolate`` and ``get_particle``, i.e. relative to
-        ``jd_ref``. Add ``self.jd_ref`` to recover absolute Julian Days (TDB).
+        The bounds are relative to ``jd_ref``.
         """
         clibassist.assist_ephem_time_bounds.restype = c_int
         t_beg = c_double(0.0)
