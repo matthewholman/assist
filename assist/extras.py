@@ -22,6 +22,7 @@ ASSIST_FORCES = {
     "GR_EIH"             : 0x40,
     "GR_SIMPLE"          : 0x80,
     "GR_POTENTIAL"       : 0x100,
+    "SUN_ACCELERATION_CORRECTION": 0x200,
 }
 
 class Extras(Structure):

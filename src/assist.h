@@ -84,6 +84,7 @@ enum ASSIST_FORCES {
     ASSIST_FORCE_GR_EIH             = 0x40,
     ASSIST_FORCE_GR_SIMPLE          = 0x80,
     ASSIST_FORCE_GR_POTENTIAL       = 0x100,
+    ASSIST_FORCE_SUN_ACCELERATION_CORRECTION = 0x200,
 };
 
 // Error code. Corresponding messages are in assist.c

@@ -103,3 +103,12 @@ ASSIST_FORCE_SUN_HARMONICS     | SUN_HARMONICS     | 0x20  | On  | \(J_2\) zonal
 ASSIST_FORCE_GR_EIH            | GR_EIH            | 0x40  | On  | Einstein, Infeld, Hoffman GR treatment (accurate but expensive)
 ASSIST_FORCE_GR_SIMPLE         | GR_SIMPLE         | 0x80  | Off | Nobili and Roxburgh GR treatment 
 ASSIST_FORCE_GR_POTENTIAL      | GR_POTENTIAL      | 0x100 | Off | Damour and Deruelle GR treatment
+
+## Optional solar acceleration correction
+
+Set `extras.forces += ["SUN_ACCELERATION_CORRECTION"]` in Python or
+`ax->forces |= ASSIST_FORCE_SUN_ACCELERATION_CORRECTION` in C to enable this
+experimental term. At each force evaluation it adds the Sun's ephemeris
+acceleration minus the Newtonian pull on the Sun from all other bodies in
+the loaded ephemerides to each test particle. The sum uses all loaded bodies
+independently of the direct-force flags. The correction is off by default.

@@ -46,6 +46,40 @@ static void assist_additional_force_potential_GR(struct reb_simulation* sim, dou
 static void assist_additional_force_simple_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, FILE *outfile);
 static void assist_additional_force_eih_GR(struct reb_simulation* sim, double xo, double yo, double zo, double vxo, double vyo, double vzo, double axo, double ayo, double azo,	FILE *outfile, FILE *eih_file);
 
+// Add the ephemeris acceleration of the Sun minus its modeled Newtonian acceleration.
+static void assist_sun_acceleration_correction(struct reb_simulation* sim){
+    struct assist_extras* assist = sim->extras;
+    struct assist_ephem* ephem = assist->ephem;
+    double gm, sx, sy, sz, vx, vy, vz, cx, cy, cz;
+    int status = assist_all_ephem(ephem, assist->ephem_cache, ASSIST_BODY_SUN, sim->t,
+            &gm, &sx, &sy, &sz, &vx, &vy, &vz, &cx, &cy, &cz);
+    double nx = 0., ny = 0., nz = 0.;
+    const int count = ASSIST_BODY_NPLANETS + (ephem->spk_asteroids ? ephem->spk_asteroids->num : 0);
+    for (int i=ASSIST_BODY_SUN+1; i<count && status==ASSIST_SUCCESS; i++){
+        double x, y, z, ax, ay, az;
+        status = assist_all_ephem(ephem, assist->ephem_cache, i, sim->t,
+                &gm, &x, &y, &z, &vx, &vy, &vz, &ax, &ay, &az);
+        if (status != ASSIST_SUCCESS) break;
+        const double dx=x-sx, dy=y-sy, dz=z-sz;
+        const double r2 = dx*dx + dy*dy + dz*dz;
+        const double scale = gm/(r2*sqrt(r2));
+        nx += scale*dx;
+        ny += scale*dy;
+        nz += scale*dz;
+    }
+    if (status != ASSIST_SUCCESS){
+        reb_simulation_error(sim, assist_error_messages[status]);
+        sim->status = REB_STATUS_GENERIC_ERROR;
+        return;
+    }
+    // The term depends only on time, so its particle-state derivatives vanish.
+    for (unsigned int i=0; i<sim->N-sim->N_var; i++){
+        sim->particles[i].ax += cx - nx;
+        sim->particles[i].ay += cy - ny;
+        sim->particles[i].az += cz - nz;
+    }
+}
+
 void assist_additional_forces(struct reb_simulation* sim){
 
     // implement additional_forces here
@@ -146,6 +180,10 @@ void assist_additional_forces(struct reb_simulation* sim){
         assist_additional_force_direct(sim, xo, yo, zo, outfile);
     }
     
+    if (assist->forces & ASSIST_FORCE_SUN_ACCELERATION_CORRECTION){
+        assist_sun_acceleration_correction(sim);
+        if (sim->status == REB_STATUS_GENERIC_ERROR) return;
+    }
     // Uncomment one of these lines and recompile for testing.
     //test_vary(sim, vfile);
     //test_vary_2nd(sim, vfile);    
